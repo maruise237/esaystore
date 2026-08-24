@@ -4,15 +4,17 @@ import {
   CreditCard,
   LayoutDashboard,
   LogOut,
+  Menu,
   ReceiptText,
   Settings2,
   ShoppingBag,
   WalletCards,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import SyncStatus from "./SyncStatus";
+import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 export type WorkspaceSection = "dashboard" | "pos" | "products" | "stock" | "customers" | "sales" | "expenses" | "reports" | "team" | "sync";
 
@@ -28,6 +30,8 @@ const navigation: Array<{ id: WorkspaceSection; label: string; icon: typeof Layo
   { id: "team", label: "Équipe", icon: Settings2 },
   { id: "sync", label: "Synchronisation", icon: CreditCard },
 ];
+const mobilePrimary = navigation.filter((item) => ["dashboard", "pos", "products", "customers"].includes(item.id));
+const mobileSecondary = navigation.filter((item) => !mobilePrimary.some((primary) => primary.id === item.id));
 
 export default function AppShell({
   active,
@@ -46,6 +50,7 @@ export default function AppShell({
   onLogout: () => void;
   children: ReactNode;
 }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   return (
     <div className="min-h-screen bg-[#f6f4ef] text-[#24231e]">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 flex-col border-r border-[#e4e1d7] bg-[#1e2924] px-5 py-6 text-[#f7f5ee] lg:flex">
@@ -97,17 +102,26 @@ export default function AppShell({
         </div>
       </aside>
 
-      <main className="pb-20 lg:ml-72 lg:pb-0">{children}</main>
+      <main className="pb-24 lg:ml-72 lg:pb-0">{children}</main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 flex overflow-x-auto border-t border-[#dedbd2] bg-[#fbfaf6]/95 px-2 py-2 backdrop-blur lg:hidden">
-        {navigation.map((item) => {
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-[#dedbd2] bg-[#fbfaf6]/95 px-2 py-2 backdrop-blur lg:hidden">
+        {mobilePrimary.map((item) => {
           const Icon = item.icon;
           return (
-            <button key={item.id} onClick={() => onNavigate(item.id)} className={cn("flex w-[72px] shrink-0 flex-col items-center gap-1 rounded-xl py-2 text-[10px] font-semibold transition-colors", active === item.id ? "bg-[#e7f3b5] text-[#26352d]" : "text-[#77776c]") }>
+            <button key={item.id} onClick={() => onNavigate(item.id)} className={cn("flex min-w-0 flex-col items-center gap-1 rounded-xl py-2 text-[10px] font-semibold transition-colors", active === item.id ? "bg-[#e7f3b5] text-[#26352d]" : "text-[#77776c]") }>
               <Icon className="h-4 w-4" />{item.label}
             </button>
           );
         })}
+        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+          <SheetTrigger asChild><button className={cn("flex min-w-0 flex-col items-center gap-1 rounded-xl py-2 text-[10px] font-semibold transition-colors", mobileSecondary.some((item) => item.id === active) ? "bg-[#e7f3b5] text-[#26352d]" : "text-[#77776c]") }><Menu className="h-4 w-4" />Menu</button></SheetTrigger>
+          <SheetContent side="bottom" className="max-h-[78vh] rounded-t-3xl border-0 bg-[#f8f7f1] pb-5">
+            <SheetHeader><SheetTitle className="font-serif text-2xl">EASYSTOR</SheetTitle><p className="text-sm text-[#71756d]">{shopName} · {currency}</p></SheetHeader>
+            <div className="grid grid-cols-2 gap-2 px-4 pb-2">{mobileSecondary.map((item) => { const Icon = item.icon; return <SheetClose asChild key={item.id}><button onClick={() => { onNavigate(item.id); setMobileMenuOpen(false); }} className={cn("flex items-center gap-3 rounded-xl border px-3 py-3 text-left text-sm font-semibold", active === item.id ? "border-[#bace7e] bg-[#e7f3b5] text-[#26352d]" : "border-[#e4e1d7] bg-white text-[#485048]") }><Icon className="h-4 w-4" />{item.label}</button></SheetClose>; })}</div>
+            <div className="mx-4 mt-3 rounded-xl bg-[#eaf0df] px-3 py-2"><SyncStatus /></div>
+            <Button variant="outline" onClick={onLogout} className="mx-4 mt-3 w-[calc(100%-2rem)] justify-center"><LogOut className="mr-2 h-4 w-4" />Se déconnecter</Button>
+          </SheetContent>
+        </Sheet>
       </nav>
     </div>
   );

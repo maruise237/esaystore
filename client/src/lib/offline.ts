@@ -7,6 +7,7 @@ type LocalSaleItem = { id?: number; saleId: string; productId: string; name: str
 type LocalProduct = { id: string; shopId: string; name: string; barcode?: string | null; isActive?: boolean; unit?: string; salePrice: number; stockQuantity: number; updatedAt: Date };
 type LocalCustomer = { id: string; shopId: string; name: string; phone?: string | null; updatedAt: Date };
 type Conflict = { id?: number; operationId: string; shopId: string; kind: SyncKind; message: string; payload: Record<string, unknown>; createdAt: Date };
+export type UnknownBarcode = { id?: number; shopId: string; barcode: string; firstSeenAt: Date; lastSeenAt: Date; occurrences: number; source: "camera" | "manual" };
 
 class EasyStorOfflineDatabase extends Dexie {
   products!: Table<LocalProduct, string>;
@@ -18,6 +19,7 @@ class EasyStorOfflineDatabase extends Dexie {
   conflicts!: Table<Conflict, number>;
   repayments!: Table<Record<string, unknown>, number>;
   expenses!: Table<Record<string, unknown>, number>;
+  unknownBarcodes!: Table<UnknownBarcode, number>;
   session!: Table<{ key: string; value: unknown }, string>;
   meta!: Table<{ key: string; value: unknown }, string>;
 
@@ -35,6 +37,9 @@ class EasyStorOfflineDatabase extends Dexie {
       expenses: "++id, shopId, createdAt",
       session: "key",
       meta: "key",
+    });
+    this.version(2).stores({
+      unknownBarcodes: "++id, &[shopId+barcode], shopId, barcode, lastSeenAt",
     });
   }
 }
@@ -59,6 +64,35 @@ export async function localProductsFor(shopId: string) {
 
 export async function localCustomersFor(shopId: string) {
   return offlineDb.customers.where("shopId").equals(shopId).sortBy("name");
+}
+
+function normalizeUnknownBarcode(value: string) {
+  return value.replace(/[\s-]/g, "").trim();
+}
+
+function emitUnknownBarcodeStatus() {
+  if (typeof window !== "undefined") window.dispatchEvent(new Event("easystor-unknown-barcodes"));
+}
+
+export async function saveUnknownBarcode(shopId: string, rawBarcode: string, source: "camera" | "manual") {
+  const barcode = normalizeUnknownBarcode(rawBarcode);
+  if (!barcode) return;
+  const existing = await offlineDb.unknownBarcodes.where("[shopId+barcode]").equals([shopId, barcode]).first();
+  const now = new Date();
+  if (existing?.id) await offlineDb.unknownBarcodes.update(existing.id, { lastSeenAt: now, occurrences: existing.occurrences + 1, source });
+  else await offlineDb.unknownBarcodes.add({ shopId, barcode, firstSeenAt: now, lastSeenAt: now, occurrences: 1, source });
+  emitUnknownBarcodeStatus();
+}
+
+export async function listUnknownBarcodes(shopId: string) {
+  const entries = await offlineDb.unknownBarcodes.where("shopId").equals(shopId).toArray();
+  return entries.sort((a, b) => b.lastSeenAt.getTime() - a.lastSeenAt.getTime());
+}
+
+export async function resolveUnknownBarcode(shopId: string, rawBarcode: string) {
+  const barcode = normalizeUnknownBarcode(rawBarcode);
+  await offlineDb.unknownBarcodes.where("[shopId+barcode]").equals([shopId, barcode]).delete();
+  emitUnknownBarcodeStatus();
 }
 
 export async function queueSale(payload: Record<string, unknown>, lines: Array<{ productId: string; name: string; quantity: number; price: number }>) {
@@ -186,8 +220,8 @@ export async function removeOutboxItem(id: number) {
 }
 
 export async function purgeOfflineData() {
-  await offlineDb.transaction("rw", [offlineDb.products, offlineDb.customers, offlineDb.sales, offlineDb.saleItems, offlineDb.stockMovements, offlineDb.outbox, offlineDb.conflicts, offlineDb.repayments, offlineDb.expenses, offlineDb.session, offlineDb.meta], async () => {
-    await Promise.all([offlineDb.products.clear(), offlineDb.customers.clear(), offlineDb.sales.clear(), offlineDb.saleItems.clear(), offlineDb.stockMovements.clear(), offlineDb.outbox.clear(), offlineDb.conflicts.clear(), offlineDb.repayments.clear(), offlineDb.expenses.clear(), offlineDb.session.clear(), offlineDb.meta.clear()]);
+  await offlineDb.transaction("rw", [offlineDb.products, offlineDb.customers, offlineDb.sales, offlineDb.saleItems, offlineDb.stockMovements, offlineDb.outbox, offlineDb.conflicts, offlineDb.repayments, offlineDb.expenses, offlineDb.unknownBarcodes, offlineDb.session, offlineDb.meta], async () => {
+    await Promise.all([offlineDb.products.clear(), offlineDb.customers.clear(), offlineDb.sales.clear(), offlineDb.saleItems.clear(), offlineDb.stockMovements.clear(), offlineDb.outbox.clear(), offlineDb.conflicts.clear(), offlineDb.repayments.clear(), offlineDb.expenses.clear(), offlineDb.unknownBarcodes.clear(), offlineDb.session.clear(), offlineDb.meta.clear()]);
   });
   if ("caches" in globalThis) {
     const keys = await caches.keys();
@@ -205,8 +239,13 @@ export async function registerBackgroundSync() {
 
 export function setupOfflineSync() {
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/sw.js").catch(() => undefined);
-    navigator.serviceWorker.addEventListener("message", (event) => { if (event.data?.type === "EASYSTOR_SYNC") drainOutbox(); });
+    if (import.meta.env.PROD) {
+      navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+      navigator.serviceWorker.addEventListener("message", (event) => { if (event.data?.type === "EASYSTOR_SYNC") drainOutbox(); });
+    } else {
+      navigator.serviceWorker.getRegistrations().then((registrations) => Promise.all(registrations.map((registration) => registration.unregister()))).catch(() => undefined);
+      if ("caches" in globalThis) caches.keys().then((keys) => Promise.all(keys.filter((key) => key.startsWith("easystor-")).map((key) => caches.delete(key)))).catch(() => undefined);
+    }
   }
   window.addEventListener("online", () => { drainOutbox(); });
 }

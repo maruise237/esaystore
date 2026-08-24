@@ -4,7 +4,6 @@ import react from "@vitejs/plugin-react";
 import fs from "node:fs";
 import path from "node:path";
 import { defineConfig, type Plugin, type ViteDevServer } from "vite";
-import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
 
 // =============================================================================
 // Manus Debug Collector - Vite Plugin
@@ -150,18 +149,30 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusDebugCollector()];
 
 export default defineConfig({
   plugins,
   resolve: {
+    dedupe: ["react", "react-dom", "scheduler"],
     alias: {
+      react: path.resolve(PROJECT_ROOT, "node_modules", "react"),
+      "react-dom": path.resolve(PROJECT_ROOT, "node_modules", "react-dom"),
+      "react/jsx-runtime": path.resolve(PROJECT_ROOT, "node_modules", "react", "jsx-runtime.js"),
+      "react/jsx-dev-runtime": path.resolve(PROJECT_ROOT, "node_modules", "react", "jsx-dev-runtime.js"),
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
     },
   },
   envDir: path.resolve(import.meta.dirname),
+  optimizeDeps: {
+    include: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime", "scheduler", "@tanstack/react-query", "@trpc/react-query"],
+    exclude: ["fake-indexeddb"],
+  },
+  ssr: {
+    noExternal: ["@trpc/react-query", "@tanstack/react-query"],
+  },
   root: path.resolve(import.meta.dirname, "client"),
   publicDir: path.resolve(import.meta.dirname, "client", "public"),
   build: {
@@ -170,6 +181,9 @@ export default defineConfig({
   },
   server: {
     host: true,
+    headers: {
+      "Cache-Control": "no-store",
+    },
     allowedHosts: [
       ".manuspre.computer",
       ".manus.computer",

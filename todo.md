@@ -34,3 +34,14 @@
 - [x] Ajouter des tests de recherche produit à partir d’un code-barres scanné.
 - [x] Ajouter une saisie manuelle de code-barres avec validation et ajout au panier dans la caisse.
 - [x] Stabiliser les délais de tests Neon afin d’éviter les échecs transitoires de validation.
+- [x] Sauvegarder localement les codes-barres inconnus rencontrés par scan ou saisie manuelle.
+- [x] Créer une file de traitement des codes inconnus permettant leur ajout ultérieur au catalogue.
+- [x] Optimiser la navigation mobile et l’accès aux sections de gestion.
+- [x] Optimiser l’ergonomie mobile du POS, des formulaires et des actions principales.
+- [x] Ajouter des tests de persistance et de déduplication des codes-barres inconnus.
+- [x] Détecter l’installabilité PWA sur mobile et afficher une invitation d’installation adaptée au navigateur.
+- [x] Ajouter des icônes PWA PNG 192x192 et 512x512 adaptées à l’installation mobile.
+- [x] Compléter l’ergonomie mobile des formulaires et actions hors caisse principale.
+- [x] Documenter et tester les parcours beforeinstallprompt, appinstalled et iOS « Sur l’écran d’accueil ».
+- [x] Adapter explicitement les panneaux crédits, ventes, stock, dépenses, équipe et synchronisation pour mobile.
+- [x] Ajouter une consultation sous forme de cartes pour les données de tableaux larges sur mobile.
