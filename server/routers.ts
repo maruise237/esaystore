@@ -11,6 +11,7 @@ import { closingRouter } from "./routers/closing";
 import { assertShopAccess, makeShopSlug } from "./routers/helpers";
 import { insightsRouter } from "./routers/insights";
 import { migrationRouter } from "./routers/migration";
+import { currenciesRouter } from "./routers/currencies";
 
 export const appRouter = router({
   auth: authRouter,
@@ -19,6 +20,7 @@ export const appRouter = router({
   closing: closingRouter,
   insights: insightsRouter,
   migration: migrationRouter,
+  currencies: currenciesRouter,
   shops: router({
     list: protectedProcedure.query(({ ctx }) => listUserShops(ctx.user.id)),
     create: protectedProcedure.input(z.object({ name: z.string().trim().min(2).max(180), currency: z.enum(["XAF", "XOF", "NGN"]).default("XAF"), country: z.string().trim().length(3).default("CMR") })).mutation(async ({ ctx, input }) => {
@@ -27,6 +29,7 @@ export const appRouter = router({
       await sql.transaction([
         sql`INSERT INTO shops (id, name, slug, currency, country, created_by) VALUES (${shopId}, ${input.name}, ${makeShopSlug(input.name)}, ${input.currency}, ${input.country.toUpperCase()}, ${ctx.user.id})`,
         sql`INSERT INTO shop_members (shop_id, user_id, role) VALUES (${shopId}, ${ctx.user.id}, 'owner')`,
+        sql`INSERT INTO shop_currencies (shop_id, currency, label, is_active) VALUES (${shopId}, ${input.currency}, 'Devise de référence', true)`,
       ]);
       return (await getDb().select().from(shops).where(eq(shops.id, shopId)).limit(1))[0];
     }),

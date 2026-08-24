@@ -22,6 +22,27 @@
       "when": 1787600446991,
       "tag": "0002_concerned_gladiator",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787610644136,
+      "tag": "0003_motionless_spot",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787610945191,
+      "tag": "0004_long_doctor_doom",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787611785688,
+      "tag": "0005_abnormal_exodus",
+      "breakpoints": true
     }
   ]
 }

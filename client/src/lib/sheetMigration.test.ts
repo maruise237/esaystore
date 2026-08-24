@@ -16,7 +16,7 @@ describe("migration de fichiers", () => {
   });
 
   it("builds one Google Sheets-compatible workbook with all business tabs", () => {
-    const workbook = buildEasystorWorkbook({ products: [], customers: [], sales: [], saleItems: [], expenses: [], receivables: [], repayments: [], closures: [], stockMovements: [] });
-    expect(workbook.SheetNames).toEqual(["Guide", "Produits", "Clients", "Ventes", "Lignes de vente", "Dépenses", "Créances", "Remboursements", "Clôtures", "Mouvements stock"]);
+    const workbook = buildEasystorWorkbook({ products: [], variants: [], customers: [], sales: [], saleItems: [], expenses: [], receivables: [], repayments: [], closures: [], stockMovements: [], currencies: [], exchangeRates: [] });
+    expect(workbook.SheetNames).toEqual(["Guide", "Produits", "Variantes", "Clients", "Ventes", "Lignes de vente", "Dépenses", "Créances", "Remboursements", "Clôtures", "Mouvements stock", "Devises", "Taux de change"]);
   });
 });

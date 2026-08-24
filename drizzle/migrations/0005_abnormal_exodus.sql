@@ -1,0 +1,1 @@
+ALTER TABLE "sales" ADD COLUMN "transaction_payment_breakdown" jsonb DEFAULT '{}'::jsonb NOT NULL;
