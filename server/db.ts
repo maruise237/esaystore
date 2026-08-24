@@ -1,92 +1,82 @@
-import { eq } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
-import { ENV } from './_core/env';
+import { neon } from "@neondatabase/serverless";
+import { and, eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/neon-http";
+import * as schema from "../drizzle/schema";
+import { type InsertUser, shopMembers, shops, users } from "../drizzle/schema";
 
-let _db: ReturnType<typeof drizzle> | null = null;
+type AppDb = ReturnType<typeof createDb>;
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
-export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
-    try {
-      _db = drizzle(process.env.DATABASE_URL);
-    } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
-      _db = null;
-    }
-  }
-  return _db;
+let cachedDb: AppDb | null = null;
+let cachedSql: ReturnType<typeof neon> | null = null;
+
+function connectionString() {
+  const value = process.env.NEON_DATABASE_URL;
+  if (!value) throw new Error("NEON_DATABASE_URL is not configured");
+  return value;
+}
+
+function createDb() {
+  return drizzle({ client: neon(connectionString()), schema });
+}
+
+export function getDb() {
+  if (!cachedDb) cachedDb = createDb();
+  return cachedDb;
+}
+
+export function getSql() {
+  if (!cachedSql) cachedSql = neon(connectionString());
+  return cachedSql;
+}
+
+export async function rawRows<T extends Record<string, unknown>>(query: string, params: unknown[] = []) {
+  const response = await getSql().query(query, params) as unknown;
+  if (Array.isArray(response)) return response as T[];
+  return ((response as { rows?: T[] }).rows ?? []);
 }
 
 export async function upsertUser(user: InsertUser): Promise<void> {
-  if (!user.openId) {
-    throw new Error("User openId is required for upsert");
-  }
-
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot upsert user: database not available");
-    return;
-  }
-
-  try {
-    const values: InsertUser = {
-      openId: user.openId,
-    };
-    const updateSet: Record<string, unknown> = {};
-
-    const textFields = ["name", "email", "loginMethod"] as const;
-    type TextField = (typeof textFields)[number];
-
-    const assignNullable = (field: TextField) => {
-      const value = user[field];
-      if (value === undefined) return;
-      const normalized = value ?? null;
-      values[field] = normalized;
-      updateSet[field] = normalized;
-    };
-
-    textFields.forEach(assignNullable);
-
-    if (user.lastSignedIn !== undefined) {
-      values.lastSignedIn = user.lastSignedIn;
-      updateSet.lastSignedIn = user.lastSignedIn;
-    }
-    if (user.role !== undefined) {
-      values.role = user.role;
-      updateSet.role = user.role;
-    } else if (user.openId === ENV.ownerOpenId) {
-      values.role = 'admin';
-      updateSet.role = 'admin';
-    }
-
-    if (!values.lastSignedIn) {
-      values.lastSignedIn = new Date();
-    }
-
-    if (Object.keys(updateSet).length === 0) {
-      updateSet.lastSignedIn = new Date();
-    }
-
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
-      set: updateSet,
-    });
-  } catch (error) {
-    console.error("[Database] Failed to upsert user:", error);
-    throw error;
-  }
+  if (!user.openId) throw new Error("User openId is required for OAuth upsert");
+  await getDb().insert(users).values(user).onConflictDoUpdate({
+    target: users.openId,
+    set: {
+      name: user.name,
+      email: user.email,
+      loginMethod: user.loginMethod,
+      lastSignedIn: new Date(),
+      updatedAt: new Date(),
+    },
+  });
 }
 
 export async function getUserByOpenId(openId: string) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get user: database not available");
-    return undefined;
-  }
-
-  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-
-  return result.length > 0 ? result[0] : undefined;
+  const rows = await getDb().select().from(users).where(eq(users.openId, openId)).limit(1);
+  return rows[0];
 }
 
-// TODO: add feature queries here as your schema grows.
+export async function getUserById(id: string) {
+  const rows = await getDb().select().from(users).where(eq(users.id, id)).limit(1);
+  return rows[0];
+}
+
+export async function getUserByEmail(email: string) {
+  const [user] = await getDb().select().from(users).where(eq(users.email, email.toLowerCase())).limit(1);
+  return user;
+}
+
+export async function listUserShops(userId: string) {
+  return getDb()
+    .select({ shop: shops, role: shopMembers.role })
+    .from(shopMembers)
+    .innerJoin(shops, eq(shopMembers.shopId, shops.id))
+    .where(eq(shopMembers.userId, userId));
+}
+
+export async function getMembership(userId: string, shopId: string) {
+  const rows = await getDb()
+    .select()
+    .from(shopMembers)
+    .where(and(eq(shopMembers.userId, userId), eq(shopMembers.shopId, shopId)))
+    .limit(1);
+  return rows[0];
+}

@@ -1,0 +1,19 @@
+import { useState } from "react";
+import { CircleDollarSign, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { queueOperation } from "@/lib/offline";
+import { trpc } from "@/lib/trpc";
+
+const format = (value: number, currency: string) => new Intl.NumberFormat("fr-FR", { style: "currency", currency, maximumFractionDigits: 0 }).format(value || 0);
+
+export default function ExpensesPanel({ shopId, currency }: { shopId: string; currency: string }) {
+  const utils = trpc.useUtils();
+  const expenses = trpc.commerce.expenses.list.useQuery({ shopId });
+  const [category, setCategory] = useState(""); const [amount, setAmount] = useState(""); const [note, setNote] = useState("");
+  const create = trpc.commerce.expenses.create.useMutation({ onSuccess: () => { setCategory(""); setAmount(""); setNote(""); utils.commerce.expenses.list.invalidate({ shopId }); } });
+  const submit = async (event: React.FormEvent) => { event.preventDefault(); const payload = { shopId, category, amount: Number(amount), note: note || undefined, operationId: crypto.randomUUID() }; if (!navigator.onLine) { await queueOperation("expense", payload); setCategory(""); setAmount(""); setNote(""); return; } create.mutate(payload); };
+  return <div className="grid gap-6 xl:grid-cols-[360px_1fr]"><Card className="h-fit border-0 bg-[#f4eadc]"><CardContent className="p-6"><div className="flex items-center gap-2"><CircleDollarSign className="h-5 w-5 text-[#976239]" /><p className="font-serif text-xl">Nouvelle dépense</p></div><form onSubmit={submit} className="mt-5 space-y-4"><label className="grid gap-2"><Label>Catégorie</Label><Input value={category} onChange={(event) => setCategory(event.target.value)} placeholder="Ex. Transport" required /></label><label className="grid gap-2"><Label>Montant</Label><Input type="number" min="1" value={amount} onChange={(event) => setAmount(event.target.value)} required /></label><label className="grid gap-2"><Label>Note</Label><Input value={note} onChange={(event) => setNote(event.target.value)} placeholder="Facultatif" /></label><Button type="submit" disabled={create.isPending} className="w-full bg-[#976239] hover:bg-[#7c4f2c]">{create.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Enregistrer la dépense</Button>{create.error && <p className="text-xs text-red-600">{create.error.message}</p>}</form></CardContent></Card><Card className="border-0 bg-white shadow-[0_12px_30px_rgba(43,47,38,0.05)]"><CardContent className="p-5 sm:p-7"><p className="font-serif text-xl">Dernières dépenses</p><div className="mt-5 space-y-3">{expenses.data?.map((expense) => <div key={expense.id} className="flex items-center justify-between rounded-xl border border-[#ece9df] px-4 py-3"><div><p className="font-semibold">{expense.category}</p><p className="mt-1 text-xs text-[#85877f]">{expense.note || "Sans note"} · {new Date(expense.spentAt).toLocaleDateString("fr-FR")}</p></div><p className="font-semibold text-[#9a5c38]">{format(expense.amount, currency)}</p></div>)}{!expenses.data?.length && <p className="py-10 text-center text-sm text-[#85877f]">Aucune dépense enregistrée.</p>}</div></CardContent></Card></div>;
+}

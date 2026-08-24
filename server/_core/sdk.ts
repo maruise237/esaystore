@@ -297,7 +297,7 @@ class SDKServer {
           openId: userInfo.openId,
           name: userInfo.name || null,
           email: userInfo.email ?? null,
-          loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
+          loginMethod: userInfo.loginMethod ?? userInfo.platform ?? "oauth",
           lastSignedIn: signedInAt,
         });
         user = await db.getUserByOpenId(userInfo.openId);
@@ -333,12 +333,14 @@ function buildCronUser(
 ): AuthenticatedUser {
   const now = new Date();
   return {
-    id: -1,
+    id: "00000000-0000-0000-0000-000000000000",
     openId: userInfo.openId,
     name: userInfo.name || "Manus Scheduled Task",
     email: null,
-    loginMethod: null,
+    passwordHash: null,
+    loginMethod: "cron",
     role: "user",
+    isActive: true,
     createdAt: now,
     updatedAt: now,
     lastSignedIn: now,

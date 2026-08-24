@@ -1,0 +1,31 @@
+# Project TODO
+
+- [x] Remplacer l’adaptateur MySQL existant par l’accès Neon PostgreSQL dans le backend tRPC.
+- [x] Définir le schéma Drizzle PostgreSQL pour les utilisateurs, boutiques et rôles avec isolation stricte des données.
+- [x] Ajouter les migrations Drizzle versionnées et la procédure d’application vers Neon.
+- [x] Mettre en place les variables d’environnement locales et de production requises par Neon et Vercel.
+- [x] Adapter l’architecture Node.js/tRPC à l’exécution Vercel Serverless sans Docker.
+- [x] Mettre en place l’authentification et l’onboarding de boutique pour le propriétaire et les collaborateurs.
+- [x] Mettre en œuvre le contrôle d’accès par rôle et par boutique dans toutes les procédures tRPC.
+- [x] Créer le tableau de bord avec indicateurs de ventes, stock bas et créances en cours.
+- [x] Créer le catalogue produits avec recherche, prix, code-barres, catégorie et seuil de stock.
+- [x] Mettre en œuvre les réapprovisionnements, ajustements justifiés et historique des mouvements de stock.
+- [x] Créer une caisse POS rapide avec panier, moyens de paiement essentiels et décrémentation transactionnelle du stock.
+- [x] Mettre en œuvre la gestion des ventes à crédit, des clients débiteurs et des remboursements partiels.
+- [x] Créer l’historique des ventes et les rapports essentiels filtrables par période.
+- [x] Transformer le client en PWA installable avec manifeste, service worker et interface adaptative.
+- [x] Mettre en œuvre une file d’opérations locale hors-ligne et une synchronisation différée idempotente.
+- [x] Purger les données locales de la boutique lors de la déconnexion sur un appareil partagé.
+- [x] Concevoir une interface élégante, accessible et cohérente pour ordinateur et téléphone.
+- [x] Ajouter des tests Vitest couvrant les règles critiques de stocks, ventes, créances et isolation des données.
+- [x] Documenter la configuration Neon, Vercel, Drizzle et les étapes de déploiement sans Docker.
+- [x] Vérifier le typage, les tests, la prévisualisation visuelle et préparer le dépôt GitHub pour Vercel.
+- [x] Ajouter un exemple versionné de variables locales et de production sans exposer de secret.
+- [x] Ajouter une interface de gestion des collaborateurs par boutique.
+- [x] Ajouter des formulaires de réapprovisionnement et d’ajustement motivé, avec consultation des mouvements de stock.
+- [x] Ajouter la saisie de remboursements partiels depuis l’interface des créances.
+- [x] Ajouter des filtres de période à l’historique des ventes.
+- [x] Étendre l’outbox hors-ligne aux dépenses, remboursements et ajustements, et exposer un écran de synchronisation et conflits.
+- [x] Purger les caches du service worker lors de la déconnexion.
+- [x] Ajouter des tests métier couvrant la transaction de vente, le stock et le remboursement partiel.
+- [x] Finaliser la préparation du dépôt GitHub pour l’import Vercel.

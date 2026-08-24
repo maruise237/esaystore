@@ -1,0 +1,57 @@
+import { z } from "zod";
+import { getSql } from "../db";
+import { protectedProcedure, router } from "../_core/trpc";
+import { assertShopAccess } from "./helpers";
+
+const numberValue = (value: unknown) => Number(value ?? 0);
+
+export const insightsRouter = router({
+  dashboard: protectedProcedure.input(z.object({ shopId: z.string().uuid() })).query(async ({ ctx, input }) => {
+    await assertShopAccess(ctx.user.id, input.shopId);
+    const sql = getSql();
+    const [totals, lowStock, debts, trend] = await sql.transaction([
+      sql`SELECT COALESCE(SUM(total) FILTER (WHERE sold_at::date = CURRENT_DATE), 0) AS sales_today,
+                 COALESCE(SUM(total) FILTER (WHERE sold_at::date = CURRENT_DATE - INTERVAL '1 day'), 0) AS sales_yesterday,
+                 COALESCE(SUM((payment_breakdown->>'cash')::numeric) FILTER (WHERE sold_at::date = CURRENT_DATE), 0) AS cash_today,
+                 COALESCE(SUM((payment_breakdown->>'mobileMoney')::numeric) FILTER (WHERE sold_at::date = CURRENT_DATE), 0) AS mobile_today
+          FROM sales WHERE shop_id = ${input.shopId} AND status = 'completed'`,
+      sql`SELECT count(*)::int AS count FROM products WHERE shop_id = ${input.shopId} AND is_active = true AND stock_quantity <= alert_threshold`,
+      sql`SELECT COALESCE(SUM(balance), 0) AS outstanding FROM receivables WHERE shop_id = ${input.shopId} AND is_settled = false`,
+      sql`SELECT to_char(day, 'Dy') AS label, COALESCE(SUM(s.total), 0) AS value
+          FROM generate_series(CURRENT_DATE - INTERVAL '6 days', CURRENT_DATE, INTERVAL '1 day') AS day
+          LEFT JOIN sales s ON s.shop_id = ${input.shopId} AND s.status = 'completed' AND s.sold_at::date = day::date
+          GROUP BY day ORDER BY day`,
+    ]) as unknown as Record<string, unknown>[][];
+    return {
+      salesToday: numberValue(totals[0]?.sales_today),
+      salesYesterday: numberValue(totals[0]?.sales_yesterday),
+      cashToday: numberValue(totals[0]?.cash_today),
+      mobileToday: numberValue(totals[0]?.mobile_today),
+      lowStockCount: numberValue(lowStock[0]?.count),
+      outstandingReceivables: numberValue(debts[0]?.outstanding),
+      trend: trend.map((row: Record<string, unknown>) => ({ label: String(row.label), value: numberValue(row.value) })),
+    };
+  }),
+
+  report: protectedProcedure.input(z.object({ shopId: z.string().uuid(), from: z.coerce.date(), to: z.coerce.date() })).query(async ({ ctx, input }) => {
+    await assertShopAccess(ctx.user.id, input.shopId, ["owner", "manager"]);
+    const sql = getSql();
+    const [summary, topProducts] = await sql.transaction([
+      sql`SELECT COALESCE(SUM(s.total), 0) AS turnover,
+                 COALESCE(SUM(s.total - si.purchase_price * si.quantity), 0) AS gross_margin,
+                 COUNT(DISTINCT s.id)::int AS sale_count
+          FROM sales s LEFT JOIN sale_items si ON si.sale_id = s.id
+          WHERE s.shop_id = ${input.shopId} AND s.status = 'completed' AND s.sold_at >= ${input.from} AND s.sold_at <= ${input.to}`,
+      sql`SELECT si.product_name AS name, SUM(si.quantity) AS quantity, SUM(si.line_total) AS revenue
+          FROM sale_items si JOIN sales s ON s.id = si.sale_id
+          WHERE s.shop_id = ${input.shopId} AND s.status = 'completed' AND s.sold_at >= ${input.from} AND s.sold_at <= ${input.to}
+          GROUP BY si.product_name ORDER BY revenue DESC LIMIT 10`,
+    ]) as unknown as Record<string, unknown>[][];
+    return {
+      turnover: numberValue(summary[0]?.turnover),
+      grossMargin: numberValue(summary[0]?.gross_margin),
+      saleCount: numberValue(summary[0]?.sale_count),
+      topProducts: topProducts.map((row: Record<string, unknown>) => ({ name: String(row.name), quantity: numberValue(row.quantity), revenue: numberValue(row.revenue) })),
+    };
+  }),
+});

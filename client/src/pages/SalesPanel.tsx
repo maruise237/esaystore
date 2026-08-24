@@ -1,0 +1,13 @@
+import { useState } from "react";
+import { CalendarDays, ReceiptText } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { trpc } from "@/lib/trpc";
+
+const format = (value: number, currency: string) => new Intl.NumberFormat("fr-FR", { style: "currency", currency, maximumFractionDigits: 0 }).format(value || 0);
+export default function SalesPanel({ shopId, currency }: { shopId: string; currency: string }) {
+  const [from, setFrom] = useState(() => new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().slice(0, 10));
+  const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
+  const sales = trpc.commerce.sales.list.useQuery({ shopId, from: new Date(`${from}T00:00:00`), to: new Date(`${to}T23:59:59`) });
+  return <Card className="border-0 bg-white shadow-[0_12px_30px_rgba(43,47,38,0.05)]"><CardContent className="p-5 sm:p-7"><div className="flex flex-wrap items-end justify-between gap-4"><div className="flex items-center gap-2"><ReceiptText className="h-5 w-5 text-[#577651]" /><div><p className="font-serif text-xl">Ventes récentes</p><p className="mt-1 text-xs text-[#85877f]">Le journal est filtrable par période.</p></div></div><div className="flex gap-3"><label className="grid gap-1 text-xs font-semibold text-[#687267]">Du<Input type="date" value={from} onChange={(event) => setFrom(event.target.value)} /></label><label className="grid gap-1 text-xs font-semibold text-[#687267]">Au<Input type="date" value={to} onChange={(event) => setTo(event.target.value)} /></label></div></div><div className="mt-5 overflow-x-auto"><table className="w-full min-w-[640px] text-left text-sm"><thead className="text-xs uppercase tracking-wider text-[#8b8e84]"><tr><th className="pb-4">Référence</th><th className="pb-4">Date</th><th className="pb-4">Client</th><th className="pb-4">Paiement</th><th className="pb-4 text-right">Montant</th></tr></thead><tbody>{sales.data?.map(({ sale, customerName }) => <tr key={sale.id} className="border-t border-[#efede6]"><td className="py-4 font-semibold">{sale.saleNumber}</td><td className="py-4 text-[#77776c]">{new Date(sale.soldAt).toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" })}</td><td className="py-4">{customerName || "Comptant"}</td><td className="py-4 capitalize">{sale.paymentMethod.replace("_", " ")}</td><td className="py-4 text-right font-semibold">{format(sale.total, currency)}</td></tr>)}</tbody></table>{!sales.data?.length && <p className="py-12 text-center text-sm text-[#85877f]">Aucune vente sur cette période.</p>}</div></CardContent></Card>;
+}
