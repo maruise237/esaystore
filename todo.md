@@ -32,3 +32,5 @@
 - [x] Ajouter un scanner de code-barres via caméra au point de vente.
 - [x] Gérer les permissions caméra, les appareils non compatibles et les codes inconnus.
 - [x] Ajouter des tests de recherche produit à partir d’un code-barres scanné.
+- [x] Ajouter une saisie manuelle de code-barres avec validation et ajout au panier dans la caisse.
+- [ ] Stabiliser les délais de tests Neon afin d’éviter les échecs transitoires de validation.
