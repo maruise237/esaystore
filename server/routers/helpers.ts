@@ -1,6 +1,7 @@
+import { and, eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import type { shopRoleEnum } from "../../drizzle/schema";
-import { getMembership } from "../db";
+import { cashClosures, type shopRoleEnum } from "../../drizzle/schema";
+import { getDb, getMembership } from "../db";
 
 type ShopRole = (typeof shopRoleEnum.enumValues)[number];
 
@@ -13,6 +14,12 @@ export async function assertShopAccess(userId: string, shopId: string, allowedRo
     throw new TRPCError({ code: "FORBIDDEN", message: "Votre rôle ne permet pas cette action." });
   }
   return membership;
+}
+
+export async function assertBusinessDayOpen(shopId: string, operationDate: Date) {
+  const businessDate = operationDate.toISOString().slice(0, 10);
+  const [closure] = await getDb().select({ id: cashClosures.id }).from(cashClosures).where(and(eq(cashClosures.shopId, shopId), eq(cashClosures.businessDate, businessDate))).limit(1);
+  if (closure) throw new TRPCError({ code: "CONFLICT", message: `La caisse du ${businessDate} est déjà clôturée. Enregistrez l’opération sur une nouvelle journée.` });
 }
 
 export function makeShopSlug(name: string) {

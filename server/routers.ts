@@ -7,14 +7,18 @@ import { protectedProcedure, router } from "./_core/trpc";
 import { authRouter } from "./routers/auth";
 import { catalogRouter } from "./routers/catalog";
 import { commerceRouter } from "./routers/commerce";
+import { closingRouter } from "./routers/closing";
 import { assertShopAccess, makeShopSlug } from "./routers/helpers";
 import { insightsRouter } from "./routers/insights";
+import { migrationRouter } from "./routers/migration";
 
 export const appRouter = router({
   auth: authRouter,
   catalog: catalogRouter,
   commerce: commerceRouter,
+  closing: closingRouter,
   insights: insightsRouter,
+  migration: migrationRouter,
   shops: router({
     list: protectedProcedure.query(({ ctx }) => listUserShops(ctx.user.id)),
     create: protectedProcedure.input(z.object({ name: z.string().trim().min(2).max(180), currency: z.enum(["XAF", "XOF", "NGN"]).default("XAF"), country: z.string().trim().length(3).default("CMR") })).mutation(async ({ ctx, input }) => {
