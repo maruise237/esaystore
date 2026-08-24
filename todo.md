@@ -57,4 +57,9 @@
 - [x] Documenter la validation finale HTTPS de l’ouverture sans barre d’adresse sur Android et iOS.
 - [x] Retirer définitivement le faux indicateur PWA dans le navigateur et vérifier son absence.
 - [x] Restreindre l’explication d’installation aux contextes mobiles pertinents et couvrir les états PWA par tests.
-- [ ] Vérifier le dépôt GitHub maruise237/esaystore et synchroniser EASYSTOR si sa structure est compatible.
+- [x] Vérifier le dépôt GitHub maruise237/esaystore et synchroniser EASYSTOR si sa structure est compatible.
+- [x] Ajouter un démarrage guidé et des états vides actionnables pour les nouveaux commerçants.
+- [x] Réduire les gestes en caisse avec des montants rapides, raccourcis clavier et confirmation claire de vente.
+- [x] Ajouter des garde-fous opérationnels pour éviter les erreurs fréquentes de stock, paiement et crédit.
+- [x] Attendre les données produits et ventes avant d’afficher le démarrage guidé.
+- [x] Autoriser explicitement les ventes à crédit dès lors qu’un client est sélectionné.
