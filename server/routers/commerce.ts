@@ -5,7 +5,7 @@ import { customers, expenses, products, receivables, repayments, sales } from ".
 import { money, paymentMethodFor, sumPaid } from "../lib/commerce";
 import { getDb, rawRows } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
-import { assertShopAccess } from "./helpers";
+import { assertBusinessDayOpen, assertShopAccess } from "./helpers";
 
 const checkoutInput = z.object({
   shopId: z.string().uuid(),
@@ -36,6 +36,7 @@ export const commerceRouter = router({
 
     checkout: protectedProcedure.input(checkoutInput).mutation(async ({ ctx, input }) => {
       await assertShopAccess(ctx.user.id, input.shopId);
+      await assertBusinessDayOpen(input.shopId, input.soldAt ?? new Date());
       const db = getDb();
       const [existing] = await db.select({ id: sales.id, saleNumber: sales.saleNumber }).from(sales)
         .where(and(eq(sales.shopId, input.shopId), eq(sales.operationId, input.operationId))).limit(1);
@@ -115,6 +116,7 @@ export const commerceRouter = router({
     }),
     repay: protectedProcedure.input(z.object({ shopId: z.string().uuid(), receivableId: z.string().uuid(), amount: z.coerce.number().positive(), operationId: z.string().uuid(), paymentMethod: z.enum(["cash", "mobile_money"]).default("cash") })).mutation(async ({ ctx, input }) => {
       await assertShopAccess(ctx.user.id, input.shopId);
+      await assertBusinessDayOpen(input.shopId, new Date());
       const rows = await rawRows<{ id: string; balance: number; is_settled: boolean }>(
         `WITH updated AS (
            UPDATE receivables SET balance = balance - $1, is_settled = balance - $1 <= 0, updated_at = now()
@@ -140,6 +142,7 @@ export const commerceRouter = router({
     }),
     create: protectedProcedure.input(z.object({ shopId: z.string().uuid(), category: z.string().trim().min(2).max(120), amount: z.coerce.number().positive(), note: z.string().trim().max(1000).optional(), operationId: z.string().uuid() })).mutation(async ({ ctx, input }) => {
       await assertShopAccess(ctx.user.id, input.shopId, ["owner", "manager"]);
+      await assertBusinessDayOpen(input.shopId, new Date());
       const [expense] = await getDb().insert(expenses).values({ ...input, createdBy: ctx.user.id, note: input.note || null }).returning();
       return expense;
     }),

@@ -18,6 +18,8 @@ import TeamPanel from "./TeamPanel";
 import CreditPanel from "./CreditPanel";
 import SalesPanel from "./SalesPanel";
 import ExpensesPanel from "./ExpensesPanel";
+import ClosingPanel from "./ClosingPanel";
+import MigrationPanel from "./MigrationPanel";
 import BarcodeScannerDialog from "@/components/BarcodeScannerDialog";
 import { findProductByBarcode } from "@/lib/barcode";
 import UnknownBarcodeQueue from "@/components/UnknownBarcodeQueue";
@@ -36,6 +38,8 @@ const sectionTitles: Record<WorkspaceSection, { kicker: string; title: string; d
   sales: { kicker: "Journal", title: "Historique des ventes", description: "Retrouvez les ventes récentes de la boutique." },
   expenses: { kicker: "Journal", title: "Dépenses", description: "Enregistrez les sorties de caisse qui affectent la rentabilité." },
   reports: { kicker: "Analyse", title: "Rapports essentiels", description: "Mesurez le chiffre d’affaires, la marge et vos meilleures ventes." },
+  closing: { kicker: "Fin de journée", title: "Fermeture de caisse", description: "Comparez le cash attendu et le montant compté, puis enregistrez la clôture du jour." },
+  migration: { kicker: "Transfert de données", title: "Importer / exporter", description: "Reprenez votre historique issu d’un fichier et préparez vos données pour un export global." },
   team: { kicker: "Administration", title: "Équipe de la boutique", description: "Ajoutez les collaborateurs déjà inscrits et attribuez leur rôle." },
   sync: { kicker: "Hors ligne", title: "Synchronisation", description: "Contrôlez les opérations locales, les erreurs et les conflits de stock." },
 };
@@ -73,6 +77,8 @@ export default function Workspace() {
       {active === "sales" && <SalesPanel shopId={activeShop.shop.id} currency={activeShop.shop.currency} />}
       {active === "expenses" && <ExpensesPanel shopId={activeShop.shop.id} currency={activeShop.shop.currency} />}
       {active === "reports" && <Reports shopId={activeShop.shop.id} currency={activeShop.shop.currency} />}
+      {active === "closing" && <ClosingPanel shopId={activeShop.shop.id} currency={activeShop.shop.currency} />}
+      {active === "migration" && <MigrationPanel shopId={activeShop.shop.id} />}
       {active === "team" && <TeamPanel shopId={activeShop.shop.id} />}
       {active === "sync" && <SyncPanel />}
     </div>

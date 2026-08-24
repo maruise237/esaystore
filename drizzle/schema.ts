@@ -1,5 +1,6 @@
 import {
   boolean,
+  date,
   index,
   jsonb,
   numeric,
@@ -171,6 +172,28 @@ export const expenses = pgTable("expenses", {
   spentAt: timestamp("spent_at", { withTimezone: true }).defaultNow().notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [uniqueIndex("expenses_shop_operation_unique").on(table.shopId, table.operationId)]);
+
+export const cashClosures = pgTable("cash_closures", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  shopId: uuid("shop_id").references(() => shops.id, { onDelete: "cascade" }).notNull(),
+  businessDate: date("business_date").notNull(),
+  expectedCash: money("expected_cash").notNull(),
+  declaredCash: money("declared_cash").notNull(),
+  difference: money("difference").notNull(),
+  snapshot: jsonb("snapshot").$type<Record<string, number>>().notNull(),
+  closedBy: uuid("closed_by").references(() => users.id, { onDelete: "restrict" }).notNull(),
+  closedAt: timestamp("closed_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [uniqueIndex("cash_closures_shop_date_unique").on(table.shopId, table.businessDate), index("cash_closures_shop_date_idx").on(table.shopId, table.businessDate)]);
+
+export const dataImports = pgTable("data_imports", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  shopId: uuid("shop_id").references(() => shops.id, { onDelete: "cascade" }).notNull(),
+  fingerprint: varchar("fingerprint", { length: 128 }).notNull(),
+  fileName: varchar("file_name", { length: 240 }).notNull(),
+  summary: jsonb("summary").$type<Record<string, number>>().notNull(),
+  importedBy: uuid("imported_by").references(() => users.id, { onDelete: "restrict" }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [uniqueIndex("data_imports_shop_fingerprint_unique").on(table.shopId, table.fingerprint), index("data_imports_shop_created_idx").on(table.shopId, table.createdAt)]);
 
 export const syncOperations = pgTable("sync_operations", {
   id: uuid("id").defaultRandom().primaryKey(),

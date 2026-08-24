@@ -6,6 +6,7 @@ import {
   LogOut,
   Menu,
   ReceiptText,
+  FileSpreadsheet,
   Settings2,
   ShoppingBag,
   WalletCards,
@@ -16,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import SyncStatus from "./SyncStatus";
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
-export type WorkspaceSection = "dashboard" | "pos" | "products" | "stock" | "customers" | "sales" | "expenses" | "reports" | "team" | "sync";
+export type WorkspaceSection = "dashboard" | "pos" | "products" | "stock" | "customers" | "sales" | "expenses" | "reports" | "closing" | "migration" | "team" | "sync";
 
 const navigation: Array<{ id: WorkspaceSection; label: string; icon: typeof LayoutDashboard }> = [
   { id: "dashboard", label: "Pilotage", icon: LayoutDashboard },
@@ -27,6 +28,8 @@ const navigation: Array<{ id: WorkspaceSection; label: string; icon: typeof Layo
   { id: "sales", label: "Ventes", icon: ReceiptText },
   { id: "expenses", label: "Dépenses", icon: CreditCard },
   { id: "reports", label: "Rapports", icon: BarChart3 },
+  { id: "closing", label: "Clôture", icon: WalletCards },
+  { id: "migration", label: "Importer / exporter", icon: FileSpreadsheet },
   { id: "team", label: "Équipe", icon: Settings2 },
   { id: "sync", label: "Synchronisation", icon: CreditCard },
 ];

@@ -63,3 +63,21 @@
 - [x] Ajouter des garde-fous opérationnels pour éviter les erreurs fréquentes de stock, paiement et crédit.
 - [x] Attendre les données produits et ventes avant d’afficher le démarrage guidé.
 - [x] Autoriser explicitement les ventes à crédit dès lors qu’un client est sélectionné.
+- [x] Ajouter une fermeture de caisse quotidienne avec rapport récapitulatif des ventes et écarts éventuels.
+- [x] Bloquer les ventes, dépenses et remboursements datés sur une journée déjà clôturée.
+- [x] Tester l’interdiction d’opérations après clôture et la stabilité du résumé journalier.
+- [x] Vérifier qu’un remboursement est refusé après clôture sans modifier le rapport existant.
+- [x] Relire et comparer le snapshot de clôture après les tentatives d’opérations refusées.
+- [x] Comparer strictement le rapport et le snapshot avant/après chaque opération refusée.
+- [x] Ajouter un import Google Sheets avec détection de colonnes, prévisualisation et reprise des historiques datés.
+- [x] Ajouter une résolution explicite des collisions avant importation et une protection contre les doublons.
+- [x] Ajouter un export global de toutes les données EASYSTOR vers un unique fichier Google Sheets.
+- [x] Accepter les fichiers `.xlsx` et `.csv` issus de Google Sheets, sans connexion au compte Google.
+- [x] Générer un classeur `.xlsx` unique directement importable dans Google Sheets pour l’export global.
+- [x] Journaliser chaque import par empreinte de fichier et refuser les réimports identiques.
+- [x] Signaler avant écriture les opérations historiques qui tombent sur une journée déjà clôturée.
+- [x] Préserver les lignes de vente et mouvements de stock lors de tout import détaillé.
+- [x] Reconstituer les mouvements de stock historiques sans modifier le stock final importé.
+- [x] Tester dans Neon la chronologie des mouvements de stock associée aux lignes de vente importées.
+- [x] Tracer un mouvement d’ouverture pour chaque produit importé, même sans ligne de vente historique.
+- [x] Bloquer les ventes détaillées sur un produit existant hors stratégie de copie, pour éviter tout historique de stock ambigu.
