@@ -29,3 +29,6 @@
 - [x] Purger les caches du service worker lors de la déconnexion.
 - [x] Ajouter des tests métier couvrant la transaction de vente, le stock et le remboursement partiel.
 - [x] Finaliser la préparation du dépôt GitHub pour l’import Vercel.
+- [x] Ajouter un scanner de code-barres via caméra au point de vente.
+- [x] Gérer les permissions caméra, les appareils non compatibles et les codes inconnus.
+- [x] Ajouter des tests de recherche produit à partir d’un code-barres scanné.

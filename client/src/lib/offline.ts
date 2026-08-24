@@ -4,7 +4,7 @@ export type SyncKind = "sale" | "repayment" | "expense" | "adjustment";
 export type OutboxItem = { id?: number; sequence?: number; operationId: string; shopId: string; kind: SyncKind; payload: Record<string, unknown>; createdAt: Date; attempts: number; lastError?: string; status: "pending" | "conflict" };
 type LocalSale = { id: string; operationId: string; shopId: string; total: number; createdAt: Date; syncStatus: "pending" | "synced" | "conflict" };
 type LocalSaleItem = { id?: number; saleId: string; productId: string; name: string; quantity: number; unitPrice: number };
-type LocalProduct = { id: string; shopId: string; name: string; salePrice: number; stockQuantity: number; updatedAt: Date };
+type LocalProduct = { id: string; shopId: string; name: string; barcode?: string | null; isActive?: boolean; unit?: string; salePrice: number; stockQuantity: number; updatedAt: Date };
 type LocalCustomer = { id: string; shopId: string; name: string; phone?: string | null; updatedAt: Date };
 type Conflict = { id?: number; operationId: string; shopId: string; kind: SyncKind; message: string; payload: Record<string, unknown>; createdAt: Date };
 
@@ -45,7 +45,7 @@ function emitStatus() {
   window.dispatchEvent(new Event("easystor-sync-status"));
 }
 
-export async function cacheProducts(items: Array<{ id: string; shopId: string; name: string; salePrice: number; stockQuantity: number; updatedAt: Date }>) {
+export async function cacheProducts(items: Array<{ id: string; shopId: string; name: string; barcode?: string | null; isActive?: boolean; unit?: string; salePrice: number; stockQuantity: number; updatedAt: Date }>) {
   await offlineDb.products.bulkPut(items.map((item) => ({ ...item, updatedAt: new Date(item.updatedAt) })));
 }
 
