@@ -1,0 +1,60 @@
+# Project TODO
+
+- [x] Remplacer l’adaptateur MySQL existant par l’accès Neon PostgreSQL dans le backend tRPC.
+- [x] Définir le schéma Drizzle PostgreSQL pour les utilisateurs, boutiques et rôles avec isolation stricte des données.
+- [x] Ajouter les migrations Drizzle versionnées et la procédure d’application vers Neon.
+- [x] Mettre en place les variables d’environnement locales et de production requises par Neon et Vercel.
+- [x] Adapter l’architecture Node.js/tRPC à l’exécution Vercel Serverless sans Docker.
+- [x] Mettre en place l’authentification et l’onboarding de boutique pour le propriétaire et les collaborateurs.
+- [x] Mettre en œuvre le contrôle d’accès par rôle et par boutique dans toutes les procédures tRPC.
+- [x] Créer le tableau de bord avec indicateurs de ventes, stock bas et créances en cours.
+- [x] Créer le catalogue produits avec recherche, prix, code-barres, catégorie et seuil de stock.
+- [x] Mettre en œuvre les réapprovisionnements, ajustements justifiés et historique des mouvements de stock.
+- [x] Créer une caisse POS rapide avec panier, moyens de paiement essentiels et décrémentation transactionnelle du stock.
+- [x] Mettre en œuvre la gestion des ventes à crédit, des clients débiteurs et des remboursements partiels.
+- [x] Créer l’historique des ventes et les rapports essentiels filtrables par période.
+- [x] Transformer le client en PWA installable avec manifeste, service worker et interface adaptative.
+- [x] Mettre en œuvre une file d’opérations locale hors-ligne et une synchronisation différée idempotente.
+- [x] Purger les données locales de la boutique lors de la déconnexion sur un appareil partagé.
+- [x] Concevoir une interface élégante, accessible et cohérente pour ordinateur et téléphone.
+- [x] Ajouter des tests Vitest couvrant les règles critiques de stocks, ventes, créances et isolation des données.
+- [x] Documenter la configuration Neon, Vercel, Drizzle et les étapes de déploiement sans Docker.
+- [x] Vérifier le typage, les tests, la prévisualisation visuelle et préparer le dépôt GitHub pour Vercel.
+- [x] Ajouter un exemple versionné de variables locales et de production sans exposer de secret.
+- [x] Ajouter une interface de gestion des collaborateurs par boutique.
+- [x] Ajouter des formulaires de réapprovisionnement et d’ajustement motivé, avec consultation des mouvements de stock.
+- [x] Ajouter la saisie de remboursements partiels depuis l’interface des créances.
+- [x] Ajouter des filtres de période à l’historique des ventes.
+- [x] Étendre l’outbox hors-ligne aux dépenses, remboursements et ajustements, et exposer un écran de synchronisation et conflits.
+- [x] Purger les caches du service worker lors de la déconnexion.
+- [x] Ajouter des tests métier couvrant la transaction de vente, le stock et le remboursement partiel.
+- [x] Finaliser la préparation du dépôt GitHub pour l’import Vercel.
+- [x] Ajouter un scanner de code-barres via caméra au point de vente.
+- [x] Gérer les permissions caméra, les appareils non compatibles et les codes inconnus.
+- [x] Ajouter des tests de recherche produit à partir d’un code-barres scanné.
+- [x] Ajouter une saisie manuelle de code-barres avec validation et ajout au panier dans la caisse.
+- [x] Stabiliser les délais de tests Neon afin d’éviter les échecs transitoires de validation.
+- [x] Sauvegarder localement les codes-barres inconnus rencontrés par scan ou saisie manuelle.
+- [x] Créer une file de traitement des codes inconnus permettant leur ajout ultérieur au catalogue.
+- [x] Optimiser la navigation mobile et l’accès aux sections de gestion.
+- [x] Optimiser l’ergonomie mobile du POS, des formulaires et des actions principales.
+- [x] Ajouter des tests de persistance et de déduplication des codes-barres inconnus.
+- [x] Détecter l’installabilité PWA sur mobile et afficher une invitation d’installation adaptée au navigateur.
+- [x] Ajouter des icônes PWA PNG 192x192 et 512x512 adaptées à l’installation mobile.
+- [x] Compléter l’ergonomie mobile des formulaires et actions hors caisse principale.
+- [x] Documenter et tester les parcours beforeinstallprompt, appinstalled et iOS « Sur l’écran d’accueil ».
+- [x] Adapter explicitement les panneaux crédits, ventes, stock, dépenses, équipe et synchronisation pour mobile.
+- [x] Ajouter une consultation sous forme de cartes pour les données de tableaux larges sur mobile.
+- [x] Ajouter des exports CSV filtrés pour les ventes, dépenses et créances.
+- [x] Générer un reçu de vente imprimable en PDF après chaque encaissement réussi.
+- [x] Afficher au tableau de bord des alertes visuelles de stock bas et de créances échues.
+- [x] Permettre de fixer une date d’échéance lors d’une vente à crédit.
+- [x] Ajouter des filtres de période aux dépenses et aligner leur export CSV sur la liste affichée.
+- [x] Ajouter des filtres de statut et d’échéance aux créances et aligner leur export CSV sur la liste affichée.
+- [x] Générer un fichier PDF de reçu partageable via les plateformes disponibles sur l’appareil.
+- [x] Renforcer et valider l’installation PWA autonome avec manifeste, service worker et parcours mobile adapté.
+- [x] Ajouter une vérification automatisée des prérequis PWA standalone et une indication visible du mode autonome actif.
+- [x] Documenter la validation finale HTTPS de l’ouverture sans barre d’adresse sur Android et iOS.
+- [x] Retirer définitivement le faux indicateur PWA dans le navigateur et vérifier son absence.
+- [x] Restreindre l’explication d’installation aux contextes mobiles pertinents et couvrir les états PWA par tests.
+- [ ] Vérifier le dépôt GitHub maruise237/esaystore et synchroniser EASYSTOR si sa structure est compatible.
