@@ -56,6 +56,27 @@ export const shopMembers = pgTable("shop_members", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [primaryKey({ columns: [table.shopId, table.userId] }), index("shop_members_user_idx").on(table.userId)]);
 
+export const shopCurrencies = pgTable("shop_currencies", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  shopId: uuid("shop_id").references(() => shops.id, { onDelete: "cascade" }).notNull(),
+  currency: varchar("currency", { length: 8 }).notNull(),
+  label: varchar("label", { length: 80 }),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [uniqueIndex("shop_currencies_shop_currency_unique").on(table.shopId, table.currency)]);
+
+export const exchangeRates = pgTable("exchange_rates", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  shopId: uuid("shop_id").references(() => shops.id, { onDelete: "cascade" }).notNull(),
+  currency: varchar("currency", { length: 8 }).notNull(),
+  rateToBase: numeric("rate_to_base", { precision: 20, scale: 8, mode: "number" }).notNull(),
+  effectiveAt: timestamp("effective_at", { withTimezone: true }).defaultNow().notNull(),
+  createdBy: uuid("created_by").references(() => users.id, { onDelete: "restrict" }).notNull(),
+  note: varchar("note", { length: 240 }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [index("exchange_rates_shop_currency_date_idx").on(table.shopId, table.currency, table.effectiveAt)]);
+
 export const products = pgTable("products", {
   id: uuid("id").defaultRandom().primaryKey(),
   shopId: uuid("shop_id").references(() => shops.id, { onDelete: "cascade" }).notNull(),
@@ -77,6 +98,27 @@ export const products = pgTable("products", {
 }, (table) => [
   index("products_shop_name_idx").on(table.shopId, table.name),
   uniqueIndex("products_shop_barcode_unique").on(table.shopId, table.barcode),
+]);
+
+export const productVariants = pgTable("product_variants", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  shopId: uuid("shop_id").references(() => shops.id, { onDelete: "cascade" }).notNull(),
+  productId: uuid("product_id").references(() => products.id, { onDelete: "cascade" }).notNull(),
+  name: varchar("name", { length: 180 }).notNull(),
+  attributes: jsonb("attributes").$type<Record<string, string>>().default({}).notNull(),
+  reference: varchar("reference", { length: 120 }),
+  barcode: varchar("barcode", { length: 120 }),
+  purchasePrice: money("purchase_price").default(0).notNull(),
+  salePrice: money("sale_price").default(0).notNull(),
+  stockQuantity: quantity("stock_quantity").default(0).notNull(),
+  alertThreshold: quantity("alert_threshold").default(5).notNull(),
+  photoUrl: text("photo_url"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index("product_variants_shop_product_idx").on(table.shopId, table.productId),
+  uniqueIndex("product_variants_shop_barcode_unique").on(table.shopId, table.barcode),
 ]);
 
 export const customers = pgTable("customers", {
@@ -103,6 +145,13 @@ export const sales = pgTable("sales", {
   creditAmount: money("credit_amount").default(0).notNull(),
   paymentMethod: paymentMethodEnum("payment_method").notNull(),
   paymentBreakdown: jsonb("payment_breakdown").$type<Record<string, number>>().default({}).notNull(),
+  transactionCurrency: varchar("transaction_currency", { length: 8 }).default("XAF").notNull(),
+  exchangeRate: numeric("exchange_rate", { precision: 20, scale: 8, mode: "number" }).default(1).notNull(),
+  transactionSubtotal: money("transaction_subtotal").default(0).notNull(),
+  transactionDiscountAmount: money("transaction_discount_amount").default(0).notNull(),
+  transactionTotal: money("transaction_total").default(0).notNull(),
+  transactionAmountPaid: money("transaction_amount_paid").default(0).notNull(),
+  transactionPaymentBreakdown: jsonb("transaction_payment_breakdown").$type<Record<string, number>>().default({}).notNull(),
   status: saleStatusEnum("status").default("completed").notNull(),
   soldAt: timestamp("sold_at", { withTimezone: true }).defaultNow().notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -116,6 +165,7 @@ export const saleItems = pgTable("sale_items", {
   id: uuid("id").defaultRandom().primaryKey(),
   saleId: uuid("sale_id").references(() => sales.id, { onDelete: "cascade" }).notNull(),
   productId: uuid("product_id").references(() => products.id, { onDelete: "restrict" }).notNull(),
+  productVariantId: uuid("product_variant_id").references(() => productVariants.id, { onDelete: "restrict" }),
   productName: varchar("product_name", { length: 240 }).notNull(),
   quantity: quantity("quantity").notNull(),
   unitPrice: money("unit_price").notNull(),
@@ -127,6 +177,7 @@ export const stockMovements = pgTable("stock_movements", {
   id: uuid("id").defaultRandom().primaryKey(),
   shopId: uuid("shop_id").references(() => shops.id, { onDelete: "cascade" }).notNull(),
   productId: uuid("product_id").references(() => products.id, { onDelete: "restrict" }).notNull(),
+  productVariantId: uuid("product_variant_id").references(() => productVariants.id, { onDelete: "restrict" }),
   saleId: uuid("sale_id").references(() => sales.id, { onDelete: "set null" }),
   createdBy: uuid("created_by").references(() => users.id, { onDelete: "restrict" }).notNull(),
   type: movementTypeEnum("type").notNull(),

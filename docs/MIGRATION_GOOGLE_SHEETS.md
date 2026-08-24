@@ -49,7 +49,7 @@ Chaque ligne détaillée doit correspondre à un produit présent dans l’ongle
 
 ## Export global
 
-Le bouton **Exporter le classeur** génère un seul fichier `.xlsx`, compatible avec l’import de Google Sheets, comprenant les onglets suivants : `Guide`, `Produits`, `Clients`, `Ventes`, `Lignes de vente`, `Dépenses`, `Créances`, `Remboursements`, `Clôtures` et `Mouvements stock`.
+Le bouton **Exporter le classeur** génère un seul fichier `.xlsx`, compatible avec l’import de Google Sheets, comprenant les onglets suivants : `Guide`, `Produits`, `Variantes`, `Clients`, `Ventes`, `Lignes de vente`, `Dépenses`, `Créances`, `Remboursements`, `Clôtures`, `Mouvements stock`, `Devises` et `Taux de change`.
 
 Le fichier sert de sauvegarde et de transfert. Pour l’ouvrir dans Google Sheets, utilisez **Fichier → Importer → Importer** puis sélectionnez le classeur téléchargé. L’export ne remplace ni ne met à jour automatiquement un document Google existant.
 

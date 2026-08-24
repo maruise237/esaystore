@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { and, eq, inArray } from "drizzle-orm";
 import { createHash } from "node:crypto";
 import { z } from "zod";
-import { cashClosures, customers, dataImports, expenses, products, receivables, repayments, saleItems, sales, stockMovements } from "../../drizzle/schema";
+import { cashClosures, customers, dataImports, exchangeRates, expenses, productVariants, products, receivables, repayments, saleItems, sales, shopCurrencies, stockMovements } from "../../drizzle/schema";
 import { getDb, getSql } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
 import { assertShopAccess } from "./helpers";
@@ -55,8 +55,9 @@ export const migrationRouter = router({
   exportData: protectedProcedure.input(z.object({ shopId: z.string().uuid() })).query(async ({ ctx, input }) => {
     await assertShopAccess(ctx.user.id, input.shopId, ["owner", "manager"]);
     const db = getDb();
-    const [productRows, customerRows, saleRows, lineRows, expenseRows, receivableRows, repaymentRows, closureRows, movementRows] = await Promise.all([
+    const [productRows, variantRows, customerRows, saleRows, lineRows, expenseRows, receivableRows, repaymentRows, closureRows, movementRows, currencyRows, rateRows] = await Promise.all([
       db.select().from(products).where(eq(products.shopId, input.shopId)),
+      db.select().from(productVariants).where(eq(productVariants.shopId, input.shopId)),
       db.select().from(customers).where(eq(customers.shopId, input.shopId)),
       db.select({ sale: sales, customerName: customers.name }).from(sales).leftJoin(customers, eq(sales.customerId, customers.id)).where(eq(sales.shopId, input.shopId)),
       db.select({ line: saleItems, saleNumber: sales.saleNumber, productBarcode: products.barcode }).from(saleItems).innerJoin(sales, eq(saleItems.saleId, sales.id)).leftJoin(products, eq(saleItems.productId, products.id)).where(eq(sales.shopId, input.shopId)),
@@ -65,8 +66,10 @@ export const migrationRouter = router({
       db.select({ repayment: repayments, customerName: customers.name, saleNumber: sales.saleNumber }).from(repayments).innerJoin(receivables, eq(repayments.receivableId, receivables.id)).innerJoin(customers, eq(receivables.customerId, customers.id)).innerJoin(sales, eq(receivables.saleId, sales.id)).where(eq(repayments.shopId, input.shopId)),
       db.select().from(cashClosures).where(eq(cashClosures.shopId, input.shopId)),
       db.select({ movement: stockMovements, productName: products.name }).from(stockMovements).innerJoin(products, eq(stockMovements.productId, products.id)).where(eq(stockMovements.shopId, input.shopId)),
+      db.select().from(shopCurrencies).where(eq(shopCurrencies.shopId, input.shopId)),
+      db.select().from(exchangeRates).where(eq(exchangeRates.shopId, input.shopId)),
     ]);
-    return { products: productRows, customers: customerRows, sales: saleRows, saleItems: lineRows, expenses: expenseRows, receivables: receivableRows, repayments: repaymentRows, closures: closureRows, stockMovements: movementRows };
+    return { products: productRows, variants: variantRows, customers: customerRows, sales: saleRows, saleItems: lineRows, expenses: expenseRows, receivables: receivableRows, repayments: repaymentRows, closures: closureRows, stockMovements: movementRows, currencies: currencyRows, exchangeRates: rateRows };
   }),
   preview: protectedProcedure.input(z.object({ shopId: z.string().uuid(), data: payload })).mutation(async ({ ctx, input }) => {
     await assertShopAccess(ctx.user.id, input.shopId, ["owner", "manager"]);

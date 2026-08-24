@@ -40,6 +40,9 @@ afterEach(async () => {
   await sql`DELETE FROM receivables WHERE shop_id = ${shopId}`;
   await sql`DELETE FROM stock_movements WHERE shop_id = ${shopId}`;
   await sql`DELETE FROM sales WHERE shop_id = ${shopId}`;
+  await sql`DELETE FROM product_variants WHERE shop_id = ${shopId}`;
+  await sql`DELETE FROM exchange_rates WHERE shop_id = ${shopId}`;
+  await sql`DELETE FROM shop_currencies WHERE shop_id = ${shopId}`;
   await sql`DELETE FROM customers WHERE shop_id = ${shopId}`;
   await sql`DELETE FROM products WHERE shop_id = ${shopId}`;
   await sql`DELETE FROM shop_members WHERE shop_id = ${shopId}`;
@@ -84,5 +87,23 @@ describe("commerce transaction with Neon", () => {
     await expect(caller().sales.checkout({ shopId, customerId, operationId: crypto.randomUUID(), discountAmount: 0, payment: { cash: 1_000, mobileMoney: 0 }, items: [{ productId, quantity: 6 }] })).rejects.toMatchObject<Partial<TRPCError>>({ code: "CONFLICT" });
     const product = await sql`SELECT stock_quantity FROM products WHERE id = ${productId}`;
     expect(Number(product[0]?.stock_quantity)).toBe(5);
+  });
+
+  it("decrements the selected variant without touching parent stock", async () => {
+    const variantId = crypto.randomUUID();
+    await sql`INSERT INTO product_variants (id, shop_id, product_id, name, attributes, sale_price, purchase_price, stock_quantity, alert_threshold) VALUES (${variantId}, ${shopId}, ${productId}, 'Bleu · M', '{"Couleur":"Bleu","Taille":"M"}'::jsonb, 1200, 600, 3, 1)`;
+    await caller().sales.checkout({ shopId, operationId: crypto.randomUUID(), discountAmount: 0, payment: { cash: 1200, mobileMoney: 0 }, items: [{ productId, variantId, quantity: 1 }] });
+    const variant = await sql`SELECT stock_quantity FROM product_variants WHERE id = ${variantId}`;
+    const product = await sql`SELECT stock_quantity FROM products WHERE id = ${productId}`;
+    const item = await sql`SELECT product_variant_id FROM sale_items WHERE sale_id IN (SELECT id FROM sales WHERE shop_id = ${shopId})`;
+    expect(Number(variant[0]?.stock_quantity)).toBe(2); expect(Number(product[0]?.stock_quantity)).toBe(5); expect(String(item[0]?.product_variant_id)).toBe(variantId);
+  });
+
+  it("uses the configured conversion rate and keeps both transaction and base values", async () => {
+    await sql`INSERT INTO shop_currencies (shop_id, currency, is_active) VALUES (${shopId}, 'XOF', true)`;
+    await sql`INSERT INTO exchange_rates (shop_id, currency, rate_to_base, created_by) VALUES (${shopId}, 'XOF', 2, ${userId})`;
+    await caller().sales.checkout({ shopId, operationId: crypto.randomUUID(), transactionCurrency: "XOF", discountAmount: 0, payment: { cash: 500, mobileMoney: 0 }, items: [{ productId, quantity: 1 }] });
+    const sale = await sql`SELECT total, transaction_currency, exchange_rate, transaction_total, transaction_amount_paid, payment_breakdown, transaction_payment_breakdown FROM sales WHERE shop_id = ${shopId}`;
+    expect(Number(sale[0]?.total)).toBe(1000); expect(sale[0]?.transaction_currency).toBe("XOF"); expect(Number(sale[0]?.exchange_rate)).toBe(2); expect(Number(sale[0]?.transaction_total)).toBe(500); expect(Number(sale[0]?.transaction_amount_paid)).toBe(500); expect(sale[0]?.payment_breakdown).toMatchObject({ cash: 1000, mobileMoney: 0, rateToBase: 2 }); expect(sale[0]?.transaction_payment_breakdown).toMatchObject({ cash: 500, mobileMoney: 0 });
   });
 }, 60_000);

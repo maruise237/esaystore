@@ -81,3 +81,14 @@
 - [x] Tester dans Neon la chronologie des mouvements de stock associée aux lignes de vente importées.
 - [x] Tracer un mouvement d’ouverture pour chaque produit importé, même sans ligne de vente historique.
 - [x] Bloquer les ventes détaillées sur un produit existant hors stratégie de copie, pour éviter tout historique de stock ambigu.
+- [x] Ajouter des images de produit stockées de manière sécurisée et affichées dans le catalogue et la caisse.
+- [x] Ajouter des variantes de produit (taille, couleur et attributs) avec prix, code-barres et stock indépendants.
+- [x] Ajouter une recherche catalogue et POS qui résout rapidement une variante par nom ou code-barres.
+- [x] Ajouter une devise de référence par boutique et des devises de transaction activables.
+- [x] Ajouter la gestion manuelle, historisée et datée des taux de conversion par boutique.
+- [x] Convertir et enregistrer les montants de vente dans leur devise de paiement et la devise de référence sans perte de traçabilité.
+- [x] Tester les variantes, les conversions et l’isolation des taux entre boutiques.
+- [x] Afficher les photos produit ou variante dans la grille et le panier de la caisse.
+- [x] Rendre les photos POS directement par React et couvrir le mapping des photos de produits et variantes.
+- [x] Rechercher les variantes de produit par nom, attribut ou code-barres depuis le catalogue.
+- [x] Conserver les détails cash et mobile money dans la devise de transaction et la devise de référence.
