@@ -1,8 +1,8 @@
-# Installation mobile d’EASYSTOR
+# Installation autonome d’EASYSTOR
 
-EASYSTOR est fournie comme PWA installable. Sur **Chrome Android**, le navigateur expose l’événement `beforeinstallprompt` lorsque le manifeste, les icônes PNG, le contexte HTTPS et le service worker sont valides. L’application affiche alors le bouton **Installer l’application**, qui déclenche l’invite native du navigateur.
+EASYSTOR est fournie comme PWA installable. Une fois installée depuis un site HTTPS, elle démarre en mode **standalone**, sans la barre d’adresse du navigateur. Le manifeste définit ce mode, les icônes PNG et la portée de l’application ; le service worker met à disposition le shell de l’application et le fonctionnement hors connexion. Sur **Chrome Android**, le navigateur expose l’événement `beforeinstallprompt` lorsque ces critères sont valides. L’application affiche alors le bouton **Installer l’application**, qui déclenche l’invite native du navigateur.
 
-Sur **Safari iOS/iPadOS**, le navigateur ne fournit pas cet événement. L’application affiche donc l’instruction alternative : ouvrez **Partager**, puis choisissez **Sur l’écran d’accueil**. L’invitation disparaît automatiquement lorsqu’EASYSTOR est déjà exécutée en mode autonome ou après une installation confirmée.
+Sur **Safari iOS/iPadOS**, le navigateur ne fournit pas cet événement. L’application affiche donc l’instruction alternative : ouvrez **Partager**, puis choisissez **Sur l’écran d’accueil**. Ouvrez ensuite l’icône EASYSTOR depuis l’écran d’accueil pour utiliser le mode autonome. L’invitation disparaît automatiquement lorsqu’EASYSTOR est déjà exécutée en mode autonome ou après une installation confirmée.
 
 | Élément | Vérification |
 |---|---|
@@ -12,3 +12,9 @@ Sur **Safari iOS/iPadOS**, le navigateur ne fournit pas cet événement. L’app
 | iOS | Utilisez Safari, touchez Partager, puis « Sur l’écran d’accueil ». |
 
 Les tests unitaires du module `client/src/lib/pwa.test.ts` couvrent l’invite native Android, le parcours iOS et les états déjà installés ou masqués.
+
+## Validation finale sur HTTPS
+
+1. Déployez la version sur une URL HTTPS, puis ouvrez `/manifest.webmanifest` et `/sw.js` : les deux ressources doivent répondre avec un statut HTTP 200.
+2. Sur Android Chrome, utilisez **Installer l’application**, fermez le navigateur, puis lancez EASYSTOR depuis l’icône ajoutée au lanceur. L’application doit occuper sa propre fenêtre, sans barre d’adresse.
+3. Sur iPhone/iPad, utilisez Safari, choisissez **Partager** puis **Sur l’écran d’accueil**, et ouvrez l’icône créée. L’indication **Mode application actif** confirme l’exécution autonome.

@@ -9,7 +9,7 @@ export const insightsRouter = router({
   dashboard: protectedProcedure.input(z.object({ shopId: z.string().uuid() })).query(async ({ ctx, input }) => {
     await assertShopAccess(ctx.user.id, input.shopId);
     const sql = getSql();
-    const [totals, lowStock, debts, trend] = await sql.transaction([
+    const [totals, lowStock, debts, trend, lowStockItems, overdueReceivables] = await sql.transaction([
       sql`SELECT COALESCE(SUM(total) FILTER (WHERE sold_at::date = CURRENT_DATE), 0) AS sales_today,
                  COALESCE(SUM(total) FILTER (WHERE sold_at::date = CURRENT_DATE - INTERVAL '1 day'), 0) AS sales_yesterday,
                  COALESCE(SUM((payment_breakdown->>'cash')::numeric) FILTER (WHERE sold_at::date = CURRENT_DATE), 0) AS cash_today,
@@ -21,6 +21,13 @@ export const insightsRouter = router({
           FROM generate_series(CURRENT_DATE - INTERVAL '6 days', CURRENT_DATE, INTERVAL '1 day') AS day
           LEFT JOIN sales s ON s.shop_id = ${input.shopId} AND s.status = 'completed' AND s.sold_at::date = day::date
           GROUP BY day ORDER BY day`,
+      sql`SELECT id, name, stock_quantity, alert_threshold FROM products
+          WHERE shop_id = ${input.shopId} AND is_active = true AND stock_quantity <= alert_threshold
+          ORDER BY stock_quantity ASC, name ASC LIMIT 5`,
+      sql`SELECT r.id, c.name AS customer_name, r.balance, r.due_date FROM receivables r
+          JOIN customers c ON c.id = r.customer_id
+          WHERE r.shop_id = ${input.shopId} AND r.is_settled = false AND r.due_date IS NOT NULL AND r.due_date < now()
+          ORDER BY r.due_date ASC LIMIT 5`,
     ]) as unknown as Record<string, unknown>[][];
     return {
       salesToday: numberValue(totals[0]?.sales_today),
@@ -30,6 +37,8 @@ export const insightsRouter = router({
       lowStockCount: numberValue(lowStock[0]?.count),
       outstandingReceivables: numberValue(debts[0]?.outstanding),
       trend: trend.map((row: Record<string, unknown>) => ({ label: String(row.label), value: numberValue(row.value) })),
+      lowStockItems: lowStockItems.map((row: Record<string, unknown>) => ({ id: String(row.id), name: String(row.name), stockQuantity: numberValue(row.stock_quantity), alertThreshold: numberValue(row.alert_threshold) })),
+      overdueReceivables: overdueReceivables.map((row: Record<string, unknown>) => ({ id: String(row.id), customerName: String(row.customer_name), balance: numberValue(row.balance), dueDate: new Date(String(row.due_date)) })),
     };
   }),
 

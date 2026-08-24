@@ -45,3 +45,13 @@
 - [x] Documenter et tester les parcours beforeinstallprompt, appinstalled et iOS « Sur l’écran d’accueil ».
 - [x] Adapter explicitement les panneaux crédits, ventes, stock, dépenses, équipe et synchronisation pour mobile.
 - [x] Ajouter une consultation sous forme de cartes pour les données de tableaux larges sur mobile.
+- [x] Ajouter des exports CSV filtrés pour les ventes, dépenses et créances.
+- [x] Générer un reçu de vente imprimable en PDF après chaque encaissement réussi.
+- [x] Afficher au tableau de bord des alertes visuelles de stock bas et de créances échues.
+- [x] Permettre de fixer une date d’échéance lors d’une vente à crédit.
+- [x] Ajouter des filtres de période aux dépenses et aligner leur export CSV sur la liste affichée.
+- [x] Ajouter des filtres de statut et d’échéance aux créances et aligner leur export CSV sur la liste affichée.
+- [x] Générer un fichier PDF de reçu partageable via les plateformes disponibles sur l’appareil.
+- [x] Renforcer et valider l’installation PWA autonome avec manifeste, service worker et parcours mobile adapté.
+- [x] Ajouter une vérification automatisée des prérequis PWA standalone et une indication visible du mode autonome actif.
+- [x] Documenter la validation finale HTTPS de l’ouverture sans barre d’adresse sur Android et iOS.

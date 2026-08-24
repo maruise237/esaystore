@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, lt } from "drizzle-orm";
 import { z } from "zod";
 import { customers, expenses, products, receivables, repayments, sales } from "../../drizzle/schema";
 import { money, paymentMethodFor, sumPaid } from "../lib/commerce";
@@ -15,6 +15,7 @@ const checkoutInput = z.object({
   payment: z.object({ cash: z.coerce.number().min(0).default(0), mobileMoney: z.coerce.number().min(0).default(0) }),
   items: z.array(z.object({ productId: z.string().uuid(), quantity: z.coerce.number().positive() })).min(1).max(100),
   soldAt: z.coerce.date().optional(),
+  dueDate: z.coerce.date().optional(),
 });
 
 export const commerceRouter = router({
@@ -90,11 +91,11 @@ export const commerceRouter = router({
            SELECT $2, l.product_id, s.id, $5, 'sale', -l.quantity, u.stock_quantity, 'Vente POS'
            FROM locked l JOIN updated_stock u ON u.id = l.product_id CROSS JOIN new_sale s
          ), written_receivable AS (
-           INSERT INTO receivables (shop_id, customer_id, sale_id, original_amount, balance)
-           SELECT $2, $4, id, credit_amount, credit_amount FROM new_sale WHERE credit_amount > 0
+           INSERT INTO receivables (shop_id, customer_id, sale_id, original_amount, balance, due_date)
+           SELECT $2, $4, id, credit_amount, credit_amount, $13 FROM new_sale WHERE credit_amount > 0
          )
          SELECT (SELECT id FROM new_sale) AS sale_id, (SELECT sufficient FROM guard) AS sufficient`,
-        [JSON.stringify(Object.entries(requested).map(([product_id, quantity]) => ({ product_id, quantity }))), input.shopId, saleId, input.customerId ?? null, ctx.user.id, saleNumber, input.operationId, input.discountAmount, amountPaid, paymentMethodFor(total, amountPaid, input.payment), JSON.stringify(input.payment), input.soldAt ?? new Date()],
+        [JSON.stringify(Object.entries(requested).map(([product_id, quantity]) => ({ product_id, quantity }))), input.shopId, saleId, input.customerId ?? null, ctx.user.id, saleNumber, input.operationId, input.discountAmount, amountPaid, paymentMethodFor(total, amountPaid, input.payment), JSON.stringify(input.payment), input.soldAt ?? new Date(), input.dueDate ?? null],
       );
       const outcome = rows[0];
       if (!outcome?.sale_id || !outcome.sufficient) throw new TRPCError({ code: "CONFLICT", message: "Stock insuffisant : la vente n’a pas été enregistrée." });
@@ -103,10 +104,14 @@ export const commerceRouter = router({
   }),
 
   receivables: router({
-    list: protectedProcedure.input(z.object({ shopId: z.string().uuid(), includeSettled: z.boolean().default(false) })).query(async ({ ctx, input }) => {
+    list: protectedProcedure.input(z.object({ shopId: z.string().uuid(), includeSettled: z.boolean().optional(), status: z.enum(["open", "settled", "all"]).optional(), overdueOnly: z.boolean().default(false) })).query(async ({ ctx, input }) => {
       await assertShopAccess(ctx.user.id, input.shopId);
-      const condition = input.includeSettled ? eq(receivables.shopId, input.shopId) : and(eq(receivables.shopId, input.shopId), eq(receivables.isSettled, false));
-      return getDb().select({ receivable: receivables, customerName: customers.name }).from(receivables).innerJoin(customers, eq(receivables.customerId, customers.id)).where(condition).orderBy(desc(receivables.createdAt));
+      const status = input.status ?? (input.includeSettled ? "all" : "open");
+      const conditions = [eq(receivables.shopId, input.shopId)];
+      if (status === "open") conditions.push(eq(receivables.isSettled, false));
+      if (status === "settled") conditions.push(eq(receivables.isSettled, true));
+      if (input.overdueOnly) conditions.push(and(eq(receivables.isSettled, false), lt(receivables.dueDate, new Date()))!);
+      return getDb().select({ receivable: receivables, customerName: customers.name }).from(receivables).innerJoin(customers, eq(receivables.customerId, customers.id)).where(and(...conditions)).orderBy(desc(receivables.createdAt));
     }),
     repay: protectedProcedure.input(z.object({ shopId: z.string().uuid(), receivableId: z.string().uuid(), amount: z.coerce.number().positive(), operationId: z.string().uuid(), paymentMethod: z.enum(["cash", "mobile_money"]).default("cash") })).mutation(async ({ ctx, input }) => {
       await assertShopAccess(ctx.user.id, input.shopId);
@@ -126,9 +131,12 @@ export const commerceRouter = router({
   }),
 
   expenses: router({
-    list: protectedProcedure.input(z.object({ shopId: z.string().uuid() })).query(async ({ ctx, input }) => {
+    list: protectedProcedure.input(z.object({ shopId: z.string().uuid(), from: z.coerce.date().optional(), to: z.coerce.date().optional() })).query(async ({ ctx, input }) => {
       await assertShopAccess(ctx.user.id, input.shopId, ["owner", "manager"]);
-      return getDb().select().from(expenses).where(eq(expenses.shopId, input.shopId)).orderBy(desc(expenses.spentAt)).limit(100);
+      const conditions = [eq(expenses.shopId, input.shopId)];
+      if (input.from) conditions.push((await import("drizzle-orm")).gte(expenses.spentAt, input.from));
+      if (input.to) conditions.push((await import("drizzle-orm")).lte(expenses.spentAt, input.to));
+      return getDb().select().from(expenses).where(and(...conditions)).orderBy(desc(expenses.spentAt)).limit(100);
     }),
     create: protectedProcedure.input(z.object({ shopId: z.string().uuid(), category: z.string().trim().min(2).max(120), amount: z.coerce.number().positive(), note: z.string().trim().max(1000).optional(), operationId: z.string().uuid() })).mutation(async ({ ctx, input }) => {
       await assertShopAccess(ctx.user.id, input.shopId, ["owner", "manager"]);

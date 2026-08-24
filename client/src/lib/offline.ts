@@ -240,7 +240,7 @@ export async function registerBackgroundSync() {
 export function setupOfflineSync() {
   if ("serviceWorker" in navigator) {
     if (import.meta.env.PROD) {
-      navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+      navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => undefined);
       navigator.serviceWorker.addEventListener("message", (event) => { if (event.data?.type === "EASYSTOR_SYNC") drainOutbox(); });
     } else {
       navigator.serviceWorker.getRegistrations().then((registrations) => Promise.all(registrations.map((registration) => registration.unregister()))).catch(() => undefined);
