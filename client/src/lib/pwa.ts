@@ -6,18 +6,16 @@ export function isStandaloneMode(mediaStandalone: boolean, navigatorStandalone: 
   return mediaStandalone || Boolean(navigatorStandalone);
 }
 
-export function shouldShowPwaInstallPrompt({
-  isMobile,
-  installed,
-  dismissed,
-  hasInstallEvent,
-  ios,
-}: {
-  isMobile: boolean;
-  installed: boolean;
-  dismissed: boolean;
-  hasInstallEvent: boolean;
-  ios: boolean;
-}) {
-  return isMobile && !installed && !dismissed && (hasInstallEvent || ios);
+export type PwaInstallSurface = "native" | "ios" | "browser" | "none";
+
+export function getPwaInstallSurface({ installed, dismissed, hasInstallEvent, ios, isMobile }: { installed: boolean; dismissed: boolean; hasInstallEvent: boolean; ios: boolean; isMobile: boolean }): PwaInstallSurface {
+  if (installed || dismissed) return "none";
+  if (hasInstallEvent) return "native";
+  if (!isMobile) return "none";
+  if (ios) return "ios";
+  return "browser";
+}
+
+export function shouldShowPwaInstallPrompt(input: { installed: boolean; dismissed: boolean; hasInstallEvent: boolean; ios: boolean; isMobile: boolean }) {
+  return getPwaInstallSurface(input) !== "none";
 }

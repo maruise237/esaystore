@@ -55,3 +55,5 @@
 - [x] Renforcer et valider l’installation PWA autonome avec manifeste, service worker et parcours mobile adapté.
 - [x] Ajouter une vérification automatisée des prérequis PWA standalone et une indication visible du mode autonome actif.
 - [x] Documenter la validation finale HTTPS de l’ouverture sans barre d’adresse sur Android et iOS.
+- [x] Retirer définitivement le faux indicateur PWA dans le navigateur et vérifier son absence.
+- [x] Restreindre l’explication d’installation aux contextes mobiles pertinents et couvrir les états PWA par tests.
