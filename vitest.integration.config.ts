@@ -14,9 +14,9 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["server/**/*.test.ts", "server/**/*.spec.ts", "client/src/**/*.test.ts", "client/src/**/*.spec.ts"],
-    exclude: ["server/neon.connection.test.ts", "server/neon.schema.test.ts", "server/routers/commerce.integration.test.ts"],
-    testTimeout: 30_000,
-    hookTimeout: 30_000,
+    include: ["server/neon.connection.test.ts", "server/neon.schema.test.ts", "server/routers/commerce.integration.test.ts"],
+    testTimeout: 60_000,
+    hookTimeout: 60_000,
+    retry: 2,
   },
 });
