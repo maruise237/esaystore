@@ -14,7 +14,17 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["server/neon.connection.test.ts", "server/neon.schema.test.ts", "server/routers/commerce.integration.test.ts", "server/routers/closing.integration.test.ts", "server/routers/migration.integration.test.ts", "server/routers/currencies.integration.test.ts"],
+    include: [
+      "server/neon.connection.test.ts",
+      "server/neon.schema.test.ts",
+      "server/authRateLimit.integration.test.ts",
+      "server/routers/commerce.integration.test.ts",
+      "server/routers/closing.integration.test.ts",
+      "server/routers/migration.integration.test.ts",
+      "server/routers/currencies.integration.test.ts",
+      "server/routers/admin.integration.test.ts",
+      "server/routers/support.integration.test.ts",
+    ],
     testTimeout: 60_000,
     hookTimeout: 60_000,
     retry: 2,

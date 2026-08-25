@@ -4,6 +4,7 @@ import { z } from "zod";
 import { shopMembers, shops, users } from "../../drizzle/schema";
 import { clearSessionCookie, hashPassword, verifyPassword, writeSessionCookie } from "../auth";
 import { getDb, getUserByEmail, getUserById, getSql, listUserShops } from "../db";
+import { AUTH_RATE_LIMIT_MESSAGE, clearAuthAttempts, consumeAuthAttempt } from "../authRateLimit";
 import { publicProcedure, router } from "../_core/trpc";
 import { makeShopSlug } from "./helpers";
 
@@ -21,8 +22,9 @@ export const authRouter = router({
 
   register: publicProcedure.input(registerInput).mutation(async ({ ctx, input }) => {
     const email = input.email.toLowerCase();
+    if (await consumeAuthAttempt(ctx.req, "register", email)) throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: AUTH_RATE_LIMIT_MESSAGE });
     if (await getUserByEmail(email)) {
-      throw new TRPCError({ code: "CONFLICT", message: "Un compte existe déjà avec cet e-mail." });
+      throw new TRPCError({ code: "BAD_REQUEST", message: "La création de compte est impossible avec ces informations." });
     }
 
     const userId = crypto.randomUUID();
@@ -38,19 +40,23 @@ export const authRouter = router({
     ]);
 
     await writeSessionCookie(ctx.req, ctx.res, userId);
+    await clearAuthAttempts(ctx.req, "register", email);
     const user = await getUserById(userId);
     const shop = (await getDb().select().from(shops).where(eq(shops.id, shopId)).limit(1))[0];
     return { user, shop, role: "owner" as const };
   }),
 
   login: publicProcedure.input(z.object({ email: z.string().email(), password: z.string().min(1) })).mutation(async ({ ctx, input }) => {
-    const user = await getUserByEmail(input.email.toLowerCase());
+    const email = input.email.toLowerCase();
+    if (await consumeAuthAttempt(ctx.req, "login", email)) throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: AUTH_RATE_LIMIT_MESSAGE });
+    const user = await getUserByEmail(email);
     if (!user?.passwordHash || !user.isActive || !(await verifyPassword(input.password, user.passwordHash))) {
       throw new TRPCError({ code: "UNAUTHORIZED", message: "Identifiants invalides." });
     }
 
     await getDb().update(users).set({ lastSignedIn: new Date(), updatedAt: new Date() }).where(eq(users.id, user.id));
     await writeSessionCookie(ctx.req, ctx.res, user.id);
+    await clearAuthAttempts(ctx.req, "login", email);
     return { user: await getUserById(user.id), shops: await listUserShops(user.id) };
   }),
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ImagePlus,
   Loader2,
@@ -491,7 +491,11 @@ export default function CatalogPanel({
             </div>
             <div className="relative w-full sm:w-72">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#85877f]" />
+              <Label htmlFor="catalog-search" className="sr-only">
+                Rechercher dans le catalogue
+              </Label>
               <Input
+                id="catalog-search"
                 value={query}
                 onChange={event => setQuery(event.target.value)}
                 className="pl-9"
@@ -574,7 +578,11 @@ export default function CatalogPanel({
         </CardContent>
       </Card>
       {notice && (
-        <p className="rounded-xl bg-[#edf1e3] px-4 py-3 text-sm text-[#4e6b48]">
+        <p
+          role="status"
+          aria-live="polite"
+          className="rounded-xl bg-[#edf1e3] px-4 py-3 text-sm text-[#4e6b48]"
+        >
           {notice}
         </p>
       )}

@@ -19,3 +19,7 @@ export function getPwaInstallSurface({ installed, dismissed, hasInstallEvent, io
 export function shouldShowPwaInstallPrompt(input: { installed: boolean; dismissed: boolean; hasInstallEvent: boolean; ios: boolean; isMobile: boolean }) {
   return getPwaInstallSurface(input) !== "none";
 }
+
+export function shouldOfferPwaInstall(input: { isAuthenticated: boolean; installed: boolean; dismissed: boolean; hasInstallEvent: boolean; ios: boolean; isMobile: boolean }) {
+  return input.isAuthenticated && shouldShowPwaInstallPrompt(input);
+}

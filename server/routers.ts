@@ -12,6 +12,8 @@ import { assertShopAccess, makeShopSlug } from "./routers/helpers";
 import { insightsRouter } from "./routers/insights";
 import { migrationRouter } from "./routers/migration";
 import { currenciesRouter } from "./routers/currencies";
+import { adminRouter } from "./routers/admin";
+import { supportRouter } from "./routers/support";
 
 export const appRouter = router({
   auth: authRouter,
@@ -21,6 +23,8 @@ export const appRouter = router({
   insights: insightsRouter,
   migration: migrationRouter,
   currencies: currenciesRouter,
+  admin: adminRouter,
+  support: supportRouter,
   shops: router({
     list: protectedProcedure.query(({ ctx }) => listUserShops(ctx.user.id)),
     create: protectedProcedure.input(z.object({ name: z.string().trim().min(2).max(180), currency: z.enum(["XAF", "XOF", "NGN"]).default("XAF"), country: z.string().trim().length(3).default("CMR") })).mutation(async ({ ctx, input }) => {

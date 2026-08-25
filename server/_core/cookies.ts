@@ -8,17 +8,10 @@ function isIpAddress(host: string) {
   return host.includes(":");
 }
 
-function isSecureRequest(req: Request) {
-  if (req.protocol === "https") return true;
-
-  const forwardedProto = req.headers["x-forwarded-proto"];
-  if (!forwardedProto) return false;
-
-  const protoList = Array.isArray(forwardedProto)
-    ? forwardedProto
-    : forwardedProto.split(",");
-
-  return protoList.some(proto => proto.trim().toLowerCase() === "https");
+export function isSecureRequest(req: Request) {
+  // `req.secure` et `req.protocol` tiennent compte uniquement des en-têtes de proxy
+  // acceptés par la politique Express configurée au démarrage.
+  return req.secure || req.protocol === "https";
 }
 
 export function getSessionCookieOptions(

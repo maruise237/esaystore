@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ArrowDown,
   BarChart3,
   ChevronDown,
   CircleAlert,
@@ -42,6 +43,10 @@ import {
   saveUnknownBarcode,
 } from "@/lib/offline";
 import AppShell, { type WorkspaceSection } from "@/components/AppShell";
+import {
+  readWorkspaceSection,
+  saveWorkspaceSection,
+} from "@/lib/workspaceNavigation";
 import AuthPage from "./AuthPage";
 import StockPanel from "./StockPanel";
 import SyncPanel from "./SyncPanel";
@@ -65,6 +70,8 @@ import {
 } from "@/lib/pos";
 import { getOnboardingSteps } from "@/lib/onboarding";
 import { resolveCatalogPhoto } from "@/lib/catalogVariants";
+import PosCatalogSearch from "@/components/PosCatalogSearch";
+import SupportPanel from "./SupportPanel";
 
 const currencyFormat = (value: number, currency = "XAF") =>
   new Intl.NumberFormat("fr-FR", {
@@ -151,11 +158,19 @@ const sectionTitles: Record<
     description:
       "Contrôlez les opérations locales, les erreurs et les conflits de stock.",
   },
+  support: {
+    kicker: "Aide EASYSTOR",
+    title: "Support & demandes",
+    description:
+      "Envoyez votre demande et échangez directement avec le support depuis l’application.",
+  },
 };
 
 export default function Workspace() {
   const { user, loading } = useAuth();
-  const [active, setActive] = useState<WorkspaceSection>("dashboard");
+  const [active, setActive] = useState<WorkspaceSection>(() =>
+    readWorkspaceSection()
+  );
   const shopsQuery = trpc.shops.list.useQuery(undefined, {
     enabled: Boolean(user),
   });
@@ -167,6 +182,20 @@ export default function Workspace() {
   const logout = trpc.auth.logout.useMutation({
     onSuccess: () => window.location.reload(),
   });
+  const navigate = useCallback((section: WorkspaceSection) => {
+    setActive(section);
+    saveWorkspaceSection(section);
+  }, []);
+
+  useEffect(() => {
+    const restoreWorkspaceSection = () => setActive(readWorkspaceSection());
+    window.addEventListener("popstate", restoreWorkspaceSection);
+    window.addEventListener("hashchange", restoreWorkspaceSection);
+    return () => {
+      window.removeEventListener("popstate", restoreWorkspaceSection);
+      window.removeEventListener("hashchange", restoreWorkspaceSection);
+    };
+  }, []);
 
   useEffect(() => {
     const first = shopsQuery.data?.[0]?.shop.id;
@@ -174,22 +203,18 @@ export default function Workspace() {
   }, [shopId, shopsQuery.data]);
 
   if (loading || (user && shopsQuery.isLoading))
-    return (
-      <div className="grid min-h-screen place-items-center bg-[#f7f5ee]">
-        <Loader2 className="h-6 w-6 animate-spin text-[#405641]" />
-      </div>
-    );
+    return <LoadingBlock label="Ouverture de votre espace marchand…" fullScreen />;
   if (!user) return <AuthPage />;
   const activeShop =
     shopsQuery.data?.find(entry => entry.shop.id === shopId) ??
     shopsQuery.data?.[0];
-  if (!activeShop) return <EmptyShop onCreate={() => setActive("dashboard")} />;
+  if (!activeShop) return <EmptyShop onCreate={() => shopsQuery.refetch()} />;
   const meta = sectionTitles[active];
 
   return (
-    <AppShell
-      active={active}
-      onNavigate={setActive}
+      <AppShell
+        active={active}
+        onNavigate={navigate}
       shopName={activeShop.shop.name}
       currency={activeShop.shop.currency}
       userName={user.name || user.email || "Utilisateur"}
@@ -231,7 +256,7 @@ export default function Workspace() {
           <Dashboard
             shopId={activeShop.shop.id}
             currency={activeShop.shop.currency}
-            onNavigate={setActive}
+            onNavigate={navigate}
           />
         )}
         {active === "pos" && (
@@ -301,6 +326,14 @@ export default function Workspace() {
         )}
         {active === "team" && <TeamPanel shopId={activeShop.shop.id} />}
         {active === "sync" && <SyncPanel />}
+        {active === "support" && (
+          <SupportPanel
+            shops={(shopsQuery.data ?? []).map(entry => ({
+              id: entry.shop.id,
+              name: entry.shop.name,
+            }))}
+          />
+        )}
       </div>
     </AppShell>
   );
@@ -319,7 +352,15 @@ function Dashboard({
   const products = trpc.catalog.products.list.useQuery({ shopId });
   const sales = trpc.commerce.sales.list.useQuery({ shopId });
   const data = dashboard.data;
-  if (dashboard.isLoading) return <LoadingBlock />;
+  if (dashboard.isLoading)
+    return <LoadingBlock label="Chargement du pilotage…" />;
+  if (dashboard.isError)
+    return (
+      <RecoveryBlock
+        message="Le pilotage n’a pas pu être chargé."
+        onRetry={() => dashboard.refetch()}
+      />
+    );
   const onboardingReady =
     !products.isLoading &&
     !sales.isLoading &&
@@ -412,9 +453,18 @@ function Dashboard({
               </div>
               <BarChart3 className="h-5 w-5 text-[#78966f]" />
             </div>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data?.trend ?? []}>
+            <figure>
+              <div
+                className="h-64"
+                role="img"
+                aria-label={
+                  data?.trend?.length
+                    ? `Évolution des ventes sur les ${data.trend.length} derniers jours. Consultez le résumé sous le graphique pour les données essentielles.`
+                    : "Aucune évolution de ventes disponible sur la période."
+                }
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={data?.trend ?? []}>
                   <defs>
                     <linearGradient
                       id="sales-gradient"
@@ -453,9 +503,38 @@ function Dashboard({
                     strokeWidth={2.5}
                     fill="url(#sales-gradient)"
                   />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+              <figcaption className="mt-3 rounded-xl bg-[#f7f8f3] px-3 py-2 text-xs leading-relaxed text-[#5f665d]">
+                {data?.trend?.length
+                  ? `Résumé : ${currencyFormat(
+                      (data.trend ?? []).reduce(
+                        (total, item) => total + item.value,
+                        0
+                      ),
+                      currency
+                    )} sur ${data.trend.length} jour${data.trend.length > 1 ? "s" : ""}. Les valeurs détaillées sont disponibles au survol ou au focus dans le graphique.`
+                  : "Aucune vente enregistrée sur la période sélectionnée."}
+              </figcaption>
+              {data?.trend?.length ? (
+                <details className="mt-2 rounded-xl border border-[#e4e8de] bg-white px-3 py-2 text-xs text-[#4e5b4c]">
+                  <summary className="cursor-pointer font-semibold">
+                    Consulter le détail des ventes par jour
+                  </summary>
+                  <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
+                    {data.trend.map(item => (
+                      <li key={item.label} className="flex justify-between gap-3">
+                        <span>{item.label}</span>
+                        <span className="font-semibold">
+                          {currencyFormat(item.value, currency)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              ) : null}
+            </figure>
           </CardContent>
         </Card>
         <Card className="border-0 bg-[#25332b] text-[#f7f7ef] shadow-[0_12px_30px_rgba(43,47,38,0.10)]">
@@ -696,6 +775,7 @@ function Pos({
     { enabled: Boolean(paymentCurrency) }
   );
   const [receipt, setReceipt] = useState<SaleReceipt | null>(null);
+  const cartAnchor = useRef<HTMLDivElement>(null);
   const checkout = trpc.commerce.sales.checkout.useMutation({
     onSuccess: sale => {
       openReceipt(sale.saleNumber);
@@ -984,31 +1064,17 @@ function Pos({
             <div>
               <p className="font-serif text-xl">Catalogue disponible</p>
               <p className="mt-1 text-xs text-[#85877f]">
-                Cliquez sur un article, scannez ou saisissez son code-barres.
+                Touchez un article, scannez ou saisissez son code-barres. Sur ordinateur, F2 ouvre le scanner.
               </p>
             </div>
-            <div className="flex w-full gap-2 sm:w-auto">
-              <div className="relative min-w-0 flex-1 sm:w-64">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#85877f]" />
-                <Input
-                  value={search}
-                  onChange={event => setSearch(event.target.value)}
-                  className="pl-9"
-                  placeholder="Rechercher un produit"
-                />
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setScannerNotice(null);
-                  setScannerOpen(true);
-                }}
-                className="shrink-0"
-              >
-                <ScanLine className="mr-2 h-4 w-4" />
-                Scanner
-              </Button>
-            </div>
+            <PosCatalogSearch
+              query={search}
+              onQueryChange={setSearch}
+              onOpenScanner={() => {
+                setScannerNotice(null);
+                setScannerOpen(true);
+              }}
+            />
           </div>
           <form
             onSubmit={submitManualBarcode}
@@ -1030,7 +1096,7 @@ function Pos({
             <Button
               type="submit"
               disabled={!manualBarcode.trim()}
-              className="bg-[#405a3e] hover:bg-[#304a31]"
+              className="h-11 bg-[#405a3e] hover:bg-[#304a31]"
             >
               Ajouter le code
             </Button>
@@ -1041,7 +1107,11 @@ function Pos({
             </p>
           )}
           {scannerNotice && (
-            <p className="mb-4 rounded-xl bg-[#edf1e3] px-3 py-2 text-xs font-medium text-[#4e6949]">
+            <p
+              role="status"
+              aria-live="polite"
+              className="mb-4 rounded-xl bg-[#edf1e3] px-3 py-2 text-xs font-medium text-[#4e6949]"
+            >
               {scannerNotice}
             </p>
           )}
@@ -1085,7 +1155,31 @@ function Pos({
           </div>
         </CardContent>
       </Card>
-      <Card className="h-fit border-0 bg-[#26352d] text-[#f7f7ef] shadow-[0_18px_40px_rgba(43,47,38,0.18)] xl:sticky xl:top-24">
+      {cart.length > 0 && (
+        <button
+          type="button"
+          onClick={() =>
+            cartAnchor.current?.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            })
+          }
+          className="fixed inset-x-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-20 flex min-h-12 items-center justify-between rounded-2xl bg-[#26352d] px-4 text-left text-[#f7f7ef] shadow-[0_14px_30px_rgba(30,41,36,0.24)] lg:hidden"
+        >
+          <span className="text-sm font-semibold">
+            {cart.length} article{cart.length > 1 ? "s" : ""} au panier
+          </span>
+          <span className="flex items-center gap-2 text-sm font-bold text-[#d1e980]">
+            {currencyFormat(transactionTotal, paymentCurrency)}
+            <ArrowDown className="h-4 w-4" aria-hidden="true" />
+          </span>
+        </button>
+      )}
+      <Card
+        ref={cartAnchor}
+        id="pos-cart"
+        className="h-fit scroll-mt-24 border-0 bg-[#26352d] text-[#f7f7ef] shadow-[0_18px_40px_rgba(43,47,38,0.18)] xl:sticky xl:top-24"
+      >
         <CardContent className="p-5 sm:p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -1140,7 +1234,7 @@ function Pos({
                   </button>
                 </div>
                 <div className="mt-3 flex items-center justify-between">
-                  <div className="flex items-center rounded-lg bg-black/15">
+                  <div className="flex items-center rounded-lg bg-[#18231d]/55">
                     <button
                       aria-label={`Réduire ${line.name}`}
                       onClick={() =>
@@ -1156,7 +1250,7 @@ function Pos({
                           )
                         )
                       }
-                      className="p-1.5"
+                      className="min-h-11 min-w-11 p-2.5"
                     >
                       <Minus className="h-3 w-3" />
                     </button>
@@ -1181,7 +1275,7 @@ function Pos({
                           )
                         )
                       }
-                      className="p-1.5"
+                      className="min-h-11 min-w-11 p-2.5"
                     >
                       <Plus className="h-3 w-3" />
                     </button>
@@ -1342,13 +1436,19 @@ function Pos({
             )}
           </div>
           {overpayment > 0 && (
-            <p className="mt-4 rounded-xl bg-[#7a452d] px-3 py-2 text-center text-xs font-medium text-[#fff5e9]">
+            <p
+              role="alert"
+              className="mt-4 rounded-xl bg-[#7a452d] px-3 py-2 text-center text-xs font-medium text-[#fff5e9]"
+            >
               Le montant saisi dépasse le total de{" "}
               {currencyFormat(overpayment, paymentCurrency)}.
             </p>
           )}
           {customerRequired && !customerId && (
-            <p className="mt-4 rounded-xl bg-[#7a452d] px-3 py-2 text-center text-xs font-medium text-[#fff5e9]">
+            <p
+              role="alert"
+              className="mt-4 rounded-xl bg-[#7a452d] px-3 py-2 text-center text-xs font-medium text-[#fff5e9]"
+            >
               Choisissez un client pour enregistrer le solde à crédit.
             </p>
           )}
@@ -1361,7 +1461,7 @@ function Pos({
               (paymentCurrency !== currency && (!quote.data || quote.isError))
             }
             onClick={submitSale}
-            className="mt-4 h-11 w-full bg-[#d1e980] text-[#26352d] hover:bg-[#deeea2]"
+            className="mt-4 h-12 w-full bg-[#d1e980] text-[#26352d] hover:bg-[#deeea2]"
           >
             {checkout.isPending ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1374,7 +1474,7 @@ function Pos({
             </span>
           </Button>
           {checkout.error && (
-            <p className="mt-3 text-center text-xs text-[#f5acac]">
+            <p role="alert" className="mt-3 text-center text-xs text-[#f5acac]">
               {checkout.error.message}
             </p>
           )}
@@ -1892,14 +1992,54 @@ function SmallInput({
       <Label className="text-[10px] font-bold uppercase tracking-[0.12em] text-current opacity-70">
         {label}
       </Label>
-      <Input value={value} onChange={event => onChange(event.target.value)} />
+      <Input
+        inputMode="decimal"
+        value={value}
+        onChange={event => onChange(event.target.value)}
+      />
     </label>
   );
 }
-function LoadingBlock() {
+function LoadingBlock({
+  label = "Chargement en cours…",
+  fullScreen = false,
+}: {
+  label?: string;
+  fullScreen?: boolean;
+}) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className={cn(
+        "grid place-items-center gap-3 text-center text-sm text-[#52634d]",
+        fullScreen ? "min-h-screen bg-[#f7f5ee]" : "min-h-[300px]"
+      )}
+    >
+      <Loader2 className="h-6 w-6 animate-spin text-[#405641]" />
+      <span>{label}</span>
+    </div>
+  );
+}
+function RecoveryBlock({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry: () => void;
+}) {
   return (
     <div className="grid min-h-[300px] place-items-center">
-      <Loader2 className="h-6 w-6 animate-spin text-[#405641]" />
+      <Card className="max-w-md border border-[#ecd8bd] bg-[#fffaf1]">
+        <CardContent className="p-6 text-center">
+          <p role="alert" className="text-sm leading-relaxed text-[#754d31]">
+            {message}
+          </p>
+          <Button variant="outline" className="mt-4" onClick={onRetry}>
+            Réessayer
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -1910,10 +2050,10 @@ function EmptyShop({ onCreate }: { onCreate: () => void }) {
         <CardContent className="p-8 text-center">
           <p className="font-serif text-2xl">Aucune boutique configurée</p>
           <p className="mt-3 text-sm text-[#77776c]">
-            Votre compte ne possède pas encore de boutique accessible.
+            Votre compte ne possède pas encore de boutique accessible. Vérifiez votre invitation ou réessayez après une connexion réseau.
           </p>
           <Button onClick={onCreate} className="mt-6">
-            Actualiser
+            Réessayer
           </Button>
         </CardContent>
       </Card>

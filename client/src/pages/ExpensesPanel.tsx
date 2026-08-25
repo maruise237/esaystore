@@ -8,13 +8,193 @@ import { createCsv, downloadCsv } from "@/lib/csv";
 import { queueOperation } from "@/lib/offline";
 import { trpc } from "@/lib/trpc";
 
-const format = (value: number, currency: string) => new Intl.NumberFormat("fr-FR", { style: "currency", currency, maximumFractionDigits: 0 }).format(value || 0);
+const format = (value: number, currency: string) =>
+  new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(value || 0);
 
-export default function ExpensesPanel({ shopId, currency }: { shopId: string; currency: string }) {
-  const utils = trpc.useUtils(); const [from, setFrom] = useState(() => new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().slice(0, 10)); const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
-  const expenses = trpc.commerce.expenses.list.useQuery({ shopId, from: new Date(`${from}T00:00:00`), to: new Date(`${to}T23:59:59`) }); const [category, setCategory] = useState(""); const [amount, setAmount] = useState(""); const [note, setNote] = useState("");
-  const create = trpc.commerce.expenses.create.useMutation({ onSuccess: () => { setCategory(""); setAmount(""); setNote(""); utils.commerce.expenses.list.invalidate({ shopId }); } });
-  const submit = async (event: React.FormEvent) => { event.preventDefault(); const payload = { shopId, category, amount: Number(amount), note: note || undefined, operationId: crypto.randomUUID() }; if (!navigator.onLine) { await queueOperation("expense", payload); setCategory(""); setAmount(""); setNote(""); return; } create.mutate(payload); };
-  const exportExpenses = () => { if (!expenses.data?.length) return; downloadCsv(`easystor-depenses-${from}-${to}.csv`, createCsv(["Date", "Catégorie", "Montant", "Note"], expenses.data.map((expense) => [new Date(expense.spentAt), expense.category, expense.amount, expense.note]))); };
-  return <div className="grid gap-6 xl:grid-cols-[360px_1fr]"><Card className="h-fit border-0 bg-[#f4eadc]"><CardContent className="p-4 sm:p-6"><div className="flex items-center gap-2"><CircleDollarSign className="h-5 w-5 text-[#976239]" /><p className="font-serif text-xl">Nouvelle dépense</p></div><form onSubmit={submit} className="mt-5 space-y-4"><label className="grid gap-2"><Label>Catégorie</Label><Input value={category} onChange={(event) => setCategory(event.target.value)} placeholder="Ex. Transport" required /></label><label className="grid gap-2"><Label>Montant</Label><Input type="number" min="1" value={amount} onChange={(event) => setAmount(event.target.value)} required /></label><label className="grid gap-2"><Label>Note</Label><Input value={note} onChange={(event) => setNote(event.target.value)} placeholder="Facultatif" /></label><Button type="submit" disabled={create.isPending} className="w-full bg-[#976239] hover:bg-[#7c4f2c]">{create.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Enregistrer la dépense</Button>{create.error && <p className="text-xs text-red-600">{create.error.message}</p>}</form></CardContent></Card><Card className="border-0 bg-white shadow-[0_12px_30px_rgba(43,47,38,0.05)]"><CardContent className="p-4 sm:p-7"><div className="flex flex-col gap-4"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><p className="font-serif text-xl">Dernières dépenses</p><Button className="w-full sm:w-auto" variant="outline" size="sm" onClick={exportExpenses} disabled={!expenses.data?.length}><Download className="mr-2 h-4 w-4" />Exporter CSV</Button></div><div className="grid grid-cols-2 gap-3 sm:max-w-md"><label className="grid gap-1 text-xs font-semibold text-[#687267]">Du<Input type="date" value={from} onChange={(event) => setFrom(event.target.value)} /></label><label className="grid gap-1 text-xs font-semibold text-[#687267]">Au<Input type="date" value={to} onChange={(event) => setTo(event.target.value)} /></label></div></div><div className="mt-5 space-y-3">{expenses.data?.map((expense) => <article key={expense.id} className="flex flex-wrap items-start justify-between gap-2 rounded-xl border border-[#ece9df] px-4 py-3"><div className="min-w-0"><p className="break-words font-semibold">{expense.category}</p><p className="mt-1 break-words text-xs text-[#85877f]">{expense.note || "Sans note"} · {new Date(expense.spentAt).toLocaleDateString("fr-FR")}</p></div><p className="shrink-0 font-semibold text-[#9a5c38]">{format(expense.amount, currency)}</p></article>)}{!expenses.data?.length && <p className="py-10 text-center text-sm text-[#85877f]">Aucune dépense sur cette période.</p>}</div></CardContent></Card></div>;
+export default function ExpensesPanel({
+  shopId,
+  currency,
+}: {
+  shopId: string;
+  currency: string;
+}) {
+  const utils = trpc.useUtils();
+  const [from, setFrom] = useState(() =>
+    new Date(new Date().setDate(new Date().getDate() - 30))
+      .toISOString()
+      .slice(0, 10)
+  );
+  const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
+  const expenses = trpc.commerce.expenses.list.useQuery({
+    shopId,
+    from: new Date(`${from}T00:00:00`),
+    to: new Date(`${to}T23:59:59`),
+  });
+  const [category, setCategory] = useState("");
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
+  const create = trpc.commerce.expenses.create.useMutation({
+    onSuccess: () => {
+      setCategory("");
+      setAmount("");
+      setNote("");
+      utils.commerce.expenses.list.invalidate({ shopId });
+    },
+  });
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const payload = {
+      shopId,
+      category,
+      amount: Number(amount),
+      note: note || undefined,
+      operationId: crypto.randomUUID(),
+    };
+    if (!navigator.onLine) {
+      await queueOperation("expense", payload);
+      setCategory("");
+      setAmount("");
+      setNote("");
+      return;
+    }
+    create.mutate(payload);
+  };
+  const exportExpenses = () => {
+    if (!expenses.data?.length) return;
+    downloadCsv(
+      `easystor-depenses-${from}-${to}.csv`,
+      createCsv(
+        ["Date", "Catégorie", "Montant", "Note"],
+        expenses.data.map(expense => [
+          new Date(expense.spentAt),
+          expense.category,
+          expense.amount,
+          expense.note,
+        ])
+      )
+    );
+  };
+  return (
+    <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
+      <Card className="h-fit border-0 bg-[#f4eadc]">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex items-center gap-2">
+            <CircleDollarSign className="h-5 w-5 text-[#976239]" />
+            <p className="font-serif text-xl">Nouvelle dépense</p>
+          </div>
+          <form onSubmit={submit} className="mt-5 space-y-4">
+            <label className="grid gap-2">
+              <Label>Catégorie</Label>
+              <Input
+                value={category}
+                onChange={event => setCategory(event.target.value)}
+                placeholder="Ex. Transport"
+                required
+              />
+            </label>
+            <label className="grid gap-2">
+              <Label>Montant</Label>
+              <Input
+                type="number"
+                min="1"
+                value={amount}
+                onChange={event => setAmount(event.target.value)}
+                required
+              />
+            </label>
+            <label className="grid gap-2">
+              <Label>Note</Label>
+              <Input
+                value={note}
+                onChange={event => setNote(event.target.value)}
+                placeholder="Facultatif"
+              />
+            </label>
+            <Button
+              type="submit"
+              disabled={create.isPending}
+              className="w-full bg-[#976239] hover:bg-[#7c4f2c]"
+            >
+              {create.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Enregistrer la dépense
+            </Button>
+            {create.error && (
+              <p role="alert" className="text-xs text-red-600">
+                {create.error.message}
+              </p>
+            )}
+          </form>
+        </CardContent>
+      </Card>
+      <Card className="border-0 bg-white shadow-[0_12px_30px_rgba(43,47,38,0.05)]">
+        <CardContent className="p-4 sm:p-7">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="font-serif text-xl">Dernières dépenses</p>
+              <Button
+                className="w-full sm:w-auto"
+                variant="outline"
+                size="sm"
+                onClick={exportExpenses}
+                disabled={!expenses.data?.length}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Exporter CSV
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:max-w-md">
+              <label className="grid gap-1 text-xs font-semibold text-[#687267]">
+                Du
+                <Input
+                  type="date"
+                  value={from}
+                  onChange={event => setFrom(event.target.value)}
+                />
+              </label>
+              <label className="grid gap-1 text-xs font-semibold text-[#687267]">
+                Au
+                <Input
+                  type="date"
+                  value={to}
+                  onChange={event => setTo(event.target.value)}
+                />
+              </label>
+            </div>
+          </div>
+          <div className="mt-5 space-y-3">
+            {expenses.data?.map(expense => (
+              <article
+                key={expense.id}
+                className="flex flex-wrap items-start justify-between gap-2 rounded-xl border border-[#ece9df] px-4 py-3"
+              >
+                <div className="min-w-0">
+                  <p className="break-words font-semibold">
+                    {expense.category}
+                  </p>
+                  <p className="mt-1 break-words text-xs text-[#85877f]">
+                    {expense.note || "Sans note"} ·{" "}
+                    {new Date(expense.spentAt).toLocaleDateString("fr-FR")}
+                  </p>
+                </div>
+                <p className="shrink-0 font-semibold text-[#9a5c38]">
+                  {format(expense.amount, currency)}
+                </p>
+              </article>
+            ))}
+            {!expenses.data?.length && (
+              <p className="py-10 text-center text-sm text-[#85877f]">
+                Aucune dépense sur cette période.
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }

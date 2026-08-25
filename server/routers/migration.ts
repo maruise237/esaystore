@@ -3,6 +3,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { cashClosures, customers, dataImports, exchangeRates, expenses, productVariants, products, receivables, repayments, saleItems, sales, shopCurrencies, stockMovements } from "../../drizzle/schema";
+import { MAX_IMPORT_PAYLOAD_BYTES, serializedByteLength } from "../../shared/importLimits";
 import { getDb, getSql } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
 import { assertShopAccess } from "./helpers";
@@ -13,7 +14,9 @@ const customerRow = z.object({ sourceId, name: z.string().trim().min(1).max(180)
 const saleRow = z.object({ sourceId, reference: z.string().trim().max(40).optional(), soldAt: z.coerce.date(), customerName: z.string().trim().max(180).optional(), total: z.coerce.number().positive(), cash: z.coerce.number().min(0).default(0), mobileMoney: z.coerce.number().min(0).default(0), discountAmount: z.coerce.number().min(0).default(0), dueDate: z.coerce.date().optional() });
 const saleItemRow = z.object({ sourceId, saleReference: z.string().trim().min(1).max(40), productName: z.string().trim().min(1).max(240), barcode: z.string().trim().max(120).optional(), quantity: z.coerce.number().positive(), unitPrice: z.coerce.number().min(0), purchasePrice: z.coerce.number().min(0).default(0) });
 const expenseRow = z.object({ sourceId, category: z.string().trim().min(1).max(120), amount: z.coerce.number().positive(), note: z.string().trim().max(1000).optional(), spentAt: z.coerce.date() });
-const payload = z.object({ products: z.array(productRow).max(1000).default([]), customers: z.array(customerRow).max(1000).default([]), sales: z.array(saleRow).max(1000).default([]), saleItems: z.array(saleItemRow).max(5000).default([]), expenses: z.array(expenseRow).max(1000).default([]) });
+const payload = z.object({ products: z.array(productRow).max(1000).default([]), customers: z.array(customerRow).max(1000).default([]), sales: z.array(saleRow).max(1000).default([]), saleItems: z.array(saleItemRow).max(5000).default([]), expenses: z.array(expenseRow).max(1000).default([]) }).superRefine((value, ctx) => {
+  if (serializedByteLength(value) > MAX_IMPORT_PAYLOAD_BYTES) ctx.addIssue({ code: "custom", message: "Les données d’import dépassent la limite sécurisée de 2 Mo." });
+});
 const conflictStrategy = z.enum(["skip", "update", "copy", "block"]);
 
 type Payload = z.infer<typeof payload>;

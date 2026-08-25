@@ -103,3 +103,106 @@
 - [x] Ajouter une barre latérale rétractable sur ordinateur avec libellés masqués en mode compact.
 - [x] Mémoriser le choix de barre latérale et préserver le menu mobile actuel.
 - [x] Tester le repli et le déploiement de la navigation desktop sans casser l’accès clavier.
+- [x] Auditer les contrastes, la lisibilité, le focus et les cibles tactiles selon WCAG 2.2 AA.
+- [x] Renforcer les contrastes de texte et les états de focus visibles dans l’interface EASYSTOR.
+- [x] Appliquer des libellés accessibles et des cibles d’interaction adaptées sur ordinateur et mobile.
+- [x] Documenter les critères WCAG appliqués et ajouter des tests ciblés d’accessibilité.
+- [x] Auditer et corriger les contrôles interactifs restants pour leur fournir un nom accessible explicite dans les écrans métier.
+- [x] Ajouter des tests UI d’accessibilité ciblés pour la caisse, le catalogue, la migration et la clôture.
+- [x] Auditer les écrans Stock, Crédits, Ventes, Dépenses, Rapports, Devises, Équipe et Synchronisation.
+- [x] Ajouter une couverture d’accessibilité pour les contrôles non couverts ou documenter les résultats d’audit de chaque écran restant.
+- [x] Définir un rôle administrateur SaaS distinct des rôles opérationnels des boutiques et le protéger côté serveur.
+- [x] Créer les procédures d’administration pour les indicateurs globaux, boutiques, comptes utilisateurs et supervision des activités.
+- [x] Construire un panneau d’administration avec vue d’ensemble, recherche, filtrage et actions de gestion sécurisées.
+- [x] Ajouter des contrôles de protection pour la suspension/réactivation des boutiques et la gestion des accès administrateurs.
+- [x] Tester les autorisations administrateur et les parcours de supervision, puis valider le build et les intégrations Neon.
+- [x] Ajouter des tests positifs des procédures admin et une action confirmée dans l’interface de supervision.
+- [x] Définir un espace de demandes de support avec catégories, statuts, messages et clôture.
+- [x] Ajouter une interface utilisateur pour créer et suivre ses demandes de support.
+- [x] Ajouter une interface administrateur pour filtrer, répondre, traiter et clôturer les demandes utilisateurs.
+- [x] Écarter les e-mails transactionnels selon la décision utilisateur, au profit de la messagerie de support intégrée.
+- [x] Tester l’isolation des demandes, les échanges support et la clôture, puis valider le build et Neon.
+- [x] Ajouter des priorités basse, moyenne et haute aux demandes de support, avec un tri sécurisé côté serveur.
+- [x] Permettre à l’administration de filtrer et de modifier la priorité des demandes de support.
+- [x] Afficher un badge dans la navigation d’administration pour les demandes nécessitant un traitement.
+- [x] Tester les priorités, le badge de demandes en attente et la validation Neon.
+- [x] Réserver l’initialisation du premier administrateur SaaS au compte propriétaire de la plateforme.
+- [x] Créer une route dédiée d’administration de plateforme, protégée côté client et côté serveur.
+- [x] Masquer l’entrée de navigation administrateur à tous les comptes non administrateurs.
+- [x] Tester les refus d’accès, l’initialisation propriétaire et le routage protégé, puis valider le build et Neon.
+- [x] Ajouter un test positif serveur confirmant que le compte propriétaire configuré peut initialiser le premier administrateur SaaS.
+- [x] Rendre la liste complète du menu desktop défilable sans masquer les dernières sections.
+- [x] Conserver les actions de session visibles et atteignables dans les modes étendu et compact.
+- [x] Tester le menu desktop aux hauteurs d’écran courantes et au clavier, puis valider le build.
+- [x] Vérifier à hauteur desktop réduite que les dernières sections restent atteignables sans masquer les actions de session.
+- [x] Vérifier la disponibilité de toutes les sections et des actions de session aux hauteurs desktop 540px et 720px.
+- [x] Rechercher et documenter les pratiques de navigation, supervision et sécurité des consoles SaaS hors facturation.
+- [x] Repenser l’architecture de navigation, les priorités visuelles et les parcours de la console EASYSTOR Control.
+- [x] Ajouter les modules de pilotage opérationnel retenus : activité, santé des boutiques, gouvernance des comptes et file d’actions.
+- [x] Étendre le journal d’audit, les filtres et les alertes de supervision sans introduire d’abonnements ni de facturation.
+- [x] Tester les parcours administrateur, l’accessibilité et les données réelles, puis valider le build et Neon.
+- [x] Exclure les abonnements et la facturation du périmètre administratif actuel selon la décision utilisateur.
+- [x] Préparer ultérieurement un module distinct d’annonces sponsorisées, après validation de ses règles de diffusion et de modération ; aucune fonctionnalité de ce type n’est ajoutée à la console actuelle.
+- [x] Vérifier dans le navigateur des sources récentes et spécialisées sur les capacités d’un back-office SaaS 2026 avant de retenir chaque module de la refonte.
+- [x] Rejouer les parcours web et réaliser une revue senior complète : architecture, sécurité, maintenabilité, stabilité, tests, performances, accessibilité et déploiement Vercel/Neon.
+- [x] Produire un rapport priorisé distinguant les problèmes observés, les risques et les améliorations recommandées.
+- [x] Remplacer l’analyse XLSX vulnérable, borner les charges d’import et aligner les limites client, tRPC et Vercel.
+- [x] Rendre les images produit servies par une route serverless compatible Vercel, proxy à même origine depuis une URL signée et contrôle strict de chemin.
+- [x] Refuser le démarrage de production en l’absence de secret JWT robuste, tout en conservant un mode développement explicite.
+- [x] Ajouter une limitation anti-bruteforce robuste aux procédures publiques de connexion et d’inscription, avec tests et messages non révélateurs.
+- [x] Valider les quatre correctifs P0 par tests unitaires, intégrations Neon, typage, build Vercel et revue de déploiement.
+- [x] Rétablir le démarrage de production en conservant l’exigence d’un secret JWT robuste et vérifier le domaine publié.
+- [x] Auditer les parcours utilisateur prioritaires et identifier les frictions observables sur mobile et desktop.
+- [x] Réduire la friction des parcours retenus avec des retours d’état, des actions plus directes et des messages clairs.
+- [x] Tester l’accessibilité, les interactions et le déploiement des améliorations d’expérience utilisateur.
+- [x] Auditer les surfaces exposées : authentification, autorisations, routes Vercel, stockage, import, dépendances et données sensibles.
+- [x] Corriger immédiatement les vulnérabilités critiques confirmées et ajouter des tests de non-régression ciblés.
+- [x] Vérifier les correctifs de sécurité par tests, audit de dépendances, typage, build Vercel, intégrations Neon et contrôle du domaine publié.
+- [x] Documenter les protections ajoutées, les risques résiduels et les mesures d’exploitation à conserver.
+- [x] Inventorier les parcours critiques et les écrans EASYSTOR à auditer avec le référentiel UI/UX spécialisé.
+- [x] Examiner les écrans desktop et mobile, y compris les états vides, formulaires, navigation et administration.
+- [x] Évaluer l’accessibilité, la hiérarchie visuelle, la cohérence des composants et la réduction de friction des parcours.
+- [x] Produire un rapport UI/UX priorisé, directement actionnable, avec critères de validation et compromis.
+- [x] Structurer la navigation métier par tâches et rendre les sections persistantes dans l’historique du navigateur.
+- [x] Clarifier le parcours de caisse sur mobile, renforcer les cibles tactiles et rendre les raccourcis clavier découvrables.
+- [x] Renforcer les états chargement, erreur et vide avec annonces accessibles et actions de reprise pertinentes.
+- [x] Rendre le tableau de ventes accessible avec un résumé textuel et des libellés explicites.
+- [x] Harmoniser l’identité « commerce de proximité hors-ligne » dans les espaces marchand et administrateur sans ajouter de friction.
+- [x] Tester, prévisualiser et documenter les corrections UI/UX livrées.
+- [x] Définir la direction de finition Impeccable et les surfaces opérationnelles prioritaires d’EASYSTOR.
+- [x] Réaliser un audit visuel reproductible des composants, états et comportements d’interface.
+- [x] Raffiner les détails de hiérarchie, densité, feedback, accessibilité et micro-interactions retenus.
+- [x] Vérifier les finitions sur desktop et mobile, puis documenter et publier les résultats.
+- [x] Identifier les composants partagés et les détails d’interaction prioritaires pour une passe de précision d’interface.
+- [x] Auditer la typographie, les surfaces, les états, les icônes et les transitions sur le parcours principal.
+- [x] Appliquer les raffinements système retenus sans modifier les flux métier ni ajouter de dépendance.
+- [x] Valider la passe de précision par tests, prévisualisations responsive et documentation.
+- [x] Cadrer une revue User Interface Wiki sur les interactions, cibles, typographie et surfaces du parcours principal.
+- [x] Inspecter les règles UI pertinentes et les rendus desktop/mobile avec constats vérifiables fichier:ligne.
+- [x] Corriger les constats prioritaires retenus sans introduire de bibliothèque supplémentaire.
+- [x] Valider, documenter et publier la revue User Interface Wiki.
+- [x] Cadrer la revue de design produit avec la méthode Designer Skills appropriée aux parcours opérationnels EASYSTOR.
+- [x] Examiner l’architecture de l’information, les parcours principaux et les décisions de hiérarchie de l’interface.
+- [x] Corriger les décisions de design prioritaires retenues sans étendre le périmètre métier.
+- [x] Valider, documenter et publier la revue Designer Skills.
+- [x] Corriger le chevauchement entre le titre EASYSTOR et les informations de boutique dans le menu mobile.
+- [x] Vérifier la grille des actions et la zone de synchronisation sur un viewport mobile représentatif.
+- [x] Ajouter une couverture de non-régression et publier la correction du menu mobile.
+- [x] Corriger la position et la lisibilité du bouton de déploiement de la barre latérale desktop compacte.
+- [x] Vérifier le comportement compact avec les contrôles clavier et le rendu desktop.
+- [x] Ajouter une non-régression ciblée et publier la correction de barre latérale.
+- [x] Établir et examiner passivement le delta de code pour la revue Claude Code Security Review.
+- [x] Analyser les frontières de confiance et les candidats de vulnérabilité réellement introduits par le delta.
+- [x] Documenter les findings retenus, les limites de revue et les remédiations sans modifier le code sans demande explicite.
+- [x] Vérifier la version servie par le domaine EASYSTOR et la présence du dernier correctif de barre compacte.
+- [x] Identifier et résoudre le décalage éventuel de déploiement ou de cache PWA empêchant l’affichage de la mise à jour.
+- [x] Confirmer la méthode d’actualisation à utiliser et clôturer la vérification de visibilité.
+- [x] Publier le suivi de revue de sécurité et confirmer la version servie par le domaine EASYSTOR.
+- [x] Versionner le cache du service worker et détecter les changements de contrôleur PWA sans rechargement automatique risqué.
+- [x] Afficher dans l’application installée une action explicite pour appliquer une mise à jour disponible.
+- [x] Tester, publier et vérifier le parcours de mise à jour PWA sur le domaine EASYSTOR.
+- [ ] Vérifier la cible GitHub et l’état local de la dernière version EASYSTOR.
+- [ ] Préparer puis pousser la synchronisation de la branche principale vers GitHub.
+- [ ] Confirmer le commit distant et clôturer la synchronisation GitHub.
+- [ ] Confirmer le dépôt GitHub EASYSTOR approprié, distinct du projet KamContent actuellement sélectionné.
+- [ ] Vérifier puis synchroniser la branche principale locale vers maruise237/esaystore.
