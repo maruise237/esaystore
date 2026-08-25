@@ -173,3 +173,7 @@
 - [x] Réaliser un audit visuel reproductible des composants, états et comportements d’interface.
 - [x] Raffiner les détails de hiérarchie, densité, feedback, accessibilité et micro-interactions retenus.
 - [x] Vérifier les finitions sur desktop et mobile, puis documenter et publier les résultats.
+- [x] Identifier les composants partagés et les détails d’interaction prioritaires pour une passe de précision d’interface.
+- [x] Auditer la typographie, les surfaces, les états, les icônes et les transitions sur le parcours principal.
+- [x] Appliquer les raffinements système retenus sans modifier les flux métier ni ajouter de dépendance.
+- [x] Valider la passe de précision par tests, prévisualisations responsive et documentation.

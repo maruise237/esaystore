@@ -177,7 +177,7 @@ export default function AppShell({
                       onClick={() => onNavigate(item.id)}
                       title={sidebarCollapsed ? item.label : undefined}
                       className={cn(
-                        "flex w-full items-center rounded-xl py-3 text-left text-sm font-medium transition-all duration-200",
+                        "flex w-full items-center rounded-xl py-3 text-left text-sm font-medium transition-[background-color,color,box-shadow] duration-150 ease-out motion-reduce:transition-none",
                         sidebarCollapsed ? "justify-center px-2" : "gap-3 px-3",
                         active === item.id
                           ? "bg-[#d1e980] text-[#1e2924] shadow-[0_8px_18px_rgba(0,0,0,0.15)]"
@@ -256,7 +256,7 @@ export default function AppShell({
               key={item.id}
               onClick={() => onNavigate(item.id)}
               className={cn(
-                "flex min-w-0 flex-col items-center gap-1 rounded-xl py-2 text-[10px] font-semibold transition-colors",
+                "flex min-w-0 flex-col items-center gap-1 rounded-xl py-2 text-[10px] font-semibold transition-[background-color,color] duration-150 ease-out motion-reduce:transition-none",
                 active === item.id
                   ? "bg-[#e7f3b5] text-[#26352d]"
                   : "text-[#77776c]"
@@ -271,7 +271,7 @@ export default function AppShell({
           <SheetTrigger asChild>
             <button
               className={cn(
-                "flex min-w-0 flex-col items-center gap-1 rounded-xl py-2 text-[10px] font-semibold transition-colors",
+                "flex min-w-0 flex-col items-center gap-1 rounded-xl py-2 text-[10px] font-semibold transition-[background-color,color] duration-150 ease-out motion-reduce:transition-none",
                 mobileSecondary.some(item => item.id === active)
                   ? "bg-[#e7f3b5] text-[#26352d]"
                   : "text-[#77776c]"
