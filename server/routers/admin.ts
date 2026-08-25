@@ -1,11 +1,12 @@
 import { TRPCError } from "@trpc/server";
-import { and, count, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, ilike, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
   adminAuditLogs,
   sales,
   shopMembers,
   shops,
+  supportTickets,
   users,
 } from "../../drizzle/schema";
 import { getDb } from "../db";
@@ -15,6 +16,23 @@ import { ENV } from "../_core/env";
 const listInput = z.object({
   query: z.string().trim().max(120).default(""),
   status: z.enum(["all", "active", "suspended"]).default("all"),
+  limit: z.number().int().min(1).max(100).default(40),
+});
+
+const auditActions = [
+  "initial_admin_claimed",
+  "shop_suspended",
+  "shop_reactivated",
+  "user_suspended",
+  "user_reactivated",
+  "user_promoted_to_admin",
+  "user_demoted_to_user",
+] as const;
+
+const activityInput = z.object({
+  query: z.string().trim().max(120).default(""),
+  action: z.enum(["all", ...auditActions]).default("all"),
+  period: z.enum(["all", "today", "week", "month"]).default("month"),
   limit: z.number().int().min(1).max(100).default(40),
 });
 
@@ -116,13 +134,14 @@ export const adminRouter = router({
 
   overview: adminProcedure.query(async () => {
     const db = getDb();
-    const [[userStats], [shopStats], [salesStats], [auditStats]] =
+    const [[userStats], [shopStats], [salesStats], [auditStats], [supportStats]] =
       await Promise.all([
         db
           .select({
             total: sql<number>`count(*)`,
             active: sql<number>`count(*) filter (where ${users.isActive})`,
             administrators: sql<number>`count(*) filter (where ${users.role} = 'admin')`,
+            newLast7Days: sql<number>`count(*) filter (where ${users.createdAt} >= now() - interval '7 days')`,
           })
           .from(users),
         db
@@ -130,6 +149,7 @@ export const adminRouter = router({
             total: sql<number>`count(*)`,
             active: sql<number>`count(*) filter (where ${shops.isActive})`,
             suspended: sql<number>`count(*) filter (where not ${shops.isActive})`,
+            newLast7Days: sql<number>`count(*) filter (where ${shops.createdAt} >= now() - interval '7 days')`,
           })
           .from(shops),
         db
@@ -137,6 +157,7 @@ export const adminRouter = router({
             total: sql<number>`count(*)`,
             today: sql<number>`count(*) filter (where ${sales.soldAt} >= current_date)`,
             turnover: sql<number>`coalesce(sum(${sales.total}), 0)`,
+            turnoverToday: sql<number>`coalesce(sum(${sales.total}) filter (where ${sales.soldAt} >= current_date), 0)`,
           })
           .from(sales),
         db
@@ -144,6 +165,13 @@ export const adminRouter = router({
             value: sql<number>`count(*) filter (where ${adminAuditLogs.createdAt} >= current_date)`,
           })
           .from(adminAuditLogs),
+        db
+          .select({
+            pending: sql<number>`count(*) filter (where ${supportTickets.status} in ('open', 'in_progress'))`,
+            waitingUser: sql<number>`count(*) filter (where ${supportTickets.status} = 'waiting_user')`,
+            highPriority: sql<number>`count(*) filter (where ${supportTickets.priority} = 'high' and ${supportTickets.status} in ('open', 'in_progress'))`,
+          })
+          .from(supportTickets),
       ]);
 
     return {
@@ -151,18 +179,26 @@ export const adminRouter = router({
         total: Number(userStats?.total ?? 0),
         active: Number(userStats?.active ?? 0),
         administrators: Number(userStats?.administrators ?? 0),
+        newLast7Days: Number(userStats?.newLast7Days ?? 0),
       },
       shops: {
         total: Number(shopStats?.total ?? 0),
         active: Number(shopStats?.active ?? 0),
         suspended: Number(shopStats?.suspended ?? 0),
+        newLast7Days: Number(shopStats?.newLast7Days ?? 0),
       },
       sales: {
         total: Number(salesStats?.total ?? 0),
         today: Number(salesStats?.today ?? 0),
         turnover: Number(salesStats?.turnover ?? 0),
+        turnoverToday: Number(salesStats?.turnoverToday ?? 0),
       },
       activityToday: Number(auditStats?.value ?? 0),
+      support: {
+        pending: Number(supportStats?.pending ?? 0),
+        waitingUser: Number(supportStats?.waitingUser ?? 0),
+        highPriority: Number(supportStats?.highPriority ?? 0),
+      },
     };
   }),
 
@@ -238,25 +274,56 @@ export const adminRouter = router({
     }));
   }),
 
-  activity: adminProcedure
-    .input(z.object({ limit: z.number().int().min(1).max(100).default(40) }))
-    .query(async ({ input }) =>
-      getDb()
-        .select({
-          id: adminAuditLogs.id,
-          action: adminAuditLogs.action,
-          targetType: adminAuditLogs.targetType,
-          targetId: adminAuditLogs.targetId,
-          metadata: adminAuditLogs.metadata,
-          createdAt: adminAuditLogs.createdAt,
-          actorName: users.name,
-          actorEmail: users.email,
-        })
-        .from(adminAuditLogs)
-        .innerJoin(users, eq(adminAuditLogs.actorId, users.id))
-        .orderBy(desc(adminAuditLogs.createdAt))
-        .limit(input.limit)
-    ),
+  activity: adminProcedure.input(activityInput).query(async ({ input }) => {
+    const search = input.query ? `%${input.query}%` : undefined;
+    const now = new Date();
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    );
+    const cutoff =
+      input.period === "today"
+        ? startOfToday
+        : input.period === "week"
+          ? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+          : input.period === "month"
+            ? new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+            : undefined;
+    const actionCondition =
+      input.action === "all" ? undefined : eq(adminAuditLogs.action, input.action);
+    const searchCondition = search
+      ? or(
+          ilike(users.name, search),
+          ilike(users.email, search),
+          ilike(adminAuditLogs.targetType, search),
+          ilike(adminAuditLogs.action, search)
+        )
+      : undefined;
+
+    return getDb()
+      .select({
+        id: adminAuditLogs.id,
+        action: adminAuditLogs.action,
+        targetType: adminAuditLogs.targetType,
+        targetId: adminAuditLogs.targetId,
+        metadata: adminAuditLogs.metadata,
+        createdAt: adminAuditLogs.createdAt,
+        actorName: users.name,
+        actorEmail: users.email,
+      })
+      .from(adminAuditLogs)
+      .innerJoin(users, eq(adminAuditLogs.actorId, users.id))
+      .where(
+        and(
+          actionCondition,
+          searchCondition,
+          cutoff ? gte(adminAuditLogs.createdAt, cutoff) : undefined
+        )
+      )
+      .orderBy(desc(adminAuditLogs.createdAt))
+      .limit(input.limit);
+  }),
 
   setShopActive: adminProcedure
     .input(

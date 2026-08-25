@@ -76,8 +76,23 @@ describe("parcours d’administration avec Neon", () => {
       suspension_reason: "Vérification opérationnelle",
     });
 
+    const suspendedActivity = await caller().activity({
+      query: "",
+      action: "shop_suspended",
+      period: "week",
+      limit: 20,
+    });
+    expect(suspendedActivity.map(entry => entry.action)).toEqual([
+      "shop_suspended",
+    ]);
+
     await caller().setShopActive({ shopId, isActive: true });
-    const activity = await caller().activity({ limit: 20 });
+    const activity = await caller().activity({
+      query: "",
+      action: "all",
+      period: "week",
+      limit: 20,
+    });
     expect(activity.map(entry => entry.action)).toEqual(
       expect.arrayContaining(["shop_suspended", "shop_reactivated"])
     );
@@ -96,7 +111,12 @@ describe("parcours d’administration avec Neon", () => {
     expect(target).toMatchObject({ is_active: true, role: "admin" });
 
     await caller().setUserRole({ userId, role: "user" });
-    const activity = await caller().activity({ limit: 20 });
+    const activity = await caller().activity({
+      query: "",
+      action: "all",
+      period: "month",
+      limit: 20,
+    });
     expect(activity.map(entry => entry.action)).toEqual(
       expect.arrayContaining([
         "user_suspended",

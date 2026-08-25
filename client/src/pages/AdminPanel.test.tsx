@@ -26,10 +26,21 @@ vi.mock("@/lib/trpc", () => ({
         useQuery: () => ({
           isLoading: false,
           data: {
-            users: { total: 3, active: 3, administrators: 1 },
-            shops: { total: 2, active: 2, suspended: 0 },
-            sales: { total: 10, today: 2, turnover: 12000 },
+            users: {
+              total: 3,
+              active: 3,
+              administrators: 1,
+              newLast7Days: 1,
+            },
+            shops: { total: 2, active: 2, suspended: 0, newLast7Days: 1 },
+            sales: {
+              total: 10,
+              today: 2,
+              turnover: 12000,
+              turnoverToday: 2500,
+            },
             activityToday: 1,
+            support: { pending: 3, waitingUser: 1, highPriority: 1 },
           },
           error: null,
         }),
@@ -120,12 +131,20 @@ describe("console d’administration", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: "Pilotez la plateforme, sans toucher aux données métier.",
+        name: "Décidez vite. Gardez le contrôle.",
       })
     ).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Boutiques" })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: /^Boutiques/ })
+    ).toBeTruthy();
     expect(
       screen.getByLabelText("3 demandes de support à traiter")
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "À traiter maintenant" })
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Ouvrir le support" })
     ).toBeTruthy();
     const result = await axe.run(document.body, {
       rules: { "color-contrast": { enabled: false } },
@@ -153,6 +172,30 @@ describe("console d’administration", () => {
     ).toBeTruthy();
   });
 
+  it("propose des filtres accessibles pour investiguer le journal d’audit", () => {
+    render(
+      <AdminPanel
+        user={{
+          id: "admin-1",
+          name: "Admin",
+          email: "admin@easystor.test",
+          role: "admin",
+        }}
+        canClaimInitialAccess={false}
+        onExit={vi.fn()}
+        onLogout={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /^Journal/ }));
+    const search = screen.getByLabelText("Rechercher dans le journal");
+    fireEvent.change(search, { target: { value: "suspension" } });
+
+    expect((search as HTMLInputElement).value).toBe("suspension");
+    expect(screen.getByLabelText("Action")).toBeTruthy();
+    expect(screen.getByLabelText("Période")).toBeTruthy();
+  });
+
   it("demande un motif puis envoie la suspension de boutique après confirmation", () => {
     render(
       <AdminPanel
@@ -168,7 +211,7 @@ describe("console d’administration", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Boutiques" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Boutiques/ }));
     fireEvent.click(screen.getByRole("button", { name: "Suspendre" }));
     fireEvent.change(screen.getByLabelText("Motif de suspension"), {
       target: { value: "Vérification de sécurité" },

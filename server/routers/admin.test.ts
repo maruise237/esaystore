@@ -33,6 +33,18 @@ describe("protections de l’administration SaaS", () => {
     });
   });
 
+  it("refuse le journal d’audit filtré à un compte marchand", async () => {
+    const caller = appRouter.createCaller(merchantContext());
+    await expect(
+      caller.admin.activity({
+        query: "suspension",
+        action: "shop_suspended",
+        period: "week",
+        limit: 20,
+      })
+    ).rejects.toMatchObject<Partial<TRPCError>>({ code: "FORBIDDEN" });
+  });
+
   it("refuse la suspension d’un compte à un compte marchand", async () => {
     const caller = appRouter.createCaller(merchantContext());
     await expect(

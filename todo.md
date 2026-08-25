@@ -136,3 +136,11 @@
 - [x] Tester le menu desktop aux hauteurs d’écran courantes et au clavier, puis valider le build.
 - [x] Vérifier à hauteur desktop réduite que les dernières sections restent atteignables sans masquer les actions de session.
 - [x] Vérifier la disponibilité de toutes les sections et des actions de session aux hauteurs desktop 540px et 720px.
+- [x] Rechercher et documenter les pratiques de navigation, supervision et sécurité des consoles SaaS hors facturation.
+- [x] Repenser l’architecture de navigation, les priorités visuelles et les parcours de la console EASYSTOR Control.
+- [x] Ajouter les modules de pilotage opérationnel retenus : activité, santé des boutiques, gouvernance des comptes et file d’actions.
+- [x] Étendre le journal d’audit, les filtres et les alertes de supervision sans introduire d’abonnements ni de facturation.
+- [x] Tester les parcours administrateur, l’accessibilité et les données réelles, puis valider le build et Neon.
+- [x] Exclure les abonnements et la facturation du périmètre administratif actuel selon la décision utilisateur.
+- [ ] Préparer ultérieurement un module distinct d’annonces sponsorisées, après validation de ses règles de diffusion et de modération.
+- [x] Vérifier dans le navigateur des sources récentes et spécialisées sur les capacités d’un back-office SaaS 2026 avant de retenir chaque module de la refonte.

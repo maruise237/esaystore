@@ -2,9 +2,15 @@ import React, { useMemo, useState } from "react";
 import {
   Activity,
   ArrowLeft,
+  ArrowUpRight,
   BadgeCheck,
   Building2,
+  CircleAlert,
+  CircleCheck,
+  ClipboardCheck,
+  Gauge,
   Loader2,
+  ListChecks,
   Search,
   ShieldAlert,
   ShieldCheck,
@@ -38,6 +44,16 @@ type AdminUser = {
 };
 
 type AdminTab = "overview" | "shops" | "users" | "activity" | "support";
+type AuditAction =
+  | "all"
+  | "initial_admin_claimed"
+  | "shop_suspended"
+  | "shop_reactivated"
+  | "user_suspended"
+  | "user_reactivated"
+  | "user_promoted_to_admin"
+  | "user_demoted_to_user";
+type AuditPeriod = "all" | "today" | "week" | "month";
 type PendingAction =
   | { type: "shop"; id: string; label: string; nextActive: boolean }
   | { type: "user-status"; id: string; label: string; nextActive: boolean }
@@ -57,12 +73,34 @@ const dateTime = (value: Date | string) =>
 const formatNumber = (value: number) =>
   new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(value);
 
-const tabs: Array<{ id: AdminTab; label: string; icon: typeof Activity }> = [
-  { id: "overview", label: "Vue d’ensemble", icon: ShieldCheck },
-  { id: "shops", label: "Boutiques", icon: Store },
-  { id: "users", label: "Comptes", icon: Users },
-  { id: "activity", label: "Journal", icon: Activity },
-  { id: "support", label: "Support", icon: LifeBuoy },
+const auditActionLabels: Record<Exclude<AuditAction, "all">, string> = {
+  initial_admin_claimed: "Administration initialisée",
+  shop_suspended: "Boutique suspendue",
+  shop_reactivated: "Boutique réactivée",
+  user_suspended: "Compte suspendu",
+  user_reactivated: "Compte réactivé",
+  user_promoted_to_admin: "Droits administrateur accordés",
+  user_demoted_to_user: "Droits administrateur retirés",
+};
+
+const auditPeriodLabels: Record<AuditPeriod, string> = {
+  all: "Tout l’historique",
+  today: "Aujourd’hui",
+  week: "7 derniers jours",
+  month: "30 derniers jours",
+};
+
+const tabs: Array<{
+  id: AdminTab;
+  label: string;
+  description: string;
+  icon: typeof Activity;
+}> = [
+  { id: "overview", label: "Pilotage", description: "À surveiller", icon: Gauge },
+  { id: "support", label: "Support", description: "Demandes", icon: LifeBuoy },
+  { id: "shops", label: "Boutiques", description: "Espaces", icon: Store },
+  { id: "users", label: "Comptes", description: "Accès", icon: Users },
+  { id: "activity", label: "Journal", description: "Traçabilité", icon: Activity },
 ];
 
 export default function AdminPanel({
@@ -80,6 +118,9 @@ export default function AdminPanel({
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"all" | "active" | "suspended">("all");
+  const [auditQuery, setAuditQuery] = useState("");
+  const [auditAction, setAuditAction] = useState<AuditAction>("all");
+  const [auditPeriod, setAuditPeriod] = useState<AuditPeriod>("month");
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(
     null
   );
@@ -90,6 +131,10 @@ export default function AdminPanel({
     () => ({ query, status, limit: 40 }),
     [query, status]
   );
+  const auditInput = useMemo(
+    () => ({ query: auditQuery, action: auditAction, period: auditPeriod, limit: 50 }),
+    [auditAction, auditPeriod, auditQuery]
+  );
   const overview = trpc.admin.overview.useQuery(undefined, {
     enabled: isAdmin,
   });
@@ -99,10 +144,9 @@ export default function AdminPanel({
   const userList = trpc.admin.users.useQuery(listInput, {
     enabled: isAdmin && activeTab === "users",
   });
-  const activity = trpc.admin.activity.useQuery(
-    { limit: 50 },
-    { enabled: isAdmin && activeTab === "activity" }
-  );
+  const activity = trpc.admin.activity.useQuery(auditInput, {
+    enabled: isAdmin && activeTab === "activity",
+  });
   const supportSummary = trpc.support.adminSummary.useQuery(undefined, {
     enabled: isAdmin,
   });
@@ -161,6 +205,12 @@ export default function AdminPanel({
     userList.error ||
     activity.error ||
     supportSummary.error;
+
+  const selectTab = (tab: AdminTab) => {
+    setActiveTab(tab);
+    setQuery("");
+    setStatus("all");
+  };
 
   const submitPendingAction = () => {
     if (!pendingAction) return;
@@ -242,17 +292,17 @@ export default function AdminPanel({
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f4ef] text-[#24231e]">
-      <header className="border-b border-[#e4e1d7] bg-[#1e2924] text-[#f7f5ee]">
-        <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-7">
+    <div className="min-h-screen bg-[#f5f6f2] text-[#20251f]">
+      <header className="border-b border-[#27382e] bg-[#17241d] text-[#f7f5ee]">
+        <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-7">
           <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-2xl bg-[#d1e980] text-[#1e2924]">
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-[#d1e980] text-[#1e2924] shadow-[0_8px_22px_rgba(209,233,128,0.16)]">
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div>
-              <p className="font-serif text-xl">EASYSTOR Control</p>
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#cdd6cc]">
-                Administration SaaS
+              <p className="font-serif text-lg">EASYSTOR Control</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#b7c5b4]">
+                Console de plateforme
               </p>
             </div>
           </div>
@@ -276,50 +326,56 @@ export default function AdminPanel({
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1440px] px-4 py-6 pb-10 sm:px-7">
+      <main className="mx-auto max-w-[1440px] px-4 py-5 pb-10 sm:px-7">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#52634d]">
-              Supervision sécurisée
+              Centre de contrôle
             </p>
-            <h1 className="mt-1 font-serif text-3xl">
-              Pilotez la plateforme, sans toucher aux données métier.
+            <h1 className="mt-1 font-serif text-3xl tracking-tight sm:text-4xl">
+              Décidez vite. Gardez le contrôle.
             </h1>
-            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[#4d5f4b]">
-              Les suspensions, réactivations et droits d’administration sont
-              contrôlés côté serveur et inscrits dans un journal d’audit.
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#4d5f4b]">
+              Commencez par les dossiers qui exigent une action, puis pilotez
+              les boutiques, comptes et règles de sécurité depuis un même espace.
             </p>
           </div>
-          <div className="rounded-2xl border border-[#cfdf9d] bg-[#edf5d8] px-4 py-3 text-sm text-[#334a30]">
+          <div className="rounded-xl border border-[#cfdf9d] bg-[#edf5d8] px-4 py-3 text-sm text-[#334a30]">
             <BadgeCheck className="mr-2 inline h-4 w-4" />
-            Session administrateur :{" "}
+            Session protégée ·{" "}
             {user.email || user.name || "Compte protégé"}
           </div>
         </div>
 
         <nav
           aria-label="Sections d’administration"
-          className="mt-6 flex gap-2 overflow-x-auto rounded-2xl border border-[#e4e1d7] bg-white p-2"
+          className="mt-6 grid gap-2 rounded-2xl border border-[#e0e4da] bg-white p-2 shadow-[0_10px_28px_rgba(43,47,38,0.04)] sm:grid-cols-2 lg:grid-cols-5"
         >
           {tabs.map(tab => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
-                onClick={() => {
-                  setActiveTab(tab.id);
-                  setQuery("");
-                  setStatus("all");
-                }}
+                onClick={() => selectTab(tab.id)}
                 className={cn(
-                  "flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold",
+                  "relative flex min-w-0 items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors",
                   activeTab === tab.id
-                    ? "bg-[#1e2924] text-white"
+                    ? "bg-[#1e2924] text-white shadow-[0_8px_18px_rgba(30,41,36,0.15)]"
                     : "text-[#4d5f4b] hover:bg-[#eff2e8]"
                 )}
               >
-                <Icon className="h-4 w-4" />
-                {tab.label}
+                <Icon className="h-5 w-5 shrink-0" />
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold">{tab.label}</span>
+                  <span
+                    className={cn(
+                      "mt-0.5 block text-[10px] font-semibold uppercase tracking-[0.12em]",
+                      activeTab === tab.id ? "text-[#d1e980]" : "text-[#697868]"
+                    )}
+                  >
+                    {tab.description}
+                  </span>
+                </span>
                 {tab.id === "support" &&
                   (supportSummary.data?.pending ?? 0) > 0 && (
                     <span
@@ -354,7 +410,11 @@ export default function AdminPanel({
         )}
 
         {activeTab === "overview" && (
-          <OverviewPanel loading={overview.isLoading} data={overview.data} />
+          <OverviewPanel
+            loading={overview.isLoading}
+            data={overview.data}
+            onNavigate={selectTab}
+          />
         )}
         {activeTab === "shops" && (
           <ShopsPanel
@@ -383,6 +443,12 @@ export default function AdminPanel({
           <ActivityPanel
             loading={activity.isLoading}
             entries={activity.data ?? []}
+            query={auditQuery}
+            action={auditAction}
+            period={auditPeriod}
+            onQueryChange={setAuditQuery}
+            onActionChange={setAuditAction}
+            onPeriodChange={setAuditPeriod}
           />
         )}
         {activeTab === "support" && <AdminSupportPanel />}
@@ -475,44 +541,62 @@ export default function AdminPanel({
 function OverviewPanel({
   loading,
   data,
+  onNavigate,
 }: {
   loading: boolean;
   data?: {
-    users: { total: number; active: number; administrators: number };
-    shops: { total: number; active: number; suspended: number };
-    sales: { total: number; today: number; turnover: number };
+    users: {
+      total: number;
+      active: number;
+      administrators: number;
+      newLast7Days: number;
+    };
+    shops: {
+      total: number;
+      active: number;
+      suspended: number;
+      newLast7Days: number;
+    };
+    sales: {
+      total: number;
+      today: number;
+      turnover: number;
+      turnoverToday: number;
+    };
     activityToday: number;
+    support: { pending: number; waitingUser: number; highPriority: number };
   };
+  onNavigate: (tab: AdminTab) => void;
 }) {
   const stats = data
     ? [
         {
-          label: "Boutiques actives",
+          label: "Boutiques saines",
           value: `${formatNumber(data.shops.active)} / ${formatNumber(data.shops.total)}`,
-          detail: `${formatNumber(data.shops.suspended)} suspendue(s)`,
+          detail: `${formatNumber(data.shops.newLast7Days)} nouvelle(s) en 7 jours`,
           icon: Building2,
           tone: "bg-[#eef3e4] text-[#334a30]",
         },
         {
           label: "Comptes actifs",
           value: `${formatNumber(data.users.active)} / ${formatNumber(data.users.total)}`,
-          detail: `${formatNumber(data.users.administrators)} administrateur(s)`,
+          detail: `${formatNumber(data.users.newLast7Days)} nouveau(x) en 7 jours`,
           icon: Users,
           tone: "bg-[#edf4f0] text-[#285446]",
         },
         {
-          label: "Ventes aujourd’hui",
+          label: "Ventes du jour",
           value: formatNumber(data.sales.today),
-          detail: `${formatNumber(data.sales.total)} vente(s) au total`,
+          detail: `${formatNumber(data.sales.turnoverToday)} montant de référence`,
           icon: Store,
           tone: "bg-[#fff0df] text-[#704916]",
         },
         {
-          label: "Actions journalisées",
-          value: formatNumber(data.activityToday),
-          detail: "depuis minuit",
-          icon: Activity,
-          tone: "bg-[#f2ecfa] text-[#5e437b]",
+          label: "Support à traiter",
+          value: formatNumber(data.support.pending),
+          detail: `${formatNumber(data.support.highPriority)} haute(s) priorité`,
+          icon: LifeBuoy,
+          tone: "bg-[#fff0ed] text-[#9c4d3b]",
         },
       ]
     : [];
@@ -524,6 +608,17 @@ function OverviewPanel({
         </p>
       ) : (
         <>
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#52634d]">
+                Vue opérationnelle
+              </p>
+              <h2 className="mt-1 font-serif text-2xl">Les signaux essentiels</h2>
+            </div>
+            <p className="text-sm text-[#52634d]">
+              {formatNumber(data?.activityToday ?? 0)} action(s) journalisée(s) aujourd’hui
+            </p>
+          </div>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {stats.map(stat => {
               const Icon = stat.icon;
@@ -551,23 +646,110 @@ function OverviewPanel({
               );
             })}
           </div>
-          <Card className="mt-5 border-0 bg-[#1e2924] text-[#f7f5ee]">
-            <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center">
-              <ShieldAlert className="h-8 w-8 shrink-0 text-[#d1e980]" />
-              <div>
-                <p className="font-serif text-xl">Garde-fous actifs</p>
-                <p className="mt-1 text-sm leading-relaxed text-[#cdd6cc]">
-                  Un administrateur ne peut ni désactiver son propre compte, ni
-                  retirer le dernier accès administrateur actif. Les suspensions
-                  de boutique exigent un motif, et chaque action sensible est
-                  horodatée.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="mt-5 grid gap-5 xl:grid-cols-[1.25fr_0.75fr]">
+            <Card className="border-0 bg-white shadow-[0_10px_28px_rgba(43,47,38,0.05)]">
+              <CardContent className="p-5 sm:p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <ListChecks className="h-5 w-5 text-[#405a3e]" />
+                      <h3 className="font-serif text-2xl">À traiter maintenant</h3>
+                    </div>
+                    <p className="mt-1 text-sm text-[#4d5f4b]">
+                      Les éléments qui demandent une décision, pas seulement une lecture.
+                    </p>
+                  </div>
+                  <ClipboardCheck className="h-6 w-6 text-[#9aaa83]" />
+                </div>
+                <div className="mt-5 space-y-3">
+                  <ActionQueueItem
+                    critical={(data?.support.highPriority ?? 0) > 0}
+                    title={`${formatNumber(data?.support.highPriority ?? 0)} demande(s) à haute priorité`}
+                    description="Consultez les dossiers de support qui ne doivent pas attendre."
+                    action="Ouvrir le support"
+                    onClick={() => onNavigate("support")}
+                  />
+                  <ActionQueueItem
+                    critical={(data?.shops.suspended ?? 0) > 0}
+                    title={`${formatNumber(data?.shops.suspended ?? 0)} boutique(s) suspendue(s)`}
+                    description="Vérifiez les motifs, réactivez ou maintenez la protection nécessaire."
+                    action="Voir les boutiques"
+                    onClick={() => onNavigate("shops")}
+                  />
+                  <ActionQueueItem
+                    critical={(data?.users.total ?? 0) > (data?.users.active ?? 0)}
+                    title={`${formatNumber((data?.users.total ?? 0) - (data?.users.active ?? 0))} compte(s) suspendu(s)`}
+                    description="Contrôlez les accès avant toute réactivation."
+                    action="Gérer les comptes"
+                    onClick={() => onNavigate("users")}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+            <div className="grid gap-5">
+              <Card className="border-0 bg-[#1e2924] text-[#f7f5ee] shadow-[0_14px_32px_rgba(30,41,36,0.16)]">
+                <CardContent className="p-5">
+                  <div className="flex items-start gap-3">
+                    <ShieldAlert className="mt-0.5 h-6 w-6 shrink-0 text-[#d1e980]" />
+                    <div>
+                      <h3 className="font-serif text-xl">Garde-fous actifs</h3>
+                      <p className="mt-2 text-sm leading-relaxed text-[#cdd6cc]">
+                        Le dernier administrateur et votre propre accès restent protégés. Les suspensions exigent un motif et chaque action sensible est tracée.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="border border-[#d8e4c7] bg-[#f4f8eb] shadow-none">
+                <CardContent className="flex items-center justify-between gap-4 p-5">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.13em] text-[#52634d]">Relations support</p>
+                    <p className="mt-1 font-serif text-2xl text-[#26352d]">{formatNumber(data?.support.waitingUser ?? 0)}</p>
+                    <p className="mt-1 text-sm text-[#4d5f4b]">dossier(s) en attente de réponse client</p>
+                  </div>
+                  <Button variant="outline" className="shrink-0" onClick={() => onNavigate("support")}>
+                    Suivre <ArrowUpRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </>
       )}
     </section>
+  );
+}
+
+function ActionQueueItem({
+  critical,
+  title,
+  description,
+  action,
+  onClick,
+}: {
+  critical: boolean;
+  title: string;
+  description: string;
+  action: string;
+  onClick: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3 rounded-xl border border-[#e4e8de] bg-[#fbfcf9] p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 gap-3">
+        {critical ? (
+          <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-[#a3533d]" />
+        ) : (
+          <CircleCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#537151]" />
+        )}
+        <div>
+          <p className="font-semibold text-[#283128]">{title}</p>
+          <p className="mt-1 text-sm leading-relaxed text-[#5f665d]">{description}</p>
+        </div>
+      </div>
+      <Button variant="outline" className="shrink-0" onClick={onClick}>
+        {action} <ArrowUpRight className="ml-2 h-4 w-4" />
+      </Button>
+    </div>
   );
 }
 
@@ -878,6 +1060,12 @@ function UsersPanel({
 function ActivityPanel({
   loading,
   entries,
+  query,
+  action,
+  period,
+  onQueryChange,
+  onActionChange,
+  onPeriodChange,
 }: {
   loading: boolean;
   entries: Array<{
@@ -890,16 +1078,13 @@ function ActivityPanel({
     actorName: string | null;
     actorEmail: string | null;
   }>;
+  query: string;
+  action: AuditAction;
+  period: AuditPeriod;
+  onQueryChange: (value: string) => void;
+  onActionChange: (value: AuditAction) => void;
+  onPeriodChange: (value: AuditPeriod) => void;
 }) {
-  const actionLabels: Record<string, string> = {
-    initial_admin_claimed: "Administration initialisée",
-    shop_suspended: "Boutique suspendue",
-    shop_reactivated: "Boutique réactivée",
-    user_suspended: "Compte suspendu",
-    user_reactivated: "Compte réactivé",
-    user_promoted_to_admin: "Droits administrateur accordés",
-    user_demoted_to_user: "Droits administrateur retirés",
-  };
   return (
     <section className="mt-6">
       <Card className="border-0 bg-white shadow-[0_10px_28px_rgba(43,47,38,0.05)]">
@@ -909,9 +1094,53 @@ function ActivityPanel({
             <div>
               <h2 className="font-serif text-2xl">Journal d’audit</h2>
               <p className="mt-1 text-sm text-[#4d5f4b]">
-                Historique horodaté des changements administratifs sensibles.
+                Recherchez les changements sensibles par auteur, type d’action et période.
               </p>
             </div>
+          </div>
+          <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_190px]">
+            <div className="relative">
+              <Label htmlFor="admin-audit-search" className="sr-only">
+                Rechercher dans le journal
+              </Label>
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#52634d]" />
+              <Input
+                id="admin-audit-search"
+                value={query}
+                onChange={event => onQueryChange(event.target.value)}
+                className="pl-10"
+                placeholder="Administrateur, action ou cible…"
+              />
+            </div>
+            <Label className="flex min-w-0 items-center gap-2 text-sm font-semibold text-[#4d5f4b]">
+              Action
+              <select
+                value={action}
+                onChange={event => onActionChange(event.target.value as AuditAction)}
+                className="h-11 min-w-0 flex-1 rounded-md border border-input bg-white px-3 text-base sm:h-10 sm:text-sm"
+              >
+                <option value="all">Toutes</option>
+                {Object.entries(auditActionLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </Label>
+            <Label className="flex min-w-0 items-center gap-2 text-sm font-semibold text-[#4d5f4b]">
+              Période
+              <select
+                value={period}
+                onChange={event => onPeriodChange(event.target.value as AuditPeriod)}
+                className="h-11 min-w-0 flex-1 rounded-md border border-input bg-white px-3 text-base sm:h-10 sm:text-sm"
+              >
+                {Object.entries(auditPeriodLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </Label>
           </div>
           <div className="mt-5 space-y-3">
             {loading ? (
@@ -926,7 +1155,7 @@ function ActivityPanel({
                 >
                   <div>
                     <p className="font-semibold">
-                      {actionLabels[entry.action] || entry.action}
+                      {auditActionLabels[entry.action as Exclude<AuditAction, "all">] || entry.action}
                     </p>
                     <p className="mt-1 text-sm text-[#4d5f4b]">
                       Par{" "}
