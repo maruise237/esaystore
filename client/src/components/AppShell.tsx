@@ -102,8 +102,9 @@ export default function AppShell({
     <div className="min-h-screen bg-[#f6f4ef] text-[#24231e]">
       <aside
         data-testid="desktop-sidebar"
+        aria-label="Informations et navigation de la boutique"
         className={cn(
-          "fixed inset-y-0 left-0 z-30 hidden flex-col overflow-hidden border-r border-[#e4e1d7] bg-[#1e2924] py-6 text-[#f7f5ee] transition-[width,padding] duration-200 lg:flex",
+          "fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-[#e4e1d7] bg-[#1e2924] py-6 text-[#f7f5ee] transition-[width,padding] duration-200 lg:flex",
           sidebarCollapsed ? "w-[76px] px-3" : "w-72 px-5"
         )}
       >
@@ -156,7 +157,7 @@ export default function AppShell({
           </div>
         )}
 
-        <nav className="space-y-1.5">
+        <nav aria-label="Navigation principale" className="space-y-1.5">
           {navigation.map(item => {
             const Icon = item.icon;
             return (
@@ -230,7 +231,7 @@ export default function AppShell({
         {children}
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-[#dedbd2] bg-[#fbfaf6]/95 px-2 py-2 backdrop-blur lg:hidden">
+      <nav aria-label="Navigation mobile" className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-[#dedbd2] bg-[#fbfaf6]/95 px-2 py-2 backdrop-blur lg:hidden">
         {mobilePrimary.map(item => {
           const Icon = item.icon;
           return (

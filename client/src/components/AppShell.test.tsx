@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import axe from "axe-core";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AppShell from "./AppShell";
 
 vi.mock("./SyncStatus", () => ({
@@ -11,6 +12,7 @@ vi.mock("./SyncStatus", () => ({
 
 describe("barre latérale desktop", () => {
   beforeEach(() => window.localStorage.clear());
+  afterEach(cleanup);
 
   it("collapses from an accessible action while keeping labeled icon navigation", async () => {
     const user = userEvent.setup();
@@ -34,5 +36,24 @@ describe("barre latérale desktop", () => {
     expect(sidebar.className).toContain("w-[76px]");
     expect(screen.getByLabelText("Développer la barre latérale")).toBeTruthy();
     expect(screen.getByTitle("Produits")).toBeTruthy();
+  });
+
+  it("has no structural accessibility violation in the navigation shell", async () => {
+    render(
+      <AppShell
+        active="dashboard"
+        onNavigate={vi.fn()}
+        shopName="Boutique test"
+        currency="XAF"
+        userName="Aline"
+        onLogout={vi.fn()}
+      >
+        <p>Contenu</p>
+      </AppShell>
+    );
+    const result = await axe.run(document.body, {
+      rules: { "color-contrast": { enabled: false } },
+    });
+    expect(result.violations).toEqual([]);
   });
 });

@@ -103,3 +103,11 @@
 - [x] Ajouter une barre latérale rétractable sur ordinateur avec libellés masqués en mode compact.
 - [x] Mémoriser le choix de barre latérale et préserver le menu mobile actuel.
 - [x] Tester le repli et le déploiement de la navigation desktop sans casser l’accès clavier.
+- [x] Auditer les contrastes, la lisibilité, le focus et les cibles tactiles selon WCAG 2.2 AA.
+- [x] Renforcer les contrastes de texte et les états de focus visibles dans l’interface EASYSTOR.
+- [x] Appliquer des libellés accessibles et des cibles d’interaction adaptées sur ordinateur et mobile.
+- [x] Documenter les critères WCAG appliqués et ajouter des tests ciblés d’accessibilité.
+- [x] Auditer et corriger les contrôles interactifs restants pour leur fournir un nom accessible explicite dans les écrans métier.
+- [x] Ajouter des tests UI d’accessibilité ciblés pour la caisse, le catalogue, la migration et la clôture.
+- [x] Auditer les écrans Stock, Crédits, Ventes, Dépenses, Rapports, Devises, Équipe et Synchronisation.
+- [x] Ajouter une couverture d’accessibilité pour les contrôles non couverts ou documenter les résultats d’audit de chaque écran restant.

@@ -65,6 +65,7 @@ import {
 } from "@/lib/pos";
 import { getOnboardingSteps } from "@/lib/onboarding";
 import { resolveCatalogPhoto } from "@/lib/catalogVariants";
+import PosCatalogSearch from "@/components/PosCatalogSearch";
 
 const currencyFormat = (value: number, currency = "XAF") =>
   new Intl.NumberFormat("fr-FR", {
@@ -987,28 +988,14 @@ function Pos({
                 Cliquez sur un article, scannez ou saisissez son code-barres.
               </p>
             </div>
-            <div className="flex w-full gap-2 sm:w-auto">
-              <div className="relative min-w-0 flex-1 sm:w-64">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#85877f]" />
-                <Input
-                  value={search}
-                  onChange={event => setSearch(event.target.value)}
-                  className="pl-9"
-                  placeholder="Rechercher un produit"
-                />
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setScannerNotice(null);
-                  setScannerOpen(true);
-                }}
-                className="shrink-0"
-              >
-                <ScanLine className="mr-2 h-4 w-4" />
-                Scanner
-              </Button>
-            </div>
+            <PosCatalogSearch
+              query={search}
+              onQueryChange={setSearch}
+              onOpenScanner={() => {
+                setScannerNotice(null);
+                setScannerOpen(true);
+              }}
+            />
           </div>
           <form
             onSubmit={submitManualBarcode}
@@ -1041,7 +1028,11 @@ function Pos({
             </p>
           )}
           {scannerNotice && (
-            <p className="mb-4 rounded-xl bg-[#edf1e3] px-3 py-2 text-xs font-medium text-[#4e6949]">
+            <p
+              role="status"
+              aria-live="polite"
+              className="mb-4 rounded-xl bg-[#edf1e3] px-3 py-2 text-xs font-medium text-[#4e6949]"
+            >
               {scannerNotice}
             </p>
           )}
