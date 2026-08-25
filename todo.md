@@ -100,3 +100,6 @@
 - [x] Effectuer une prévisualisation dédiée de la section Produits simplifiée sur desktop et mobile.
 - [x] Garder le prix d’achat visible parmi les champs principaux de création de produit.
 - [x] Mettre à jour le test du parcours catalogue court pour inclure le prix d’achat visible mais non bloquant.
+- [x] Ajouter une barre latérale rétractable sur ordinateur avec libellés masqués en mode compact.
+- [x] Mémoriser le choix de barre latérale et préserver le menu mobile actuel.
+- [x] Tester le repli et le déploiement de la navigation desktop sans casser l’accès clavier.
