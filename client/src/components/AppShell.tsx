@@ -11,6 +11,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ShieldCheck,
+  CircleHelp,
   Settings2,
   ShoppingBag,
   WalletCards,
@@ -45,7 +46,8 @@ export type WorkspaceSection =
   | "migration"
   | "currencies"
   | "team"
-  | "sync";
+  | "sync"
+  | "support";
 
 const navigation: Array<{
   id: WorkspaceSection;
@@ -65,6 +67,7 @@ const navigation: Array<{
   { id: "currencies", label: "Devises & taux", icon: ArrowRightLeft },
   { id: "team", label: "Équipe", icon: Settings2 },
   { id: "sync", label: "Synchronisation", icon: CreditCard },
+  { id: "support", label: "Support", icon: CircleHelp },
 ];
 const mobilePrimary = navigation.filter(item =>
   ["dashboard", "pos", "products", "customers"].includes(item.id)

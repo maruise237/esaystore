@@ -22,6 +22,7 @@ export default defineConfig({
       "server/routers/migration.integration.test.ts",
       "server/routers/currencies.integration.test.ts",
       "server/routers/admin.integration.test.ts",
+      "server/routers/support.integration.test.ts",
     ],
     testTimeout: 60_000,
     hookTimeout: 60_000,

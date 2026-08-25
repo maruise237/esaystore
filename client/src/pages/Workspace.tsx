@@ -67,6 +67,7 @@ import { getOnboardingSteps } from "@/lib/onboarding";
 import { resolveCatalogPhoto } from "@/lib/catalogVariants";
 import PosCatalogSearch from "@/components/PosCatalogSearch";
 import AdminPanel from "./AdminPanel";
+import SupportPanel from "./SupportPanel";
 
 const currencyFormat = (value: number, currency = "XAF") =>
   new Intl.NumberFormat("fr-FR", {
@@ -152,6 +153,12 @@ const sectionTitles: Record<
     title: "Synchronisation",
     description:
       "Contrôlez les opérations locales, les erreurs et les conflits de stock.",
+  },
+  support: {
+    kicker: "Aide EASYSTOR",
+    title: "Support & demandes",
+    description:
+      "Envoyez votre demande et échangez directement avec le support depuis l’application.",
   },
 };
 
@@ -321,6 +328,14 @@ export default function Workspace() {
         )}
         {active === "team" && <TeamPanel shopId={activeShop.shop.id} />}
         {active === "sync" && <SyncPanel />}
+        {active === "support" && (
+          <SupportPanel
+            shops={(shopsQuery.data ?? []).map(entry => ({
+              id: entry.shop.id,
+              name: entry.shop.name,
+            }))}
+          />
+        )}
       </div>
     </AppShell>
   );

@@ -41,6 +41,25 @@ export const syncKindEnum = pgEnum("sync_kind", [
   "repayment",
   "adjustment",
 ]);
+export const supportTicketStatusEnum = pgEnum("support_ticket_status", [
+  "open",
+  "in_progress",
+  "waiting_user",
+  "resolved",
+  "closed",
+]);
+export const supportTicketCategoryEnum = pgEnum("support_ticket_category", [
+  "account",
+  "technical",
+  "data",
+  "payment",
+  "feature",
+  "other",
+]);
+export const supportAuthorTypeEnum = pgEnum("support_author_type", [
+  "user",
+  "admin",
+]);
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -112,6 +131,71 @@ export const adminAuditLogs = pgTable(
       table.createdAt
     ),
     index("admin_audit_logs_target_idx").on(table.targetType, table.targetId),
+  ]
+);
+
+export const supportTickets = pgTable(
+  "support_tickets",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    ticketNumber: varchar("ticket_number", { length: 40 }).notNull().unique(),
+    userId: uuid("user_id")
+      .references(() => users.id, { onDelete: "restrict" })
+      .notNull(),
+    shopId: uuid("shop_id").references(() => shops.id, {
+      onDelete: "set null",
+    }),
+    category: supportTicketCategoryEnum("category").notNull(),
+    subject: varchar("subject", { length: 180 }).notNull(),
+    status: supportTicketStatusEnum("status").default("open").notNull(),
+    assignedAdminId: uuid("assigned_admin_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    lastMessageAt: timestamp("last_message_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    lastMessageBy: supportAuthorTypeEnum("last_message_by")
+      .default("user")
+      .notNull(),
+    closedAt: timestamp("closed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  table => [
+    index("support_tickets_user_status_idx").on(table.userId, table.status),
+    index("support_tickets_status_last_message_idx").on(
+      table.status,
+      table.lastMessageAt
+    ),
+    index("support_tickets_assigned_admin_idx").on(table.assignedAdminId),
+  ]
+);
+
+export const supportMessages = pgTable(
+  "support_messages",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    ticketId: uuid("ticket_id")
+      .references(() => supportTickets.id, { onDelete: "cascade" })
+      .notNull(),
+    authorId: uuid("author_id")
+      .references(() => users.id, { onDelete: "restrict" })
+      .notNull(),
+    authorType: supportAuthorTypeEnum("author_type").notNull(),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  table => [
+    index("support_messages_ticket_created_idx").on(
+      table.ticketId,
+      table.createdAt
+    ),
   ]
 );
 

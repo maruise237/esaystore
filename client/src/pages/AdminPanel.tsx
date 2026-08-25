@@ -12,6 +12,7 @@ import {
   UserCheck,
   UserRoundCog,
   Users,
+  LifeBuoy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
+import AdminSupportPanel from "./AdminSupportPanel";
 
 type AdminUser = {
   id: string;
@@ -35,7 +37,7 @@ type AdminUser = {
   role: "user" | "admin";
 };
 
-type AdminTab = "overview" | "shops" | "users" | "activity";
+type AdminTab = "overview" | "shops" | "users" | "activity" | "support";
 type PendingAction =
   | { type: "shop"; id: string; label: string; nextActive: boolean }
   | { type: "user-status"; id: string; label: string; nextActive: boolean }
@@ -60,6 +62,7 @@ const tabs: Array<{ id: AdminTab; label: string; icon: typeof Activity }> = [
   { id: "shops", label: "Boutiques", icon: Store },
   { id: "users", label: "Comptes", icon: Users },
   { id: "activity", label: "Journal", icon: Activity },
+  { id: "support", label: "Support", icon: LifeBuoy },
 ];
 
 export default function AdminPanel({
@@ -364,6 +367,7 @@ export default function AdminPanel({
             entries={activity.data ?? []}
           />
         )}
+        {activeTab === "support" && <AdminSupportPanel />}
       </main>
 
       <Dialog

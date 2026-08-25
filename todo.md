@@ -117,3 +117,8 @@
 - [x] Ajouter des contrôles de protection pour la suspension/réactivation des boutiques et la gestion des accès administrateurs.
 - [x] Tester les autorisations administrateur et les parcours de supervision, puis valider le build et les intégrations Neon.
 - [x] Ajouter des tests positifs des procédures admin et une action confirmée dans l’interface de supervision.
+- [x] Définir un espace de demandes de support avec catégories, statuts, messages et clôture.
+- [x] Ajouter une interface utilisateur pour créer et suivre ses demandes de support.
+- [x] Ajouter une interface administrateur pour filtrer, répondre, traiter et clôturer les demandes utilisateurs.
+- [x] Écarter les e-mails transactionnels selon la décision utilisateur, au profit de la messagerie de support intégrée.
+- [x] Tester l’isolation des demandes, les échanges support et la clôture, puis valider le build et Neon.
