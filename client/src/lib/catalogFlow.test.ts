@@ -11,6 +11,15 @@ describe("parcours catalogue simplifié", () => {
         name: "Savon",
         salePrice: "500",
         stockQuantity: "0",
+        purchasePrice: "300",
+      })
+    ).toBe(true);
+    expect(
+      canCreateEssentialProduct({
+        name: "Savon",
+        salePrice: "500",
+        stockQuantity: "0",
+        purchasePrice: "",
       })
     ).toBe(true);
     expect(
