@@ -107,13 +107,13 @@ export default function AppShell({
         data-testid="desktop-sidebar"
         aria-label="Informations et navigation de la boutique"
         className={cn(
-          "fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-[#e4e1d7] bg-[#1e2924] py-6 text-[#f7f5ee] transition-[width,padding] duration-200 lg:flex",
+          "fixed inset-y-0 left-0 z-30 hidden min-h-0 flex-col overflow-hidden border-r border-[#e4e1d7] bg-[#1e2924] py-5 text-[#f7f5ee] transition-[width,padding] duration-200 lg:flex",
           sidebarCollapsed ? "w-[76px] px-3" : "w-72 px-5"
         )}
       >
         <div
           className={cn(
-            "mb-10 flex items-center",
+            "mb-6 flex shrink-0 items-center",
             sidebarCollapsed ? "justify-center" : "gap-3 px-2"
           )}
         >
@@ -152,7 +152,7 @@ export default function AppShell({
         </div>
 
         {!sidebarCollapsed && (
-          <div className="mb-7 rounded-2xl border border-white/10 bg-white/[0.06] p-4">
+          <div className="mb-4 shrink-0 rounded-2xl border border-white/10 bg-white/[0.06] p-4">
             <p className="truncate text-sm font-semibold">{shopName}</p>
             <p className="mt-1 text-xs text-[#afbcaf]">
               Devise active · {currency}
@@ -160,7 +160,10 @@ export default function AppShell({
           </div>
         )}
 
-        <nav aria-label="Navigation principale" className="space-y-1.5">
+        <nav
+          aria-label="Navigation principale"
+          className="min-h-0 flex-1 space-y-1.5 overflow-y-auto overscroll-contain pr-1 pb-4 [scrollbar-width:thin] [scrollbar-color:#6f816d_transparent]"
+        >
           {navigation.map(item => {
             const Icon = item.icon;
             return (
@@ -185,7 +188,7 @@ export default function AppShell({
 
         <div
           className={cn(
-            "mt-auto border-t border-white/10 pt-5",
+            "shrink-0 border-t border-white/10 pt-4",
             sidebarCollapsed && "flex flex-col items-center"
           )}
         >

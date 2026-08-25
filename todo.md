@@ -131,3 +131,8 @@
 - [x] Masquer l’entrée de navigation administrateur à tous les comptes non administrateurs.
 - [x] Tester les refus d’accès, l’initialisation propriétaire et le routage protégé, puis valider le build et Neon.
 - [x] Ajouter un test positif serveur confirmant que le compte propriétaire configuré peut initialiser le premier administrateur SaaS.
+- [x] Rendre la liste complète du menu desktop défilable sans masquer les dernières sections.
+- [x] Conserver les actions de session visibles et atteignables dans les modes étendu et compact.
+- [x] Tester le menu desktop aux hauteurs d’écran courantes et au clavier, puis valider le build.
+- [x] Vérifier à hauteur desktop réduite que les dernières sections restent atteignables sans masquer les actions de session.
+- [x] Vérifier la disponibilité de toutes les sections et des actions de session aux hauteurs desktop 540px et 720px.
