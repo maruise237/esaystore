@@ -51,6 +51,7 @@ describe("zone Support utilisateur", () => {
     );
 
     expect(screen.getByLabelText("Motif")).toBeTruthy();
+    expect(screen.getByLabelText("Priorité")).toBeTruthy();
     expect(screen.getByLabelText("Sujet")).toBeTruthy();
     expect(screen.getByLabelText("Décrivez le besoin")).toBeTruthy();
     const result = await axe.run(document.body, {
@@ -65,6 +66,9 @@ describe("zone Support utilisateur", () => {
     fireEvent.change(screen.getByLabelText("Boutique concernée (facultatif)"), {
       target: { value: "shop-1" },
     });
+    fireEvent.change(screen.getByLabelText("Priorité"), {
+      target: { value: "high" },
+    });
     fireEvent.change(screen.getByLabelText("Sujet"), {
       target: { value: "Erreur de caisse" },
     });
@@ -75,6 +79,7 @@ describe("zone Support utilisateur", () => {
 
     expect(mocks.create).toHaveBeenCalledWith({
       category: "technical",
+      priority: "high",
       shopId: "shop-1",
       subject: "Erreur de caisse",
       message: "La caisse ne charge plus ce matin.",

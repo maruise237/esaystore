@@ -23,6 +23,12 @@ const statusLabels = {
   closed: "Clôturée",
 } as const;
 type SupportStatus = keyof typeof statusLabels;
+const priorityLabels = {
+  low: "Basse",
+  medium: "Moyenne",
+  high: "Haute",
+} as const;
+type SupportPriority = keyof typeof priorityLabels;
 
 const categoryLabels = {
   account: "Compte",
@@ -42,12 +48,18 @@ const dateTime = (value: Date | string) =>
 export default function AdminSupportPanel() {
   const utils = trpc.useUtils();
   const [status, setStatus] = useState<SupportStatus | "all">("all");
+  const [priority, setPriority] = useState<SupportPriority | "all">("all");
   const [query, setQuery] = useState("");
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [reply, setReply] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
   const summary = trpc.support.adminSummary.useQuery();
-  const tickets = trpc.support.adminList.useQuery({ query, status, limit: 50 });
+  const tickets = trpc.support.adminList.useQuery({
+    query,
+    status,
+    priority,
+    limit: 50,
+  });
   const detail = trpc.support.adminDetail.useQuery(
     { ticketId: selectedTicketId ?? "00000000-0000-4000-8000-000000000000" },
     { enabled: Boolean(selectedTicketId) }
@@ -72,6 +84,14 @@ export default function AdminSupportPanel() {
       refresh();
     },
   });
+  const setPriorityMutation = trpc.support.adminSetPriority.useMutation({
+    onSuccess: (_, values) => {
+      setNotice(
+        `La priorité est maintenant « ${priorityLabels[values.priority]} ».`
+      );
+      refresh();
+    },
+  });
   const selectedSummary = useMemo(
     () => tickets.data?.find(ticket => ticket.id === selectedTicketId),
     [tickets.data, selectedTicketId]
@@ -80,7 +100,10 @@ export default function AdminSupportPanel() {
     if (!selectedTicketId && tickets.data?.[0])
       setSelectedTicketId(tickets.data[0].id);
   }, [selectedTicketId, tickets.data]);
-  const busy = replyMutation.isPending || setStatusMutation.isPending;
+  const busy =
+    replyMutation.isPending ||
+    setStatusMutation.isPending ||
+    setPriorityMutation.isPending;
   const selectedStatus = detail.data?.ticket.status;
 
   return (
@@ -125,23 +148,42 @@ export default function AdminSupportPanel() {
                 placeholder="N° dossier, sujet ou demandeur…"
               />
             </div>
-            <Label className="mt-3 flex items-center gap-2 text-sm font-semibold text-[#4d5f4b]">
-              Statut
-              <select
-                value={status}
-                onChange={event =>
-                  setStatus(event.target.value as SupportStatus | "all")
-                }
-                className="h-11 rounded-md border border-input bg-white px-3 text-base sm:h-10 sm:text-sm"
-              >
-                <option value="all">Tous</option>
-                {Object.entries(statusLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </Label>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <Label className="flex items-center gap-2 text-sm font-semibold text-[#4d5f4b]">
+                Statut
+                <select
+                  value={status}
+                  onChange={event =>
+                    setStatus(event.target.value as SupportStatus | "all")
+                  }
+                  className="h-11 rounded-md border border-input bg-white px-3 text-base sm:h-10 sm:text-sm"
+                >
+                  <option value="all">Tous</option>
+                  {Object.entries(statusLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </Label>
+              <Label className="flex items-center gap-2 text-sm font-semibold text-[#4d5f4b]">
+                Priorité
+                <select
+                  value={priority}
+                  onChange={event =>
+                    setPriority(event.target.value as SupportPriority | "all")
+                  }
+                  className="h-11 rounded-md border border-input bg-white px-3 text-base sm:h-10 sm:text-sm"
+                >
+                  <option value="all">Toutes</option>
+                  {Object.entries(priorityLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </Label>
+            </div>
             <div className="mt-4 max-h-[510px] space-y-2 overflow-y-auto pr-1">
               {tickets.isLoading ? (
                 <p className="p-6 text-center text-sm text-[#5f665d]">
@@ -163,6 +205,7 @@ export default function AdminSupportPanel() {
                       <p className="min-w-0 flex-1 truncate font-semibold">
                         {ticket.subject}
                       </p>
+                      <PriorityBadge priority={ticket.priority} />
                       <StatusBadge status={ticket.status} />
                     </div>
                     <p className="mt-1 truncate text-xs text-[#5f665d]">
@@ -221,6 +264,7 @@ export default function AdminSupportPanel() {
                       {selectedSummary?.subject ||
                         detail.data.ticket.ticketNumber}
                     </h2>
+                    <PriorityBadge priority={detail.data.ticket.priority} />
                     <StatusBadge status={detail.data.ticket.status} />
                   </div>
                   <p className="mt-1 text-sm text-[#4d5f4b]">
@@ -233,6 +277,26 @@ export default function AdminSupportPanel() {
                     {detail.data.ticket.ticketNumber}
                   </p>
                 </div>
+                <Label className="flex items-center gap-2 text-sm font-semibold text-[#4d5f4b]">
+                  Priorité
+                  <select
+                    value={detail.data.ticket.priority}
+                    onChange={event =>
+                      setPriorityMutation.mutate({
+                        ticketId: detail.data.ticket.id,
+                        priority: event.target.value as SupportPriority,
+                      })
+                    }
+                    disabled={busy}
+                    className="h-9 rounded-md border border-input bg-white px-2 text-sm"
+                  >
+                    {Object.entries(priorityLabels).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </Label>
                 <div className="flex flex-wrap gap-2">
                   <Button
                     size="sm"
@@ -400,6 +464,25 @@ function StatusBadge({ status }: { status: SupportStatus }) {
       )}
     >
       {statusLabels[status]}
+    </span>
+  );
+}
+
+function PriorityBadge({ priority }: { priority: SupportPriority }) {
+  const tone =
+    priority === "high"
+      ? "bg-[#fff0ed] text-[#9c4d3b]"
+      : priority === "medium"
+        ? "bg-[#fff0df] text-[#704916]"
+        : "bg-[#edf4f0] text-[#285446]";
+  return (
+    <span
+      className={cn(
+        "shrink-0 rounded-full px-2 py-1 text-[10px] font-bold",
+        tone
+      )}
+    >
+      {priorityLabels[priority]}
     </span>
   );
 }

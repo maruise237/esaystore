@@ -30,8 +30,14 @@ const statusLabels = {
   resolved: "Résolue",
   closed: "Clôturée",
 } as const;
+const priorityLabels = {
+  low: "Basse",
+  medium: "Moyenne",
+  high: "Haute",
+} as const;
 
 type TicketStatus = keyof typeof statusLabels;
+type TicketPriority = keyof typeof priorityLabels;
 
 const dateTime = (value: Date | string) =>
   new Date(value).toLocaleString("fr-FR", {
@@ -48,6 +54,7 @@ export default function SupportPanel({
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [category, setCategory] =
     useState<keyof typeof categoryLabels>("technical");
+  const [priority, setPriority] = useState<TicketPriority>("medium");
   const [shopId, setShopId] = useState("");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
@@ -100,6 +107,7 @@ export default function SupportPanel({
     event.preventDefault();
     createTicket.mutate({
       category,
+      priority,
       shopId: shopId || undefined,
       subject,
       message,
@@ -172,6 +180,26 @@ export default function SupportPanel({
                     </option>
                   ))}
                 </select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="support-priority">Priorité</Label>
+                <select
+                  id="support-priority"
+                  value={priority}
+                  onChange={event =>
+                    setPriority(event.target.value as TicketPriority)
+                  }
+                  className="h-11 rounded-md border border-input bg-white px-3 text-base sm:text-sm"
+                >
+                  {Object.entries(priorityLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-[#5f665d]">
+                  Choisissez « Haute » seulement si votre activité est bloquée.
+                </p>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="support-subject">Sujet</Label>
@@ -268,6 +296,7 @@ export default function SupportPanel({
                       <p className="min-w-0 flex-1 truncate font-semibold">
                         {ticket.subject}
                       </p>
+                      <TicketPriorityBadge priority={ticket.priority} />
                       <TicketStatusBadge status={ticket.status} />
                     </div>
                     <p className="mt-1 text-xs text-[#5f665d]">
@@ -305,9 +334,14 @@ export default function SupportPanel({
                         {selectedTicket.data.ticket.ticketNumber}
                       </p>
                     </div>
-                    <TicketStatusBadge
-                      status={selectedTicket.data.ticket.status}
-                    />
+                    <div className="flex flex-wrap gap-1">
+                      <TicketPriorityBadge
+                        priority={selectedTicket.data.ticket.priority}
+                      />
+                      <TicketStatusBadge
+                        status={selectedTicket.data.ticket.status}
+                      />
+                    </div>
                   </div>
                   <div className="mt-4 max-h-64 space-y-3 overflow-y-auto pr-1">
                     {selectedTicket.data.messages.map(item => (
@@ -423,6 +457,25 @@ function TicketStatusBadge({ status }: { status: TicketStatus }) {
       )}
     >
       {statusLabels[status]}
+    </span>
+  );
+}
+
+function TicketPriorityBadge({ priority }: { priority: TicketPriority }) {
+  const tone =
+    priority === "high"
+      ? "bg-[#fff0ed] text-[#9c4d3b]"
+      : priority === "medium"
+        ? "bg-[#fff0df] text-[#704916]"
+        : "bg-[#edf4f0] text-[#285446]";
+  return (
+    <span
+      className={cn(
+        "shrink-0 rounded-full px-2 py-1 text-[10px] font-bold",
+        tone
+      )}
+    >
+      {priorityLabels[priority]}
     </span>
   );
 }

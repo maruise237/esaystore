@@ -88,6 +88,15 @@ vi.mock("@/lib/trpc", () => ({
         }),
       },
     },
+    support: {
+      adminSummary: {
+        useQuery: () => ({
+          isLoading: false,
+          data: { pending: 3 },
+          error: null,
+        }),
+      },
+    },
   },
 }));
 
@@ -115,6 +124,9 @@ describe("console d’administration", () => {
       })
     ).toBeTruthy();
     expect(screen.getByRole("button", { name: "Boutiques" })).toBeTruthy();
+    expect(
+      screen.getByLabelText("3 demandes de support à traiter")
+    ).toBeTruthy();
     const result = await axe.run(document.body, {
       rules: { "color-contrast": { enabled: false } },
     });

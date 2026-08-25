@@ -95,6 +95,7 @@ describe("espace de support avec Neon", () => {
     expect(mine[0]).toMatchObject({
       id: ticket.id,
       status: "open",
+      priority: "medium",
       shopName: "Boutique support",
     });
 
@@ -104,6 +105,18 @@ describe("espace de support avec Neon", () => {
       limit: 10,
     });
     expect(adminList).toHaveLength(1);
+    await adminCaller.adminSetPriority({
+      ticketId: ticket.id,
+      priority: "high",
+    });
+    const highPriorityTickets = await adminCaller.adminList({
+      query: ticket.ticketNumber,
+      status: "all",
+      priority: "high",
+      limit: 10,
+    });
+    expect(highPriorityTickets).toHaveLength(1);
+    expect(highPriorityTickets[0].priority).toBe("high");
     await adminCaller.adminSetStatus({
       ticketId: ticket.id,
       status: "in_progress",

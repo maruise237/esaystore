@@ -60,6 +60,11 @@ export const supportAuthorTypeEnum = pgEnum("support_author_type", [
   "user",
   "admin",
 ]);
+export const supportTicketPriorityEnum = pgEnum("support_ticket_priority", [
+  "low",
+  "medium",
+  "high",
+]);
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -147,6 +152,7 @@ export const supportTickets = pgTable(
     }),
     category: supportTicketCategoryEnum("category").notNull(),
     subject: varchar("subject", { length: 180 }).notNull(),
+    priority: supportTicketPriorityEnum("priority").default("medium").notNull(),
     status: supportTicketStatusEnum("status").default("open").notNull(),
     assignedAdminId: uuid("assigned_admin_id").references(() => users.id, {
       onDelete: "set null",
@@ -168,6 +174,11 @@ export const supportTickets = pgTable(
   table => [
     index("support_tickets_user_status_idx").on(table.userId, table.status),
     index("support_tickets_status_last_message_idx").on(
+      table.status,
+      table.lastMessageAt
+    ),
+    index("support_tickets_priority_status_last_message_idx").on(
+      table.priority,
       table.status,
       table.lastMessageAt
     ),

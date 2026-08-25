@@ -103,6 +103,9 @@ export default function AdminPanel({
     { limit: 50 },
     { enabled: isAdmin && activeTab === "activity" }
   );
+  const supportSummary = trpc.support.adminSummary.useQuery(undefined, {
+    enabled: isAdmin,
+  });
   const claimInitialAccess = trpc.admin.claimInitialAccess.useMutation({
     onSuccess: () => window.location.reload(),
   });
@@ -153,7 +156,11 @@ export default function AdminPanel({
     setUserActive.isPending ||
     setUserRole.isPending;
   const queryError =
-    overview.error || shopList.error || userList.error || activity.error;
+    overview.error ||
+    shopList.error ||
+    userList.error ||
+    activity.error ||
+    supportSummary.error;
 
   const submitPendingAction = () => {
     if (!pendingAction) return;
@@ -313,6 +320,17 @@ export default function AdminPanel({
               >
                 <Icon className="h-4 w-4" />
                 {tab.label}
+                {tab.id === "support" &&
+                  (supportSummary.data?.pending ?? 0) > 0 && (
+                    <span
+                      aria-label={`${supportSummary.data?.pending} demandes de support à traiter`}
+                      className="grid min-w-5 place-items-center rounded-full bg-[#d1e980] px-1.5 py-0.5 text-[10px] font-bold text-[#1e2924]"
+                    >
+                      {supportSummary.data!.pending > 99
+                        ? "99+"
+                        : supportSummary.data!.pending}
+                    </span>
+                  )}
               </button>
             );
           })}

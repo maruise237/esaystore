@@ -122,3 +122,7 @@
 - [x] Ajouter une interface administrateur pour filtrer, répondre, traiter et clôturer les demandes utilisateurs.
 - [x] Écarter les e-mails transactionnels selon la décision utilisateur, au profit de la messagerie de support intégrée.
 - [x] Tester l’isolation des demandes, les échanges support et la clôture, puis valider le build et Neon.
+- [x] Ajouter des priorités basse, moyenne et haute aux demandes de support, avec un tri sécurisé côté serveur.
+- [x] Permettre à l’administration de filtrer et de modifier la priorité des demandes de support.
+- [x] Afficher un badge dans la navigation d’administration pour les demandes nécessitant un traitement.
+- [x] Tester les priorités, le badge de demandes en attente et la validation Neon.

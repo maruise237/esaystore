@@ -25,6 +25,7 @@ const ticketCategory = z.enum([
   "feature",
   "other",
 ]);
+const ticketPriority = z.enum(["low", "medium", "high"]);
 
 const messageInput = z.object({
   ticketId: z.string().uuid(),
@@ -43,6 +44,7 @@ async function getUserTicket(ticketId: string, userId: string) {
     .select({
       id: supportTickets.id,
       ticketNumber: supportTickets.ticketNumber,
+      priority: supportTickets.priority,
       status: supportTickets.status,
       userId: supportTickets.userId,
     })
@@ -65,6 +67,7 @@ async function getAnyTicket(ticketId: string) {
     .select({
       id: supportTickets.id,
       ticketNumber: supportTickets.ticketNumber,
+      priority: supportTickets.priority,
       status: supportTickets.status,
       userId: supportTickets.userId,
     })
@@ -99,6 +102,7 @@ async function listMessages(ticketId: string) {
 const adminListInput = z.object({
   query: z.string().trim().max(160).default(""),
   status: z.union([ticketStatus, z.literal("all")]).default("all"),
+  priority: z.union([ticketPriority, z.literal("all")]).default("all"),
   limit: z.number().int().min(1).max(100).default(50),
 });
 
@@ -108,6 +112,7 @@ export const supportRouter = router({
       z.object({
         shopId: z.string().uuid().optional(),
         category: ticketCategory,
+        priority: ticketPriority.default("medium"),
         subject: z.string().trim().min(3).max(180),
         message: z.string().trim().min(5).max(5000),
       })
@@ -129,6 +134,7 @@ export const supportRouter = router({
         userId: ctx.user.id,
         shopId: input.shopId,
         category: input.category,
+        priority: input.priority,
         subject: input.subject,
         lastMessageAt: now,
         lastMessageBy: "user",
@@ -158,6 +164,7 @@ export const supportRouter = router({
           id: supportTickets.id,
           ticketNumber: supportTickets.ticketNumber,
           category: supportTickets.category,
+          priority: supportTickets.priority,
           subject: supportTickets.subject,
           status: supportTickets.status,
           lastMessageAt: supportTickets.lastMessageAt,
@@ -228,6 +235,7 @@ export const supportRouter = router({
         inProgress: sql<number>`count(*) filter (where ${supportTickets.status} = 'in_progress')`,
         waitingUser: sql<number>`count(*) filter (where ${supportTickets.status} = 'waiting_user')`,
         resolved: sql<number>`count(*) filter (where ${supportTickets.status} = 'resolved')`,
+        pending: sql<number>`count(*) filter (where ${supportTickets.status} in ('open', 'in_progress'))`,
       })
       .from(supportTickets);
     return {
@@ -235,6 +243,7 @@ export const supportRouter = router({
       inProgress: Number(result?.inProgress ?? 0),
       waitingUser: Number(result?.waitingUser ?? 0),
       resolved: Number(result?.resolved ?? 0),
+      pending: Number(result?.pending ?? 0),
     };
   }),
 
@@ -244,6 +253,10 @@ export const supportRouter = router({
       input.status === "all"
         ? undefined
         : eq(supportTickets.status, input.status);
+    const priorityCondition =
+      input.priority === "all"
+        ? undefined
+        : eq(supportTickets.priority, input.priority);
     const searchCondition = search
       ? or(
           ilike(supportTickets.ticketNumber, search),
@@ -257,6 +270,7 @@ export const supportRouter = router({
         id: supportTickets.id,
         ticketNumber: supportTickets.ticketNumber,
         category: supportTickets.category,
+        priority: supportTickets.priority,
         subject: supportTickets.subject,
         status: supportTickets.status,
         assignedAdminId: supportTickets.assignedAdminId,
@@ -270,8 +284,11 @@ export const supportRouter = router({
       .from(supportTickets)
       .innerJoin(users, eq(supportTickets.userId, users.id))
       .leftJoin(shops, eq(supportTickets.shopId, shops.id))
-      .where(and(statusCondition, searchCondition))
-      .orderBy(desc(supportTickets.lastMessageAt))
+      .where(and(statusCondition, priorityCondition, searchCondition))
+      .orderBy(
+        sql`case ${supportTickets.priority} when 'high' then 3 when 'medium' then 2 else 1 end desc`,
+        desc(supportTickets.lastMessageAt)
+      )
       .limit(input.limit);
   }),
 
@@ -327,5 +344,21 @@ export const supportRouter = router({
         })
         .where(eq(supportTickets.id, ticket.id));
       return { id: ticket.id, status: input.status };
+    }),
+
+  adminSetPriority: adminProcedure
+    .input(z.object({ ticketId: z.string().uuid(), priority: ticketPriority }))
+    .mutation(async ({ ctx, input }) => {
+      const ticket = await getAnyTicket(input.ticketId);
+      const now = new Date();
+      await getDb()
+        .update(supportTickets)
+        .set({
+          priority: input.priority,
+          assignedAdminId: ctx.user.id,
+          updatedAt: now,
+        })
+        .where(eq(supportTickets.id, ticket.id));
+      return { id: ticket.id, priority: input.priority };
     }),
 });
