@@ -201,3 +201,8 @@
 - [x] Versionner le cache du service worker et détecter les changements de contrôleur PWA sans rechargement automatique risqué.
 - [x] Afficher dans l’application installée une action explicite pour appliquer une mise à jour disponible.
 - [x] Tester, publier et vérifier le parcours de mise à jour PWA sur le domaine EASYSTOR.
+- [ ] Vérifier la cible GitHub et l’état local de la dernière version EASYSTOR.
+- [ ] Préparer puis pousser la synchronisation de la branche principale vers GitHub.
+- [ ] Confirmer le commit distant et clôturer la synchronisation GitHub.
+- [ ] Confirmer le dépôt GitHub EASYSTOR approprié, distinct du projet KamContent actuellement sélectionné.
+- [ ] Vérifier puis synchroniser la branche principale locale vers maruise237/esaystore.
