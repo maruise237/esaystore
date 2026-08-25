@@ -151,7 +151,7 @@
 - [x] Refuser le démarrage de production en l’absence de secret JWT robuste, tout en conservant un mode développement explicite.
 - [x] Ajouter une limitation anti-bruteforce robuste aux procédures publiques de connexion et d’inscription, avec tests et messages non révélateurs.
 - [x] Valider les quatre correctifs P0 par tests unitaires, intégrations Neon, typage, build Vercel et revue de déploiement.
-- [ ] Rétablir le démarrage de production en conservant l’exigence d’un secret JWT robuste et vérifier le domaine publié.
-- [ ] Auditer les parcours utilisateur prioritaires et identifier les frictions observables sur mobile et desktop.
-- [ ] Réduire la friction des parcours retenus avec des retours d’état, des actions plus directes et des messages clairs.
+- [x] Rétablir le démarrage de production en conservant l’exigence d’un secret JWT robuste et vérifier le domaine publié.
+- [x] Auditer les parcours utilisateur prioritaires et identifier les frictions observables sur mobile et desktop.
+- [x] Réduire la friction des parcours retenus avec des retours d’état, des actions plus directes et des messages clairs.
 - [ ] Tester l’accessibilité, les interactions et le déploiement des améliorations d’expérience utilisateur.
