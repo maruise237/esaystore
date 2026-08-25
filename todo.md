@@ -207,3 +207,4 @@
 - [x] Confirmer le dépôt GitHub EASYSTOR approprié, distinct du projet KamContent actuellement sélectionné.
 - [x] Vérifier puis synchroniser la branche principale locale vers maruise237/esaystore.
 - [x] Réconcilier les historiques divergents sur une branche dédiée afin de créer une pull request intégrable sans toucher à main.
+- [x] Vérifier et, si nécessaire, créer un commit direct de la dernière version sur la branche principale GitHub.
