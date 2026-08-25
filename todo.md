@@ -159,3 +159,13 @@
 - [x] Corriger immédiatement les vulnérabilités critiques confirmées et ajouter des tests de non-régression ciblés.
 - [x] Vérifier les correctifs de sécurité par tests, audit de dépendances, typage, build Vercel, intégrations Neon et contrôle du domaine publié.
 - [x] Documenter les protections ajoutées, les risques résiduels et les mesures d’exploitation à conserver.
+- [x] Inventorier les parcours critiques et les écrans EASYSTOR à auditer avec le référentiel UI/UX spécialisé.
+- [x] Examiner les écrans desktop et mobile, y compris les états vides, formulaires, navigation et administration.
+- [x] Évaluer l’accessibilité, la hiérarchie visuelle, la cohérence des composants et la réduction de friction des parcours.
+- [x] Produire un rapport UI/UX priorisé, directement actionnable, avec critères de validation et compromis.
+- [x] Structurer la navigation métier par tâches et rendre les sections persistantes dans l’historique du navigateur.
+- [x] Clarifier le parcours de caisse sur mobile, renforcer les cibles tactiles et rendre les raccourcis clavier découvrables.
+- [x] Renforcer les états chargement, erreur et vide avec annonces accessibles et actions de reprise pertinentes.
+- [x] Rendre le tableau de ventes accessible avec un résumé textuel et des libellés explicites.
+- [x] Harmoniser l’identité « commerce de proximité hors-ligne » dans les espaces marchand et administrateur sans ajouter de friction.
+- [x] Tester, prévisualiser et documenter les corrections UI/UX livrées.

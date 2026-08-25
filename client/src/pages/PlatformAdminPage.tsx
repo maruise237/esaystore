@@ -20,8 +20,13 @@ export default function PlatformAdminPage() {
     (Boolean(user) && user?.role !== "admin" && bootstrap.isLoading)
   ) {
     return (
-      <main className="grid min-h-screen place-items-center bg-[#f6f4ef]">
+      <main
+        role="status"
+        aria-live="polite"
+        className="grid min-h-screen place-items-center gap-3 bg-[#f6f4ef] text-sm text-[#52634d]"
+      >
         <Loader2 className="h-6 w-6 animate-spin text-[#405a3e]" />
+        <span>Vérification de votre accès sécurisé…</span>
       </main>
     );
   }

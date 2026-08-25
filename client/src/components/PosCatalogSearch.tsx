@@ -32,10 +32,14 @@ export default function PosCatalogSearch({
         type="button"
         variant="outline"
         onClick={onOpenScanner}
-        className="shrink-0"
+        className="h-11 shrink-0"
+        title="Ouvrir le scanner de code-barres (F2)"
       >
         <ScanLine className="mr-2 h-4 w-4" />
         Scanner
+        <kbd className="ml-2 hidden rounded border border-[#d9ddd3] bg-[#f7f8f4] px-1 py-0.5 text-[10px] font-semibold text-[#5f665d] lg:inline">
+          F2
+        </kbd>
       </Button>
     </div>
   );

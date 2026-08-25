@@ -21,7 +21,8 @@ describe("accessibilité de la recherche POS", () => {
     expect(
       screen.getByLabelText("Rechercher un produit dans la caisse")
     ).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Scanner" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Scanner/ })).toBeTruthy();
+    expect(screen.getByText("F2")).toBeTruthy();
     const result = await axe.run(document.body, {
       rules: { "color-contrast": { enabled: false } },
     });

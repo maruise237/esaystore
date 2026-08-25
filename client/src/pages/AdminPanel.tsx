@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Activity,
   ArrowLeft,
@@ -34,6 +34,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
+import {
+  readAdminTab,
+  saveAdminTab,
+  type AdminTab,
+} from "@/lib/adminNavigation";
 import AdminSupportPanel from "./AdminSupportPanel";
 
 type AdminUser = {
@@ -43,7 +48,6 @@ type AdminUser = {
   role: "user" | "admin";
 };
 
-type AdminTab = "overview" | "shops" | "users" | "activity" | "support";
 type AuditAction =
   | "all"
   | "initial_admin_claimed"
@@ -115,7 +119,7 @@ export default function AdminPanel({
   onLogout: () => void;
 }) {
   const utils = trpc.useUtils();
-  const [activeTab, setActiveTab] = useState<AdminTab>("overview");
+  const [activeTab, setActiveTab] = useState<AdminTab>(() => readAdminTab());
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"all" | "active" | "suspended">("all");
   const [auditQuery, setAuditQuery] = useState("");
@@ -126,6 +130,15 @@ export default function AdminPanel({
   );
   const [reason, setReason] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
+  useEffect(() => {
+    const restoreAdminTab = () => setActiveTab(readAdminTab());
+    window.addEventListener("popstate", restoreAdminTab);
+    window.addEventListener("hashchange", restoreAdminTab);
+    return () => {
+      window.removeEventListener("popstate", restoreAdminTab);
+      window.removeEventListener("hashchange", restoreAdminTab);
+    };
+  }, []);
   const isAdmin = user.role === "admin";
   const listInput = useMemo(
     () => ({ query, status, limit: 40 }),
@@ -208,6 +221,7 @@ export default function AdminPanel({
 
   const selectTab = (tab: AdminTab) => {
     setActiveTab(tab);
+    saveAdminTab(tab);
     setQuery("");
     setStatus("all");
   };
