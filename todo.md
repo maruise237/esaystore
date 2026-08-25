@@ -191,3 +191,10 @@
 - [x] Corriger la position et la lisibilité du bouton de déploiement de la barre latérale desktop compacte.
 - [x] Vérifier le comportement compact avec les contrôles clavier et le rendu desktop.
 - [x] Ajouter une non-régression ciblée et publier la correction de barre latérale.
+- [x] Établir et examiner passivement le delta de code pour la revue Claude Code Security Review.
+- [x] Analyser les frontières de confiance et les candidats de vulnérabilité réellement introduits par le delta.
+- [x] Documenter les findings retenus, les limites de revue et les remédiations sans modifier le code sans demande explicite.
+- [ ] Vérifier la version servie par le domaine EASYSTOR et la présence du dernier correctif de barre compacte.
+- [ ] Identifier et résoudre le décalage éventuel de déploiement ou de cache PWA empêchant l’affichage de la mise à jour.
+- [ ] Confirmer la méthode d’actualisation à utiliser et clôturer la vérification de visibilité.
+- [ ] Publier le suivi de revue de sécurité et confirmer la version servie par le domaine EASYSTOR.
