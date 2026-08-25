@@ -146,3 +146,8 @@
 - [x] Vérifier dans le navigateur des sources récentes et spécialisées sur les capacités d’un back-office SaaS 2026 avant de retenir chaque module de la refonte.
 - [x] Rejouer les parcours web et réaliser une revue senior complète : architecture, sécurité, maintenabilité, stabilité, tests, performances, accessibilité et déploiement Vercel/Neon.
 - [x] Produire un rapport priorisé distinguant les problèmes observés, les risques et les améliorations recommandées.
+- [x] Remplacer l’analyse XLSX vulnérable, borner les charges d’import et aligner les limites client, tRPC et Vercel.
+- [x] Rendre les images produit servies par une route serverless compatible Vercel, proxy à même origine depuis une URL signée et contrôle strict de chemin.
+- [x] Refuser le démarrage de production en l’absence de secret JWT robuste, tout en conservant un mode développement explicite.
+- [x] Ajouter une limitation anti-bruteforce robuste aux procédures publiques de connexion et d’inscription, avec tests et messages non révélateurs.
+- [ ] Valider les quatre correctifs P0 par tests unitaires, intégrations Neon, typage, build Vercel et revue de déploiement.

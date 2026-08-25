@@ -4,6 +4,7 @@
   "outputDirectory": "dist/public",
   "cleanUrls": true,
   "rewrites": [
+    { "source": "/manus-storage/(.*)", "destination": "/api/manus-storage/$1" },
     { "source": "/((?!api/.*).*)", "destination": "/index.html" }
   ],
   "headers": [

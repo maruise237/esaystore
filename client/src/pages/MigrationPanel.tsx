@@ -14,6 +14,7 @@ import {
   parseMigrationFile,
   type MigrationData,
 } from "@/lib/sheetMigration";
+import { MAX_IMPORT_FILE_BYTES, MAX_IMPORT_PAYLOAD_BYTES, serializedByteLength } from "../../../shared/importLimits";
 import { trpc } from "@/lib/trpc";
 
 const strategyCopy = {
@@ -71,9 +72,9 @@ export default function MigrationPanel({ shopId }: { shopId: string }) {
       );
       return;
     }
-    if (file.size > 12 * 1024 * 1024) {
+    if (file.size > MAX_IMPORT_FILE_BYTES) {
       setNotice(
-        "Ce fichier dépasse la limite de 12 Mo. Réduisez-le ou séparez les onglets."
+        "Ce fichier dépasse la limite sécurisée de 2 Mo. Réduisez-le ou séparez les onglets."
       );
       return;
     }
@@ -89,6 +90,10 @@ export default function MigrationPanel({ shopId }: { shopId: string }) {
         setNotice(
           "Aucune donnée reconnue. Vérifiez les noms d’onglets ou les en-têtes de colonnes."
         );
+        return;
+      }
+      if (serializedByteLength(result.data) > MAX_IMPORT_PAYLOAD_BYTES) {
+        setNotice("Les données extraites dépassent la limite sécurisée de l’import. Réduisez le nombre de lignes ou séparez les onglets.");
         return;
       }
       setData(result.data);
@@ -115,7 +120,7 @@ export default function MigrationPanel({ shopId }: { shopId: string }) {
   const exportWorkbook = async () => {
     const result = await exportData.refetch();
     if (result.data) {
-      downloadEasystorWorkbook(
+      await downloadEasystorWorkbook(
         result.data,
         `EASYSTOR-export-${new Date().toISOString().slice(0, 10)}.xlsx`
       );

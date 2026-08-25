@@ -6,7 +6,24 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { getUserById } from "./db";
 import { COOKIE_NAME, ONE_YEAR_MS } from "../shared/const";
 
-const sessionSecret = () => new TextEncoder().encode(process.env.JWT_SECRET || "development-secret-change-me");
+const DEVELOPMENT_SESSION_SECRET = "development-secret-change-me";
+const MINIMUM_PRODUCTION_SECRET_LENGTH = 32;
+
+function sessionSecret() {
+  const configured = process.env.JWT_SECRET?.trim();
+  if (!configured) {
+    if (process.env.NODE_ENV === "production") throw new Error("JWT_SECRET is required in production");
+    return new TextEncoder().encode(DEVELOPMENT_SESSION_SECRET);
+  }
+  if (process.env.NODE_ENV === "production" && configured.length < MINIMUM_PRODUCTION_SECRET_LENGTH) {
+    throw new Error(`JWT_SECRET must contain at least ${MINIMUM_PRODUCTION_SECRET_LENGTH} characters in production`);
+  }
+  return new TextEncoder().encode(configured);
+}
+
+export function assertSessionSecretConfigured() {
+  sessionSecret();
+}
 
 export async function hashPassword(password: string) {
   return bcrypt.hash(password, 12);

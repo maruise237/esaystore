@@ -1,6 +1,7 @@
 import {
   boolean,
   date,
+  integer,
   index,
   jsonb,
   numeric,
@@ -87,6 +88,22 @@ export const users = pgTable("users", {
     .defaultNow()
     .notNull(),
 });
+
+export const authRateLimits = pgTable(
+  "auth_rate_limits",
+  {
+    key: varchar("key", { length: 64 }).primaryKey(),
+    attemptCount: integer("attempt_count").default(0).notNull(),
+    windowStartedAt: timestamp("window_started_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    blockedUntil: timestamp("blocked_until", { withTimezone: true }),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  table => [index("auth_rate_limits_blocked_idx").on(table.blockedUntil)]
+);
 
 export const shops = pgTable("shops", {
   id: uuid("id").defaultRandom().primaryKey(),

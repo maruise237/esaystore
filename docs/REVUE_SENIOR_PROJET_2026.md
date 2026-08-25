@@ -63,6 +63,15 @@ Les tables et journaux Neon ont été interrogés en **lecture seule**. Aucune d
 | P2 — performance et évolution | Scinder `Workspace.tsx` et `AdminPanel.tsx` par domaine; ajouter des imports paresseux pour les panneaux rarement ouverts et définir un budget de bundle. | Le premier chargement ne contient plus les modules non essentiels et Vite n’émet plus d’avertissement de paquet principal. |
 | P2 — exploitation | Ajouter un linting, un contrôle de couverture et une CI; activer une solution d’observabilité de requêtes Neon adaptée à l’environnement. | Toute modification passe automatiquement typage, tests, build et seuils qualité avant livraison. |
 
+## Correctifs P0 appliqués le 25 août 2026
+
+| Risque initial | Correctif livré | Validation |
+| --- | --- | --- |
+| Analyse XLSX vulnérable et limite incohérente | `xlsx` a été retiré. L’import utilise désormais `read-excel-file` côté navigateur, l’export utilise `exceljs`, et la taille est bornée à 2 Mo pour le fichier comme pour le payload sérialisé. Les handlers développement et Vercel partagent désormais une limite de corps JSON de 4 Mo. | Régressions CSV et XLSX généré en test réussies ; validation d’intégration migration Neon réussie. |
+| Images produit incompatibles avec Vercel | Une fonction Vercel `/api/manus-storage/[...key]` sert seulement les clés catalogue validées, télécharge l’image signée côté serveur et la renvoie à même origine ; la réécriture Vercel préserve les URLs existantes. | Tests des chemins autorisés, refus de traversée et proxy d’image réussis. |
+| Secret JWT permissif | La production exige désormais un `JWT_SECRET` non vide d’au moins 32 caractères dès le démarrage Express et au chargement de la fonction tRPC. Le secret de développement ne reste disponible qu’en mode explicitement non production. | Tests de refus de secret absent ou trop court réussis. |
+| Absence d’anti-bruteforce | Une table Neon indexée conserve un compteur haché par IP, identifiant et opération. Connexion et inscription sont bloquées quinze minutes dès la cinquième tentative, puis le compteur est effacé après succès. | Test d’intégration Neon : blocage puis réinitialisation réussis. |
+
 ## Conclusion
 
 EASYSTOR présente un socle métier cohérent : isolation par boutique, contrôles de rôle, transactions de vente, journalisation administrative et tests Neon sont déjà bien structurés. Sa **première priorité n’est pas fonctionnelle** mais opérationnelle : sécuriser la chaîne d’import, fermer les écarts Vercel autour du stockage, imposer les secrets et limiter les tentatives d’authentification. Les optimisations de bundle, de découpage de composants et d’outillage peuvent ensuite renforcer durablement la maintenabilité sans perturber les parcours commerçants existants.

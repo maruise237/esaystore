@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildEasystorWorkbook, detectSheetKind, parseSheetDate } from "./sheetMigration";
+import ExcelJS from "exceljs";
+import { buildEasystorWorkbook, detectSheetKind, parseMigrationFile, parseSheetDate } from "./sheetMigration";
 
 describe("migration de fichiers", () => {
   it("recognizes common French worksheet names and headers", () => {
@@ -17,6 +18,24 @@ describe("migration de fichiers", () => {
 
   it("builds one Google Sheets-compatible workbook with all business tabs", () => {
     const workbook = buildEasystorWorkbook({ products: [], variants: [], customers: [], sales: [], saleItems: [], expenses: [], receivables: [], repayments: [], closures: [], stockMovements: [], currencies: [], exchangeRates: [] });
-    expect(workbook.SheetNames).toEqual(["Guide", "Produits", "Variantes", "Clients", "Ventes", "Lignes de vente", "Dépenses", "Créances", "Remboursements", "Clôtures", "Mouvements stock", "Devises", "Taux de change"]);
+    expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual(["Guide", "Produits", "Variantes", "Clients", "Ventes", "Lignes de vente", "Dépenses", "Créances", "Remboursements", "Clôtures", "Mouvements stock", "Devises", "Taux de change"]);
+  });
+
+  it("parses a bounded CSV import without relying on the legacy XLSX parser", async () => {
+    const content = "Nom;Prix de vente;Prix d’achat;Stock\nSavon;750;400;6";
+    const file = { name: "produits.csv", size: new TextEncoder().encode(content).byteLength, text: async () => content } as File;
+    const parsed = await parseMigrationFile(file);
+    expect(parsed.data.products).toEqual([expect.objectContaining({ name: "Savon", salePrice: 750, purchasePrice: 400, stockQuantity: 6 })]);
+  });
+
+  it("parses a generated XLSX product sheet with the browser parser", async () => {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Produits");
+    sheet.addRow(["Nom", "Prix de vente", "Prix d’achat", "Stock"]);
+    sheet.addRow(["Savon XLSX", 900, 500, 4]);
+    const bytes = await workbook.xlsx.writeBuffer();
+    const file = new File([bytes], "produits.xlsx", { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const parsed = await parseMigrationFile(file);
+    expect(parsed.data.products).toEqual([expect.objectContaining({ name: "Savon XLSX", salePrice: 900, purchasePrice: 500, stockQuantity: 4 })]);
   });
 });

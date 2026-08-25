@@ -17,6 +17,7 @@ export default defineConfig({
     include: [
       "server/neon.connection.test.ts",
       "server/neon.schema.test.ts",
+      "server/authRateLimit.integration.test.ts",
       "server/routers/commerce.integration.test.ts",
       "server/routers/closing.integration.test.ts",
       "server/routers/migration.integration.test.ts",
