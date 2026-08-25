@@ -180,7 +180,7 @@ export default function AppShell({
                         "flex w-full items-center rounded-xl py-3 text-left text-sm font-medium transition-[background-color,color,box-shadow] duration-150 ease-out motion-reduce:transition-none",
                         sidebarCollapsed ? "justify-center px-2" : "gap-3 px-3",
                         active === item.id
-                          ? "bg-[#d1e980] text-[#1e2924] shadow-[0_8px_18px_rgba(0,0,0,0.15)]"
+                          ? "bg-[#d1e980] text-[#1e2924] shadow-[0_8px_18px_rgba(15,28,21,0.22)]"
                           : "text-[#cdd6cc] hover:bg-white/[0.08] hover:text-white"
                       )}
                     >

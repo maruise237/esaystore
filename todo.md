@@ -177,3 +177,7 @@
 - [x] Auditer la typographie, les surfaces, les états, les icônes et les transitions sur le parcours principal.
 - [x] Appliquer les raffinements système retenus sans modifier les flux métier ni ajouter de dépendance.
 - [x] Valider la passe de précision par tests, prévisualisations responsive et documentation.
+- [x] Cadrer une revue User Interface Wiki sur les interactions, cibles, typographie et surfaces du parcours principal.
+- [x] Inspecter les règles UI pertinentes et les rendus desktop/mobile avec constats vérifiables fichier:ligne.
+- [x] Corriger les constats prioritaires retenus sans introduire de bibliothèque supplémentaire.
+- [x] Valider, documenter et publier la revue User Interface Wiki.
