@@ -144,3 +144,5 @@
 - [x] Exclure les abonnements et la facturation du périmètre administratif actuel selon la décision utilisateur.
 - [x] Préparer ultérieurement un module distinct d’annonces sponsorisées, après validation de ses règles de diffusion et de modération ; aucune fonctionnalité de ce type n’est ajoutée à la console actuelle.
 - [x] Vérifier dans le navigateur des sources récentes et spécialisées sur les capacités d’un back-office SaaS 2026 avant de retenir chaque module de la refonte.
+- [x] Rejouer les parcours web et réaliser une revue senior complète : architecture, sécurité, maintenabilité, stabilité, tests, performances, accessibilité et déploiement Vercel/Neon.
+- [x] Produire un rapport priorisé distinguant les problèmes observés, les risques et les améliorations recommandées.
