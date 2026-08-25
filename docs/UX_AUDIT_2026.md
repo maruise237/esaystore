@@ -19,3 +19,7 @@ L’invitation PWA doit rester disponible, car elle est utile au produit mobile,
 ## Validation après amélioration
 
 Les captures de l’écran d’entrée à 1280 × 720 px et 375 × 812 px confirment que l’invitation PWA ne recouvre plus le formulaire anonyme. Le parcours d’inscription présente désormais la suite concrète « Boutique → Produit → Vente », les champs conservent leurs libellés et leurs aides, et le contrôle d’affichage du mot de passe reste atteignable sur mobile.
+
+Au premier contrôle du domaine publié après le checkpoint, l’ancienne version d’authentification restait servie malgré un rechargement avec paramètre de cache. La validation locale, les tests et le build sont concluants ; une nouvelle vérification du domaine sera effectuée après la propagation de la révision publiée.
+
+Un second contrôle après attente confirme que le domaine géré sert encore cette même révision antérieure. Les améliorations UX sont donc validées dans l’environnement de développement et dans la suite automatisée, mais la vérification du dernier déploiement demeure bloquée par la propagation de l’hébergement géré, et non par une erreur applicative visible.
