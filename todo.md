@@ -92,3 +92,9 @@
 - [x] Rendre les photos POS directement par React et couvrir le mapping des photos de produits et variantes.
 - [x] Rechercher les variantes de produit par nom, attribut ou code-barres depuis le catalogue.
 - [x] Conserver les détails cash et mobile money dans la devise de transaction et la devise de référence.
+- [x] Simplifier l’entrée principale de la section Produits pour créer un article avec les seuls champs essentiels.
+- [x] Regrouper photos, stock détaillé et variantes dans des actions secondaires explicites.
+- [x] Réduire la densité visuelle et clarifier les libellés du catalogue sur mobile.
+- [x] Vérifier le parcours simplifié de création de produit et de variante avec les tests et la prévisualisation.
+- [x] Ajouter un test ciblé des règles de champs essentiels et d’ouverture des options avancées du catalogue simplifié.
+- [x] Effectuer une prévisualisation dédiée de la section Produits simplifiée sur desktop et mobile.
