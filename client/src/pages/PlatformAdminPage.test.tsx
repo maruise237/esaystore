@@ -50,6 +50,7 @@ describe("route privée de plateforme", () => {
     ).toBeTruthy();
     expect(screen.getByText("Accès opérateur sécurisé")).toBeTruthy();
     expect(screen.getByText("EASYSTOR")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Se connecter" })).toBeTruthy();
     expect(
       screen.queryByText(
         "Pilotez la plateforme, sans toucher aux données métier."

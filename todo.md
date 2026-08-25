@@ -181,3 +181,7 @@
 - [x] Inspecter les règles UI pertinentes et les rendus desktop/mobile avec constats vérifiables fichier:ligne.
 - [x] Corriger les constats prioritaires retenus sans introduire de bibliothèque supplémentaire.
 - [x] Valider, documenter et publier la revue User Interface Wiki.
+- [x] Cadrer la revue de design produit avec la méthode Designer Skills appropriée aux parcours opérationnels EASYSTOR.
+- [x] Examiner l’architecture de l’information, les parcours principaux et les décisions de hiérarchie de l’interface.
+- [x] Corriger les décisions de design prioritaires retenues sans étendre le périmètre métier.
+- [x] Valider, documenter et publier la revue Designer Skills.

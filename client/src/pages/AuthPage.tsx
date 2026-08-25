@@ -6,7 +6,11 @@ import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 
 export default function AuthPage() {
-  const [mode, setMode] = useState<"login" | "register">("register");
+  const [mode, setMode] = useState<"login" | "register">(() =>
+    new URLSearchParams(window.location.search).get("mode") === "login"
+      ? "login"
+      : "register"
+  );
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const passwordHintId = useId();

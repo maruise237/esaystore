@@ -15,7 +15,10 @@ vi.mock("@/lib/trpc", () => ({
 }));
 
 describe("parcours d’authentification", () => {
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    window.history.replaceState({}, "", "/");
+  });
 
   it("explique les étapes initiales, rend le mot de passe visible à la demande et garde une structure accessible", async () => {
     render(<AuthPage />);
@@ -35,5 +38,15 @@ describe("parcours d’authentification", () => {
     expect(screen.getByRole("tab", { name: "Se connecter" }).getAttribute("aria-selected")).toBe("true");
     const result = await axe.run(document.body, { rules: { "color-contrast": { enabled: false } } });
     expect(result.violations).toEqual([]);
+  });
+
+  it("ouvre directement la connexion lorsqu’une intention est fournie dans l’URL", () => {
+    window.history.replaceState({}, "", "/?mode=login");
+    render(<AuthPage />);
+
+    expect(
+      screen.getByRole("tab", { name: "Se connecter" }).getAttribute("aria-selected")
+    ).toBe("true");
+    expect(screen.getByRole("button", { name: "Accéder à ma boutique" })).toBeTruthy();
   });
 });

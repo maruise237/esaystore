@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Loader2, LogIn, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { trpc } from "@/lib/trpc";
 import AdminPanel from "./AdminPanel";
 
 const returnToWorkspace = () => window.location.replace("/");
+const returnToLogin = () => window.location.assign("/?mode=login");
 
 export default function PlatformAdminPage() {
   const { user, loading } = useAuth();
@@ -88,13 +89,14 @@ function RestrictedRoute({ message }: { message: string }) {
           >
             {message}
           </p>
-          <Button
-            variant="outline"
-            className="mt-6"
-            onClick={returnToWorkspace}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" /> Retour à EASYSTOR
-          </Button>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button onClick={returnToLogin} className="bg-[#26352d] text-[#f5f7e8] hover:bg-[#1b2721]">
+              <LogIn className="mr-2 h-4 w-4" /> Se connecter
+            </Button>
+            <Button variant="outline" onClick={returnToWorkspace}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Retour à EASYSTOR
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </main>
