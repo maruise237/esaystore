@@ -72,6 +72,8 @@ Les tables et journaux Neon ont été interrogés en **lecture seule**. Aucune d
 | Secret JWT permissif | La production exige désormais un `JWT_SECRET` non vide d’au moins 32 caractères dès le démarrage Express et au chargement de la fonction tRPC. Le secret de développement ne reste disponible qu’en mode explicitement non production. | Tests de refus de secret absent ou trop court réussis. |
 | Absence d’anti-bruteforce | Une table Neon indexée conserve un compteur haché par IP, identifiant et opération. Connexion et inscription sont bloquées quinze minutes dès la cinquième tentative, puis le compteur est effacé après succès. | Test d’intégration Neon : blocage puis réinitialisation réussis. |
 
+La vérification sur le domaine actuellement géré par Manus confirme qu’une URL `/manus-storage/…` est interceptée par son propre service de stockage et redirigée vers une URL CloudFront signée. Ce comportement d’infrastructure est distinct de la route Vercel ajoutée dans ce dépôt. La fonction `api/manus-storage/[...key]` et la réécriture correspondante sont couvertes par tests et build, mais doivent être vérifiées une fois sur le domaine Vercel effectivement associé au projet.
+
 ## Conclusion
 
 EASYSTOR présente un socle métier cohérent : isolation par boutique, contrôles de rôle, transactions de vente, journalisation administrative et tests Neon sont déjà bien structurés. Sa **première priorité n’est pas fonctionnelle** mais opérationnelle : sécuriser la chaîne d’import, fermer les écarts Vercel autour du stockage, imposer les secrets et limiter les tentatives d’authentification. Les optimisations de bundle, de découpage de composants et d’outillage peuvent ensuite renforcer durablement la maintenabilité sans perturber les parcours commerçants existants.

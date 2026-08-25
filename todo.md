@@ -150,4 +150,4 @@
 - [x] Rendre les images produit servies par une route serverless compatible Vercel, proxy à même origine depuis une URL signée et contrôle strict de chemin.
 - [x] Refuser le démarrage de production en l’absence de secret JWT robuste, tout en conservant un mode développement explicite.
 - [x] Ajouter une limitation anti-bruteforce robuste aux procédures publiques de connexion et d’inscription, avec tests et messages non révélateurs.
-- [ ] Valider les quatre correctifs P0 par tests unitaires, intégrations Neon, typage, build Vercel et revue de déploiement.
+- [x] Valider les quatre correctifs P0 par tests unitaires, intégrations Neon, typage, build Vercel et revue de déploiement.
