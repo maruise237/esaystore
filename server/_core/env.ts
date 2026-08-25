@@ -4,6 +4,7 @@ export const ENV = {
   neonDatabaseUrl: process.env.NEON_DATABASE_URL ?? "",
   oAuthServerUrl: process.env.OAUTH_SERVER_URL ?? "",
   ownerOpenId: process.env.OWNER_OPEN_ID ?? "",
+  platformOwnerEmail: process.env.PLATFORM_OWNER_EMAIL ?? "",
   isProduction: process.env.NODE_ENV === "production",
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",

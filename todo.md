@@ -126,3 +126,8 @@
 - [x] Permettre à l’administration de filtrer et de modifier la priorité des demandes de support.
 - [x] Afficher un badge dans la navigation d’administration pour les demandes nécessitant un traitement.
 - [x] Tester les priorités, le badge de demandes en attente et la validation Neon.
+- [x] Réserver l’initialisation du premier administrateur SaaS au compte propriétaire de la plateforme.
+- [x] Créer une route dédiée d’administration de plateforme, protégée côté client et côté serveur.
+- [x] Masquer l’entrée de navigation administrateur à tous les comptes non administrateurs.
+- [x] Tester les refus d’accès, l’initialisation propriétaire et le routage protégé, puis valider le build et Neon.
+- [x] Ajouter un test positif serveur confirmant que le compte propriétaire configuré peut initialiser le premier administrateur SaaS.

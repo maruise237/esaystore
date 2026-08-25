@@ -10,7 +10,6 @@ import {
   ArrowRightLeft,
   PanelLeftClose,
   PanelLeftOpen,
-  ShieldCheck,
   CircleHelp,
   Settings2,
   ShoppingBag,
@@ -83,8 +82,6 @@ export default function AppShell({
   currency,
   userName,
   onLogout,
-  canOpenAdmin = false,
-  onOpenAdmin,
   children,
 }: {
   active: WorkspaceSection;
@@ -93,8 +90,6 @@ export default function AppShell({
   currency: string;
   userName: string;
   onLogout: () => void;
-  canOpenAdmin?: boolean;
-  onOpenAdmin?: () => void;
   children: ReactNode;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -198,22 +193,6 @@ export default function AppShell({
             <div className="mb-4 px-2">
               <SyncStatus />
             </div>
-          )}
-          {canOpenAdmin && onOpenAdmin && (
-            <Button
-              variant="ghost"
-              onClick={onOpenAdmin}
-              title="Administration SaaS"
-              className={cn(
-                "mb-3 text-[#d1e980] hover:bg-white/[0.08] hover:text-[#d1e980]",
-                sidebarCollapsed ? "h-10 w-10 p-0" : "w-full justify-start"
-              )}
-            >
-              <ShieldCheck
-                className={cn("h-4 w-4", !sidebarCollapsed && "mr-2")}
-              />
-              {!sidebarCollapsed && "Administration SaaS"}
-            </Button>
           )}
           <div
             className={cn(
@@ -328,18 +307,6 @@ export default function AppShell({
             <div className="mx-4 mt-3 rounded-xl bg-[#eaf0df] px-3 py-2">
               <SyncStatus />
             </div>
-            {canOpenAdmin && onOpenAdmin && (
-              <SheetClose asChild>
-                <Button
-                  variant="outline"
-                  onClick={onOpenAdmin}
-                  className="mx-4 mt-3 w-[calc(100%-2rem)] justify-center"
-                >
-                  <ShieldCheck className="mr-2 h-4 w-4" />
-                  Administration SaaS
-                </Button>
-              </SheetClose>
-            )}
             <Button
               variant="outline"
               onClick={onLogout}

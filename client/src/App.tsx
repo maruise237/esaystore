@@ -3,6 +3,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Workspace from "./pages/Workspace";
+import PlatformAdminPage from "./pages/PlatformAdminPage";
 import PwaInstallPrompt from "./components/PwaInstallPrompt";
 
 // NOTE: About Theme
@@ -11,14 +12,13 @@ import PwaInstallPrompt from "./components/PwaInstallPrompt";
 // - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
 
 function App() {
+  const isPlatformAdminRoute = window.location.pathname === "/platform-admin";
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-      >
+      <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
-          <Workspace />
+          {isPlatformAdminRoute ? <PlatformAdminPage /> : <Workspace />}
           <PwaInstallPrompt />
         </TooltipProvider>
       </ThemeProvider>

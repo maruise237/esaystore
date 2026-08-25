@@ -42,4 +42,13 @@ describe("protections de l’administration SaaS", () => {
       })
     ).rejects.toMatchObject<Partial<TRPCError>>({ code: "FORBIDDEN" });
   });
+
+  it("refuse l’initialisation de l’administration au compte non propriétaire", async () => {
+    const caller = appRouter.createCaller(merchantContext());
+    await expect(caller.admin.claimInitialAccess()).rejects.toMatchObject<
+      Partial<TRPCError>
+    >({
+      code: "FORBIDDEN",
+    });
+  });
 });

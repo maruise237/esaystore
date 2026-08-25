@@ -10,6 +10,7 @@ import {
 } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { adminProcedure, protectedProcedure, router } from "../_core/trpc";
+import { ENV } from "../_core/env";
 
 const listInput = z.object({
   query: z.string().trim().max(120).default(""),
@@ -41,22 +42,37 @@ async function getActiveAdminCount() {
   return Number(result?.value ?? 0);
 }
 
+function isPlatformOwner(email: string | null | undefined) {
+  const ownerEmail = ENV.platformOwnerEmail.trim().toLowerCase();
+  return Boolean(ownerEmail) && email?.trim().toLowerCase() === ownerEmail;
+}
+
 export const adminRouter = router({
-  bootstrapStatus: protectedProcedure.query(async () => {
+  bootstrapStatus: protectedProcedure.query(async ({ ctx }) => {
     const [result] = await getDb()
       .select({ value: sql<number>`count(*)` })
       .from(users)
       .where(eq(users.role, "admin"));
-    return { available: Number(result?.value ?? 0) === 0 };
+    const available = Number(result?.value ?? 0) === 0;
+    return {
+      available,
+      canClaimInitialAccess: available && isPlatformOwner(ctx.user.email),
+    };
   }),
 
   /**
-   * Le premier compte connecté peut réclamer l’administration une seule fois,
-   * tant qu’aucun administrateur n’existe. Les accès ultérieurs sont toujours
-   * contrôlés par adminProcedure côté serveur.
+   * Seul le compte propriétaire configuré peut initialiser l’administration
+   * une fois. Les accès ultérieurs sont contrôlés par adminProcedure.
    */
   claimInitialAccess: protectedProcedure.mutation(async ({ ctx }) => {
     if (ctx.user.role === "admin") return { role: "admin" as const };
+    if (!isPlatformOwner(ctx.user.email)) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message:
+          "Seul le compte propriétaire de la plateforme peut initialiser l’administration SaaS.",
+      });
+    }
 
     const [existingAdmin] = await getDb()
       .select({ id: users.id })
