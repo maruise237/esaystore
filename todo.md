@@ -198,3 +198,6 @@
 - [ ] Identifier et résoudre le décalage éventuel de déploiement ou de cache PWA empêchant l’affichage de la mise à jour.
 - [ ] Confirmer la méthode d’actualisation à utiliser et clôturer la vérification de visibilité.
 - [ ] Publier le suivi de revue de sécurité et confirmer la version servie par le domaine EASYSTOR.
+- [ ] Versionner le cache du service worker et détecter les changements de contrôleur PWA sans rechargement automatique risqué.
+- [ ] Afficher dans l’application installée une action explicite pour appliquer une mise à jour disponible.
+- [ ] Tester, publier et vérifier le parcours de mise à jour PWA sur le domaine EASYSTOR.

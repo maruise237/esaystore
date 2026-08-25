@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Workspace from "./pages/Workspace";
 import PlatformAdminPage from "./pages/PlatformAdminPage";
 import PwaInstallPrompt from "./components/PwaInstallPrompt";
+import PwaUpdatePrompt from "./components/PwaUpdatePrompt";
 
 // NOTE: About Theme
 // - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
@@ -20,6 +21,7 @@ function App() {
           <Toaster />
           {isPlatformAdminRoute ? <PlatformAdminPage /> : <Workspace />}
           <PwaInstallPrompt />
+          <PwaUpdatePrompt />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
