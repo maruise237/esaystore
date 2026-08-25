@@ -194,10 +194,10 @@
 - [x] Établir et examiner passivement le delta de code pour la revue Claude Code Security Review.
 - [x] Analyser les frontières de confiance et les candidats de vulnérabilité réellement introduits par le delta.
 - [x] Documenter les findings retenus, les limites de revue et les remédiations sans modifier le code sans demande explicite.
-- [ ] Vérifier la version servie par le domaine EASYSTOR et la présence du dernier correctif de barre compacte.
-- [ ] Identifier et résoudre le décalage éventuel de déploiement ou de cache PWA empêchant l’affichage de la mise à jour.
-- [ ] Confirmer la méthode d’actualisation à utiliser et clôturer la vérification de visibilité.
-- [ ] Publier le suivi de revue de sécurité et confirmer la version servie par le domaine EASYSTOR.
-- [ ] Versionner le cache du service worker et détecter les changements de contrôleur PWA sans rechargement automatique risqué.
-- [ ] Afficher dans l’application installée une action explicite pour appliquer une mise à jour disponible.
-- [ ] Tester, publier et vérifier le parcours de mise à jour PWA sur le domaine EASYSTOR.
+- [x] Vérifier la version servie par le domaine EASYSTOR et la présence du dernier correctif de barre compacte.
+- [x] Identifier et résoudre le décalage éventuel de déploiement ou de cache PWA empêchant l’affichage de la mise à jour.
+- [x] Confirmer la méthode d’actualisation à utiliser et clôturer la vérification de visibilité.
+- [x] Publier le suivi de revue de sécurité et confirmer la version servie par le domaine EASYSTOR.
+- [x] Versionner le cache du service worker et détecter les changements de contrôleur PWA sans rechargement automatique risqué.
+- [x] Afficher dans l’application installée une action explicite pour appliquer une mise à jour disponible.
+- [x] Tester, publier et vérifier le parcours de mise à jour PWA sur le domaine EASYSTOR.
