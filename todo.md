@@ -185,3 +185,6 @@
 - [x] Examiner l’architecture de l’information, les parcours principaux et les décisions de hiérarchie de l’interface.
 - [x] Corriger les décisions de design prioritaires retenues sans étendre le périmètre métier.
 - [x] Valider, documenter et publier la revue Designer Skills.
+- [x] Corriger le chevauchement entre le titre EASYSTOR et les informations de boutique dans le menu mobile.
+- [x] Vérifier la grille des actions et la zone de synchronisation sur un viewport mobile représentatif.
+- [x] Ajouter une couverture de non-régression et publier la correction du menu mobile.

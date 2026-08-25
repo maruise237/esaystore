@@ -23,6 +23,7 @@ import {
   Sheet,
   SheetClose,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -283,13 +284,13 @@ export default function AppShell({
           </SheetTrigger>
           <SheetContent
             side="bottom"
-            className="max-h-[78vh] rounded-t-3xl border-0 bg-[#f8f7f1] pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+            className="max-h-[85dvh] overflow-y-auto overscroll-contain rounded-t-3xl border-0 bg-[#f8f7f1] pb-[max(1.25rem,env(safe-area-inset-bottom))]"
           >
-            <SheetHeader>
+            <SheetHeader className="relative z-10 min-h-24 shrink-0 gap-1 border-b border-[#e4e1d7] pb-3 pr-14">
               <SheetTitle className="font-serif text-2xl">EASYSTOR</SheetTitle>
-              <p className="text-sm text-[#71756d]">
+              <SheetDescription className="text-sm text-[#71756d]">
                 {shopName} · {currency}
-              </p>
+              </SheetDescription>
             </SheetHeader>
             <div className="space-y-4 px-4 pb-2">
               {mobileSecondaryGroups.map(({ group, items }) => (

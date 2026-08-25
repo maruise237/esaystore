@@ -80,6 +80,32 @@ describe("barre latérale desktop", () => {
     expect(screen.getByRole("button", { name: "Synchronisation" })).toBeTruthy();
   });
 
+  it("réserve un en-tête distinct et défilable au menu mobile", async () => {
+    const user = userEvent.setup();
+    render(
+      <AppShell
+        active="dashboard"
+        onNavigate={vi.fn()}
+        shopName="Boutique test"
+        currency="XAF"
+        userName="Aline"
+        onLogout={vi.fn()}
+      >
+        <p>Contenu</p>
+      </AppShell>
+    );
+
+    await user.click(screen.getByRole("button", { name: "Menu" }));
+    const description = screen.getByText("Boutique test · XAF");
+    const header = description.closest('[data-slot="sheet-header"]');
+    const content = description.closest('[data-slot="sheet-content"]');
+
+    expect(header?.className).toContain("min-h-24");
+    expect(header?.className).toContain("pr-14");
+    expect(content?.className).toContain("overflow-y-auto");
+    expect(content?.className).toContain("max-h-[85dvh]");
+  });
+
   it.each([540, 720])(
     "garde toutes les sections et la déconnexion atteignables à hauteur desktop %ipx",
     async height => {
