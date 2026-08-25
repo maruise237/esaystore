@@ -169,3 +169,7 @@
 - [x] Rendre le tableau de ventes accessible avec un résumé textuel et des libellés explicites.
 - [x] Harmoniser l’identité « commerce de proximité hors-ligne » dans les espaces marchand et administrateur sans ajouter de friction.
 - [x] Tester, prévisualiser et documenter les corrections UI/UX livrées.
+- [x] Définir la direction de finition Impeccable et les surfaces opérationnelles prioritaires d’EASYSTOR.
+- [x] Réaliser un audit visuel reproductible des composants, états et comportements d’interface.
+- [x] Raffiner les détails de hiérarchie, densité, feedback, accessibilité et micro-interactions retenus.
+- [x] Vérifier les finitions sur desktop et mobile, puis documenter et publier les résultats.

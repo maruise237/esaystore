@@ -21,6 +21,12 @@ describe("parcours d’authentification", () => {
     render(<AuthPage />);
     expect(screen.getByText("1. Boutique")).toBeTruthy();
     expect(screen.getByText("2. Produit")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Chaque vente garde son reçu, son stock et son paiement alignés."
+      )
+    ).toBeTruthy();
+    expect(screen.getByText("Même hors connexion")).toBeTruthy();
     const password = screen.getByLabelText("Mot de passe") as HTMLInputElement;
     expect(password.type).toBe("password");
     fireEvent.click(screen.getByRole("button", { name: "Afficher le mot de passe" }));

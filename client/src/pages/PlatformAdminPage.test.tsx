@@ -48,6 +48,8 @@ describe("route privée de plateforme", () => {
         "Cette console est réservée aux administrateurs de la plateforme."
       )
     ).toBeTruthy();
+    expect(screen.getByText("Accès opérateur sécurisé")).toBeTruthy();
+    expect(screen.getByText("EASYSTOR")).toBeTruthy();
     expect(
       screen.queryByText(
         "Pilotez la plateforme, sans toucher aux données métier."

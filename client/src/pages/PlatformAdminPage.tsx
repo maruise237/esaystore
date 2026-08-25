@@ -56,15 +56,29 @@ export default function PlatformAdminPage() {
 
 function RestrictedRoute({ message }: { message: string }) {
   return (
-    <main className="grid min-h-screen place-items-center bg-[#f6f4ef] p-5">
-      <Card className="w-full max-w-lg border-0 bg-white shadow-[0_18px_50px_rgba(30,41,36,0.12)]">
+    <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[#f6f4ef] p-5 lg:p-10">
+      <aside className="absolute inset-y-0 left-0 hidden w-[38%] bg-[#1e2924] p-12 text-[#f7f5ee] lg:flex lg:flex-col">
+        <div className="flex items-center gap-3">
+          <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[#d1e980] text-[#1e2924]">
+            <ShieldCheck className="h-5 w-5" />
+          </div>
+          <span className="font-serif text-2xl">EASYSTOR</span>
+        </div>
+        <div className="my-auto max-w-xs">
+          <p className="font-serif text-5xl leading-[1.02] tracking-tight">Control</p>
+          <p className="mt-5 text-base leading-relaxed text-[#cdd6cc]">
+            Les accès, boutiques et demandes sensibles de la plateforme restent sous supervision.
+          </p>
+        </div>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#b7ce69]">
+          Accès opérateur sécurisé
+        </p>
+      </aside>
+      <Card className="relative w-full max-w-lg border-0 bg-white shadow-[0_18px_50px_rgba(30,41,36,0.16)] lg:ml-[22%]">
         <CardContent className="p-6 sm:p-9">
           <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[#1e2924] text-[#d1e980]">
             <ShieldCheck className="h-6 w-6" />
           </div>
-          <p className="mt-6 text-xs font-bold uppercase tracking-[0.16em] text-[#5f665d]">
-            Accès restreint
-          </p>
           <h1 className="mt-2 font-serif text-3xl text-[#20251f]">
             Console de plateforme
           </h1>

@@ -1234,7 +1234,7 @@ function Pos({
                   </button>
                 </div>
                 <div className="mt-3 flex items-center justify-between">
-                  <div className="flex items-center rounded-lg bg-black/15">
+                  <div className="flex items-center rounded-lg bg-[#18231d]/55">
                     <button
                       aria-label={`Réduire ${line.name}`}
                       onClick={() =>
