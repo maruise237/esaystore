@@ -155,3 +155,7 @@
 - [x] Auditer les parcours utilisateur prioritaires et identifier les frictions observables sur mobile et desktop.
 - [x] Réduire la friction des parcours retenus avec des retours d’état, des actions plus directes et des messages clairs.
 - [x] Tester l’accessibilité, les interactions et le déploiement des améliorations d’expérience utilisateur.
+- [x] Auditer les surfaces exposées : authentification, autorisations, routes Vercel, stockage, import, dépendances et données sensibles.
+- [x] Corriger immédiatement les vulnérabilités critiques confirmées et ajouter des tests de non-régression ciblés.
+- [ ] Vérifier les correctifs de sécurité par tests, audit de dépendances, typage, build Vercel, intégrations Neon et contrôle du domaine publié.
+- [x] Documenter les protections ajoutées, les risques résiduels et les mesures d’exploitation à conserver.

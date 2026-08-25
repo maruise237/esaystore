@@ -8,9 +8,9 @@ const WINDOW_MINUTES = 15;
 type AttemptRow = { blocked_until: Date | null };
 
 function sourceIp(req: Request) {
-  const forwarded = req.headers["x-forwarded-for"];
-  const raw = Array.isArray(forwarded) ? forwarded[0] : forwarded;
-  return raw?.split(",", 1)[0]?.trim() || req.ip || "unknown";
+  // Express calcule req.ip après application de la politique `trust proxy` centralisée.
+  // Ne jamais lire x-forwarded-for directement : un client pourrait le falsifier.
+  return req.ip || req.socket.remoteAddress || "unknown";
 }
 
 export function authRateLimitKey(req: Request, scope: "login" | "register", identifier: string) {
