@@ -2,6 +2,7 @@ export type EssentialProductInput = {
   name: string;
   salePrice: string;
   stockQuantity: string;
+  purchasePrice?: string;
 };
 
 export function canCreateEssentialProduct(input: EssentialProductInput) {

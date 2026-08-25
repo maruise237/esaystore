@@ -217,7 +217,7 @@ export default function CatalogPanel({
               <div>
                 <p className="font-serif text-xl">Ajouter un produit</p>
                 <p className="text-xs text-[#697868]">
-                  Commencez par le nom, le prix et le stock.
+                  Commencez par le nom, les prix et le stock.
                 </p>
               </div>
             </div>
@@ -226,7 +226,7 @@ export default function CatalogPanel({
             </p>
           </div>
           <form onSubmit={submitProduct} className="mt-5">
-            <div className="grid gap-3 sm:grid-cols-[1fr_160px_130px]">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_150px_150px_130px]">
               <Field label="Nom du produit">
                 <Input
                   autoFocus
@@ -241,6 +241,16 @@ export default function CatalogPanel({
                   value={product.salePrice}
                   onChange={event =>
                     updateProduct("salePrice", event.target.value)
+                  }
+                  placeholder="0"
+                />
+              </Field>
+              <Field label="Prix d’achat">
+                <Input
+                  inputMode="decimal"
+                  value={product.purchasePrice}
+                  onChange={event =>
+                    updateProduct("purchasePrice", event.target.value)
                   }
                   placeholder="0"
                 />
@@ -272,15 +282,6 @@ export default function CatalogPanel({
                     value={product.barcode}
                     onChange={event =>
                       updateProduct("barcode", event.target.value)
-                    }
-                  />
-                </Field>
-                <Field label="Prix d’achat">
-                  <Input
-                    inputMode="decimal"
-                    value={product.purchasePrice}
-                    onChange={event =>
-                      updateProduct("purchasePrice", event.target.value)
                     }
                   />
                 </Field>

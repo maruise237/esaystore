@@ -98,3 +98,5 @@
 - [x] Vérifier le parcours simplifié de création de produit et de variante avec les tests et la prévisualisation.
 - [x] Ajouter un test ciblé des règles de champs essentiels et d’ouverture des options avancées du catalogue simplifié.
 - [x] Effectuer une prévisualisation dédiée de la section Produits simplifiée sur desktop et mobile.
+- [x] Garder le prix d’achat visible parmi les champs principaux de création de produit.
+- [x] Mettre à jour le test du parcours catalogue court pour inclure le prix d’achat visible mais non bloquant.
