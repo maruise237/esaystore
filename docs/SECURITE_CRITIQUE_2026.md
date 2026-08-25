@@ -20,3 +20,7 @@ Les seules procédures publiques sont la lecture de session, l’inscription, la
 ## Risque résiduel
 
 L’audit de dépendances conserve une alerte **modérée** transitivement apportée par ExcelJS (`uuid` v8), concernant les écritures dans un tampon fourni aux variantes UUID v3/v5/v6. EASYSTOR n’utilise pas ce chemin d’API ; l’import et l’export continuent d’être couverts par les tests. Cette dépendance devra être mise à jour lorsque le mainteneur publiera une chaîne compatible sans alerte.
+
+## Contrôle des en-têtes de déploiement
+
+L’instance Express locale émet les six en-têtes applicatifs attendus. La prévisualisation gérée conserve la CSP, les permissions, la politique de référent et l’isolation d’ouverture. Le domaine géré courant conserve HTTPS/HSTS et `X-Content-Type-Options`, mais ne restitue pas l’intégralité des en-têtes applicatifs : il s’agit d’un comportement de son proxy d’hébergement, distinct du routage Vercel prévu par le projet. Le fichier `vercel.json` déclare les en-têtes complets pour le déploiement Vercel cible ; ils devront être contrôlés sur le domaine Vercel réel avant toute mise en service ou bascule DNS.
