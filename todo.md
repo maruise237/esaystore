@@ -154,4 +154,4 @@
 - [x] Rétablir le démarrage de production en conservant l’exigence d’un secret JWT robuste et vérifier le domaine publié.
 - [x] Auditer les parcours utilisateur prioritaires et identifier les frictions observables sur mobile et desktop.
 - [x] Réduire la friction des parcours retenus avec des retours d’état, des actions plus directes et des messages clairs.
-- [ ] Tester l’accessibilité, les interactions et le déploiement des améliorations d’expérience utilisateur.
+- [x] Tester l’accessibilité, les interactions et le déploiement des améliorations d’expérience utilisateur.

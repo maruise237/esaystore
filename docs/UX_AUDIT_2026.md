@@ -23,3 +23,5 @@ Les captures de l’écran d’entrée à 1280 × 720 px et 375 × 812 px confir
 Au premier contrôle du domaine publié après le checkpoint, l’ancienne version d’authentification restait servie malgré un rechargement avec paramètre de cache. La validation locale, les tests et le build sont concluants ; une nouvelle vérification du domaine sera effectuée après la propagation de la révision publiée.
 
 Un second contrôle après attente confirme que le domaine géré sert encore cette même révision antérieure. Les améliorations UX sont donc validées dans l’environnement de développement et dans la suite automatisée, mais la vérification du dernier déploiement demeure bloquée par la propagation de l’hébergement géré, et non par une erreur applicative visible.
+
+Après la nouvelle publication confirmée, le domaine publié sert bien la révision améliorée : l’aide « Boutique → Produit → Vente », les onglets accessibles, les identifiants de champ et l’action d’affichage du mot de passe sont présents. L’invitation PWA ne s’affiche plus avant authentification, de sorte qu’elle ne peut plus recouvrir l’inscription ou la connexion.
