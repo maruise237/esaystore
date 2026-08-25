@@ -34,7 +34,10 @@ describe("barre latérale desktop", () => {
     toggle.focus();
     await user.keyboard("{Enter}");
     expect(sidebar.className).toContain("w-[76px]");
-    expect(screen.getByLabelText("Développer la barre latérale")).toBeTruthy();
+    const expandButton = screen.getByLabelText("Développer la barre latérale");
+    expect(expandButton).toBeTruthy();
+    expect(expandButton.className).not.toContain("absolute");
+    expect(expandButton.parentElement?.className).toContain("flex-col");
     expect(screen.getByTitle("Produits")).toBeTruthy();
   });
 

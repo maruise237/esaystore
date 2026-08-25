@@ -188,3 +188,6 @@
 - [x] Corriger le chevauchement entre le titre EASYSTOR et les informations de boutique dans le menu mobile.
 - [x] Vérifier la grille des actions et la zone de synchronisation sur un viewport mobile représentatif.
 - [x] Ajouter une couverture de non-régression et publier la correction du menu mobile.
+- [x] Corriger la position et la lisibilité du bouton de déploiement de la barre latérale desktop compacte.
+- [x] Vérifier le comportement compact avec les contrôles clavier et le rendu desktop.
+- [x] Ajouter une non-régression ciblée et publier la correction de barre latérale.

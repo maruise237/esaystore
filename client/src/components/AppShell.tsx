@@ -109,8 +109,8 @@ export default function AppShell({
       >
         <div
           className={cn(
-            "mb-6 flex shrink-0 items-center",
-            sidebarCollapsed ? "justify-center" : "gap-3 px-2"
+            "mb-6 flex shrink-0",
+            sidebarCollapsed ? "flex-col items-center gap-3" : "items-center gap-3 px-2"
           )}
         >
           <div className="grid h-10 w-10 place-items-center rounded-2xl bg-[#d1e980] text-[#1e2924] shadow-[0_8px_22px_rgba(209,233,128,0.18)]">
@@ -136,7 +136,7 @@ export default function AppShell({
             className={cn(
               "grid h-9 w-9 shrink-0 place-items-center rounded-xl text-[#cdd6cc] transition-colors hover:bg-white/[0.1] hover:text-white",
               sidebarCollapsed &&
-                "absolute -right-3 top-5 z-10 border border-white/10 bg-[#293a30] shadow-lg"
+                "border border-white/10 bg-[#293a30] shadow-[0_6px_14px_rgba(15,28,21,0.24)]"
             )}
           >
             {sidebarCollapsed ? (
