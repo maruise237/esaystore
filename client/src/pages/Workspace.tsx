@@ -66,6 +66,7 @@ import {
 import { getOnboardingSteps } from "@/lib/onboarding";
 import { resolveCatalogPhoto } from "@/lib/catalogVariants";
 import PosCatalogSearch from "@/components/PosCatalogSearch";
+import AdminPanel from "./AdminPanel";
 
 const currencyFormat = (value: number, currency = "XAF") =>
   new Intl.NumberFormat("fr-FR", {
@@ -157,6 +158,10 @@ const sectionTitles: Record<
 export default function Workspace() {
   const { user, loading } = useAuth();
   const [active, setActive] = useState<WorkspaceSection>("dashboard");
+  const [adminOpen, setAdminOpen] = useState(false);
+  const adminBootstrap = trpc.admin.bootstrapStatus.useQuery(undefined, {
+    enabled: Boolean(user),
+  });
   const shopsQuery = trpc.shops.list.useQuery(undefined, {
     enabled: Boolean(user),
   });
@@ -181,6 +186,16 @@ export default function Workspace() {
       </div>
     );
   if (!user) return <AuthPage />;
+  if (adminOpen) {
+    return (
+      <AdminPanel
+        user={user}
+        canClaimInitialAccess={Boolean(adminBootstrap.data?.available)}
+        onExit={() => setAdminOpen(false)}
+        onLogout={() => logout.mutate()}
+      />
+    );
+  }
   const activeShop =
     shopsQuery.data?.find(entry => entry.shop.id === shopId) ??
     shopsQuery.data?.[0];
@@ -197,6 +212,10 @@ export default function Workspace() {
       onLogout={() => {
         purgeOfflineData().finally(() => logout.mutate());
       }}
+      canOpenAdmin={
+        user.role === "admin" || Boolean(adminBootstrap.data?.available)
+      }
+      onOpenAdmin={() => setAdminOpen(true)}
     >
       <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-[#e4e1d7] bg-[#f6f4ef]/90 px-4 py-3 backdrop-blur sm:px-5 sm:py-4 lg:px-10">
         <div className="min-w-0">

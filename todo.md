@@ -111,3 +111,9 @@
 - [x] Ajouter des tests UI d’accessibilité ciblés pour la caisse, le catalogue, la migration et la clôture.
 - [x] Auditer les écrans Stock, Crédits, Ventes, Dépenses, Rapports, Devises, Équipe et Synchronisation.
 - [x] Ajouter une couverture d’accessibilité pour les contrôles non couverts ou documenter les résultats d’audit de chaque écran restant.
+- [x] Définir un rôle administrateur SaaS distinct des rôles opérationnels des boutiques et le protéger côté serveur.
+- [x] Créer les procédures d’administration pour les indicateurs globaux, boutiques, comptes utilisateurs et supervision des activités.
+- [x] Construire un panneau d’administration avec vue d’ensemble, recherche, filtrage et actions de gestion sécurisées.
+- [x] Ajouter des contrôles de protection pour la suspension/réactivation des boutiques et la gestion des accès administrateurs.
+- [x] Tester les autorisations administrateur et les parcours de supervision, puis valider le build et les intégrations Neon.
+- [x] Ajouter des tests positifs des procédures admin et une action confirmée dans l’interface de supervision.

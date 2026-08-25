@@ -10,6 +10,7 @@ import {
   ArrowRightLeft,
   PanelLeftClose,
   PanelLeftOpen,
+  ShieldCheck,
   Settings2,
   ShoppingBag,
   WalletCards,
@@ -79,6 +80,8 @@ export default function AppShell({
   currency,
   userName,
   onLogout,
+  canOpenAdmin = false,
+  onOpenAdmin,
   children,
 }: {
   active: WorkspaceSection;
@@ -87,6 +90,8 @@ export default function AppShell({
   currency: string;
   userName: string;
   onLogout: () => void;
+  canOpenAdmin?: boolean;
+  onOpenAdmin?: () => void;
   children: ReactNode;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -191,6 +196,22 @@ export default function AppShell({
               <SyncStatus />
             </div>
           )}
+          {canOpenAdmin && onOpenAdmin && (
+            <Button
+              variant="ghost"
+              onClick={onOpenAdmin}
+              title="Administration SaaS"
+              className={cn(
+                "mb-3 text-[#d1e980] hover:bg-white/[0.08] hover:text-[#d1e980]",
+                sidebarCollapsed ? "h-10 w-10 p-0" : "w-full justify-start"
+              )}
+            >
+              <ShieldCheck
+                className={cn("h-4 w-4", !sidebarCollapsed && "mr-2")}
+              />
+              {!sidebarCollapsed && "Administration SaaS"}
+            </Button>
+          )}
           <div
             className={cn(
               "mb-3 flex items-center",
@@ -231,7 +252,10 @@ export default function AppShell({
         {children}
       </main>
 
-      <nav aria-label="Navigation mobile" className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-[#dedbd2] bg-[#fbfaf6]/95 px-2 py-2 backdrop-blur lg:hidden">
+      <nav
+        aria-label="Navigation mobile"
+        className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-[#dedbd2] bg-[#fbfaf6]/95 px-2 py-2 backdrop-blur lg:hidden"
+      >
         {mobilePrimary.map(item => {
           const Icon = item.icon;
           return (
@@ -301,6 +325,18 @@ export default function AppShell({
             <div className="mx-4 mt-3 rounded-xl bg-[#eaf0df] px-3 py-2">
               <SyncStatus />
             </div>
+            {canOpenAdmin && onOpenAdmin && (
+              <SheetClose asChild>
+                <Button
+                  variant="outline"
+                  onClick={onOpenAdmin}
+                  className="mx-4 mt-3 w-[calc(100%-2rem)] justify-center"
+                >
+                  <ShieldCheck className="mr-2 h-4 w-4" />
+                  Administration SaaS
+                </Button>
+              </SheetClose>
+            )}
             <Button
               variant="outline"
               onClick={onLogout}
