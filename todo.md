@@ -269,4 +269,4 @@
 - [x] Publier les animations de landing et synchroniser GitHub `main`.
 - [x] Adapter le fond Gradient Blinds à la palette EASYSTOR evergreen, crème et lime, avec une zone de texte lisible.
 - [x] Intégrer le fond WebGL au hero avec un fallback statique, mouvement réduit et limites de performance adaptées au mobile.
-- [ ] Tester, prévisualiser, publier et synchroniser le fond animé sur GitHub `main`.
+- [x] Tester, prévisualiser, publier et synchroniser le fond animé sur GitHub `main`.

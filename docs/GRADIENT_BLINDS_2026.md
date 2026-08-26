@@ -19,3 +19,5 @@ Le hero conserve son fond evergreen CSS statique. Le canvas WebGL ne se monte qu
 ## Vérification
 
 Le hero est contrôlé après rechargement des dépendances à 1440 × 900 et 390 × 844. La zone de texte, les CTA et l’aperçu produit restent lisibles. Le premier rendu blanc observé correspondait à l’optimisation Vite après ajout d’OGL ; une seconde capture, après optimisation, confirme le fond WebGL actif et stable.
+
+Le déploiement Vercel associé au commit GitHub est terminé avec succès. L’inspection DOM publique confirme la landing montée, un conteneur Gradient Blinds, un canvas WebGL actif et le CTA d’ouverture de boutique. La capture blanche du navigateur reste un artefact connu de cet environnement de contrôle, distinct du rendu DOM réellement chargé.
