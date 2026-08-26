@@ -38,4 +38,23 @@ describe("migration de fichiers", () => {
     const parsed = await parseMigrationFile(file);
     expect(parsed.data.products).toEqual([expect.objectContaining({ name: "Savon XLSX", salePrice: 900, purchasePrice: 500, stockQuantity: 4 })]);
   });
+
+  it("parses a management workbook with preamble rows, SKU/client links and formulas without cached values", async () => {
+    const workbook = new ExcelJS.Workbook();
+    const products = workbook.addWorksheet("Produits"); products.addRows([[], [], [], ["SKU", "Produit", "Code catégorie", "Prix achat HT (€)", "Prix vente TTC (€)", "Stock initial", "Stock minimum", "Stock actuel"], ["SKU-01", "Robe importée", "CAT-01", 20, 50, 10, 3, { formula: "F5+1-3" }]]);
+    const customers = workbook.addWorksheet("Clients"); customers.addRows([[], [], [], ["ID client", "Nom complet", "Téléphone"], ["CLI-01", "Aline Client", "+237600000000"]]);
+    const sales = workbook.addWorksheet("Ventes"); sales.addRows([[], [], [], ["ID vente", "Date", "ID client", "Mode paiement", "Statut", "Total TTC (€)"], ["VEN-01", new Date("2026-01-10T00:00:00.000Z"), "CLI-01", "Mobile Money", "Payée", { formula: "SUMIFS(Lignes_Ventes!$H:$H,Lignes_Ventes!$B:$B,A5)" }]]);
+    const lines = workbook.addWorksheet("Lignes_Ventes"); lines.addRows([[], [], [], ["ID ligne", "ID vente", "SKU", "Produit", "Quantité", "Prix unitaire TTC (€)", "Remise ligne (€)", "Total ligne (€)"], ["LV-01", "VEN-01", "SKU-01", { formula: "VLOOKUP(C5,Produits!A:B,2,FALSE)" }, 2, { formula: "VLOOKUP(C5,Produits!A:E,5,FALSE)" }, 0, { formula: "E5*F5" }]]);
+    const movements = workbook.addWorksheet("Stock_Mouvements"); movements.addRows([[], [], [], ["ID mouvement", "Date", "SKU", "Type mouvement", "Quantité signée"], ["MVT-01", new Date("2026-01-10T00:00:00.000Z"), "SKU-01", "Vente", -2], ["MVT-02", new Date("2026-01-11T00:00:00.000Z"), "SKU-01", "Achat", 1]]);
+    const expenses = workbook.addWorksheet("Dépenses"); expenses.addRows([[], [], [], ["ID dépense", "Date", "Catégorie", "Description", "Montant HT (€)", "Total TTC (€)"], ["DEP-01", new Date("2026-01-12T00:00:00.000Z"), "Transport", "Livraison", 20, { formula: "E5*1.2" }]]);
+    const bytes = await workbook.xlsx.writeBuffer();
+    const file = new File([bytes], "gestion-boutique.xlsx", { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const parsed = await parseMigrationFile(file);
+    expect(parsed.data.products).toEqual([expect.objectContaining({ name: "Robe importée", reference: "SKU-01", category: "CAT-01", stockQuantity: 9, salePrice: 50, purchasePrice: 20 })]);
+    expect(parsed.data.customers).toEqual([expect.objectContaining({ name: "Aline Client", phone: "+237600000000" })]);
+    expect(parsed.data.sales).toEqual([expect.objectContaining({ reference: "VEN-01", customerName: "Aline Client", total: 100, mobileMoney: 100 })]);
+    expect(parsed.data.saleItems).toEqual([expect.objectContaining({ saleReference: "VEN-01", productName: "Robe importée", quantity: 2, unitPrice: 50, purchasePrice: 20 })]);
+    expect(parsed.data.expenses).toEqual([expect.objectContaining({ category: "Transport", amount: 20, note: "Livraison" })]);
+    expect(parsed.ignoredSheets).not.toContain("Stock_Mouvements");
+  });
 });

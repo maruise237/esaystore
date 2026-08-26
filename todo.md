@@ -306,3 +306,6 @@
 - [x] Tester, prévisualiser, publier et synchroniser l’identité visuelle unifiée sur GitHub `main`.
 - [x] Identifier les états de connexion et remplacer le badge ambigu par Online/Hors ligne avec icônes Wi-Fi explicites.
 - [x] Tester, prévisualiser, publier et synchroniser l’indicateur de connexion explicite sur GitHub `main`.
+- [x] Analyser le fichier Excel client fourni et identifier précisément le format de gestion non accepté.
+- [x] Étendre l’import de migration pour reconnaître ce format sans régresser sur CSV/XLSX existants.
+- [x] Valider le fichier client, tester, publier et synchroniser la compatibilité étendue sur GitHub `main`.

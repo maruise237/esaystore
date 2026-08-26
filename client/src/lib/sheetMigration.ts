@@ -19,10 +19,17 @@ type SheetRows = Array<Record<string, unknown>>;
 const clean = (value: unknown) => String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/[^a-z0-9]+/g, " ").trim();
 const number = (value: unknown) => {
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
-  const parsed = Number(String(value ?? "").replace(/\s/g, "").replace(",", ".").replace(/[^0-9.-]/g, ""));
+  const source = String(value ?? "").replace(/\s/g, "").replace(/[^0-9,.-]/g, "");
+  const lastComma = source.lastIndexOf(",");
+  const lastDot = source.lastIndexOf(".");
+  const normalized = lastComma > -1 && lastDot > -1
+    ? (lastComma > lastDot ? source.replace(/\./g, "").replace(",", ".") : source.replace(/,/g, ""))
+    : source.replace(",", ".");
+  const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : 0;
 };
 const text = (value: unknown) => String(value ?? "").trim();
+const hasValue = (value: unknown) => value instanceof Date || typeof value === "number" || typeof value === "string" && value.trim().length > 0;
 
 export function parseSheetDate(value: unknown) {
   if (value instanceof Date && !Number.isNaN(value.valueOf())) return value;
@@ -35,12 +42,14 @@ export function parseSheetDate(value: unknown) {
 }
 
 function field(row: Record<string, unknown>, aliases: string[]) {
-  const entry = Object.entries(row).find(([key]) => aliases.includes(clean(key)));
+  const normalizedAliases = aliases.map(clean);
+  const entry = Object.entries(row).find(([key]) => normalizedAliases.includes(clean(key)));
   return entry?.[1];
 }
 
-export function detectSheetKind(name: string, rows: SheetRows): "products" | "customers" | "sales" | "saleItems" | "expenses" | "unknown" {
+export function detectSheetKind(name: string, rows: SheetRows): "products" | "customers" | "sales" | "saleItems" | "expenses" | "stockMovements" | "unknown" {
   const title = clean(name);
+  if (/stock.*mouvement|mouvement.*stock/.test(title)) return "stockMovements";
   if (/ligne.*vente|sale.*line|articles.*vente/.test(title)) return "saleItems";
   if (/produit|product|stock|inventaire/.test(title)) return "products";
   if (/client|customer/.test(title)) return "customers";
@@ -48,6 +57,7 @@ export function detectSheetKind(name: string, rows: SheetRows): "products" | "cu
   if (/depense|expense|charge/.test(title)) return "expenses";
   const keys = Object.keys(rows[0] ?? {}).map(clean);
   if (keys.some((key) => ["code barres", "barcode", "prix vente", "stock"].includes(key))) return "products";
+  if (keys.some((key) => ["quantite signee", "stock apres", "variation"].includes(key))) return "stockMovements";
   if (keys.some((key) => ["telephone", "phone"].includes(key)) && keys.some((key) => ["client", "nom", "name"].includes(key))) return "customers";
   if (keys.some((key) => ["date vente", "sale date", "montant total", "total"].includes(key))) return "sales";
   if (keys.some((key) => ["date depense", "expense date", "categorie"].includes(key))) return "expenses";
@@ -55,7 +65,16 @@ export function detectSheetKind(name: string, rows: SheetRows): "products" | "cu
 }
 
 function rowsFromMatrix(matrix: Array<Array<unknown>>): SheetRows {
-  const [headers = [], ...values] = matrix;
+  const headerTerms = new Set(["sku", "produit", "nom", "id client", "id vente", "id ligne", "date", "categorie", "quantite", "quantite signee", "montant", "prix vente", "prix vente ttc", "prix achat ht", "stock initial", "stock actuel", "mode paiement", "statut"]);
+  let headerIndex = -1;
+  for (let index = 0; index < Math.min(matrix.length, 32); index += 1) {
+    const labels = matrix[index].map((value) => clean(value)).filter(Boolean);
+    const score = labels.filter((label) => headerTerms.has(label)).length;
+    if (labels.length >= 2 && score >= 1) { headerIndex = index; break; }
+  }
+  if (headerIndex < 0) return [];
+  const headers = matrix[headerIndex] ?? [];
+  const values = matrix.slice(headerIndex + 1);
   const labels = headers.map((value) => text(value));
   return values
     .filter((row) => row.some((value) => text(value)))
@@ -85,20 +104,65 @@ function parseCsvRows(source: string): Array<Array<string>> {
   return rows;
 }
 
-function readProducts(rows: SheetRows, sheet: string): MigrationData["products"] {
-  return rows.map((row, index) => ({ sourceId: `${sheet}-${index + 2}`, name: text(field(row, ["nom", "name", "produit", "product"])), barcode: text(field(row, ["code barres", "barcode", "ean"])) || undefined, reference: text(field(row, ["reference", "ref", "sku"])) || undefined, category: text(field(row, ["categorie", "category"])) || undefined, unit: text(field(row, ["unite", "unit"])) || undefined, salePrice: number(field(row, ["prix vente", "prix de vente", "sale price", "price"])), purchasePrice: number(field(row, ["prix achat", "prix d achat", "purchase price", "cost"])), stockQuantity: number(field(row, ["stock", "quantite", "quantity", "stock initial"])), alertThreshold: number(field(row, ["seuil", "alert threshold", "seuil alerte"])) || 5 })).filter((row) => Boolean(row.name));
+function stockDeltas(rows: SheetRows) {
+  const deltas = new Map<string, number>();
+  for (const row of rows) {
+    const reference = text(field(row, ["sku", "reference", "code produit", "produit"]));
+    if (!reference) continue;
+    const delta = number(field(row, ["quantite signee", "variation", "quantite"]));
+    deltas.set(reference, (deltas.get(reference) ?? 0) + delta);
+  }
+  return deltas;
+}
+
+function readProducts(rows: SheetRows, sheet: string, movementDeltas: Map<string, number>): MigrationData["products"] {
+  return rows.map((row, index) => {
+    const reference = text(field(row, ["reference", "ref", "sku"])) || undefined;
+    const initialStock = number(field(row, ["stock initial", "stock depart"]));
+    const currentStock = field(row, ["stock actuel", "stock final", "stock"]);
+    return {
+      sourceId: `${sheet}-${index + 1}`,
+      name: text(field(row, ["nom", "name", "produit", "product"])),
+      barcode: text(field(row, ["code barres", "barcode", "ean"])) || undefined,
+      reference,
+      category: text(field(row, ["categorie", "category", "code categorie"])) || undefined,
+      unit: text(field(row, ["unite", "unit"])) || undefined,
+      salePrice: number(field(row, ["prix vente ttc", "prix vente", "prix de vente", "sale price", "price"])),
+      purchasePrice: number(field(row, ["prix achat ht", "prix achat", "prix d achat", "purchase price", "cost"])),
+      stockQuantity: Math.max(0, hasValue(currentStock) ? number(currentStock) : initialStock + (reference ? movementDeltas.get(reference) ?? 0 : 0)),
+      alertThreshold: number(field(row, ["stock minimum", "seuil", "alert threshold", "seuil alerte"])) || 5,
+    };
+  }).filter((row) => Boolean(row.name));
 }
 function readCustomers(rows: SheetRows, sheet: string): MigrationData["customers"] {
-  return rows.map((row, index) => ({ sourceId: `${sheet}-${index + 2}`, name: text(field(row, ["nom", "name", "client", "customer"])), phone: text(field(row, ["telephone", "phone", "tel"])) || undefined, note: text(field(row, ["note", "commentaire", "comment"])) || undefined })).filter((row) => Boolean(row.name));
+  return rows.map((row, index) => ({ sourceId: `${sheet}-${index + 1}`, name: text(field(row, ["nom complet", "nom", "name", "client", "customer"])), phone: text(field(row, ["telephone", "phone", "tel"])) || undefined, note: text(field(row, ["note", "commentaire", "comment", "segment"])) || undefined })).filter((row) => Boolean(row.name));
 }
-function readSales(rows: SheetRows, sheet: string): MigrationData["sales"] {
-  return rows.flatMap((row, index) => { const soldAt = parseSheetDate(field(row, ["date", "date vente", "sale date", "sold at"])); const total = number(field(row, ["total", "montant", "montant total", "amount"])); if (!soldAt || total <= 0) return []; return [{ sourceId: `${sheet}-${index + 2}`, reference: text(field(row, ["reference", "numero", "sale number", "numero vente"])) || undefined, soldAt, customerName: text(field(row, ["client", "customer", "nom client"])) || undefined, total, cash: number(field(row, ["especes", "cash"])), mobileMoney: number(field(row, ["mobile money", "mobilemoney", "momo"])), discountAmount: number(field(row, ["remise", "discount"])), dueDate: parseSheetDate(field(row, ["echeance", "due date"])) }]; });
+type ParsedSale = MigrationData["sales"][number] & { paymentKind?: "cash" | "mobileMoney" };
+
+function readSales(rows: SheetRows, sheet: string, customersByReference: Map<string, string>): ParsedSale[] {
+  return rows.flatMap((row, index) => {
+    const soldAt = parseSheetDate(field(row, ["date", "date vente", "sale date", "sold at"]));
+    const status = clean(field(row, ["statut", "status"]));
+    if (!soldAt || /annul|cancel/.test(status)) return [];
+    const total = number(field(row, ["total ttc", "total", "montant", "montant total", "amount"]));
+    const customerReference = text(field(row, ["id client", "client", "customer", "nom client"]));
+    const paymentMethod = clean(field(row, ["mode paiement", "payment method", "paiement"]));
+    const paid = /pay|regl|encaisse|recu/.test(status);
+    const paymentKind = /mobile money|momo/.test(paymentMethod) ? "mobileMoney" : "cash";
+    const mobileMoney = number(field(row, ["mobile money", "mobilemoney", "momo"])) || (paid && paymentKind === "mobileMoney" ? total : 0);
+    const cash = number(field(row, ["especes", "cash"])) || (paid && paymentKind === "cash" ? total : 0);
+    return [{ sourceId: `${sheet}-${index + 1}`, reference: text(field(row, ["id vente", "reference", "numero", "sale number", "numero vente"])) || undefined, soldAt, customerName: customersByReference.get(customerReference) || customerReference || undefined, total, cash, mobileMoney, discountAmount: number(field(row, ["remise", "discount"])), dueDate: parseSheetDate(field(row, ["echeance", "due date"])), paymentKind: paid ? paymentKind : undefined }];
+  });
 }
-function readSaleItems(rows: SheetRows, sheet: string): MigrationData["saleItems"] {
-  return rows.map((row, index) => ({ sourceId: `${sheet}-${index + 2}`, saleReference: text(field(row, ["reference vente", "sale reference", "reference", "numero vente"])), productName: text(field(row, ["produit", "product", "nom produit"])), barcode: text(field(row, ["code barres", "barcode", "ean"])) || undefined, quantity: number(field(row, ["quantite", "quantity", "qte"])), unitPrice: number(field(row, ["prix unitaire", "unit price", "prix", "price"])), purchasePrice: number(field(row, ["prix achat", "purchase price", "cost"])) })).filter((row) => Boolean(row.saleReference) && Boolean(row.productName) && row.quantity > 0 && row.unitPrice >= 0);
+function readSaleItems(rows: SheetRows, sheet: string, productsByReference: Map<string, MigrationData["products"][number]>): MigrationData["saleItems"] {
+  return rows.map((row, index) => {
+    const reference = text(field(row, ["sku", "reference produit", "code produit"]));
+    const product = productsByReference.get(reference);
+    return { sourceId: `${sheet}-${index + 1}`, saleReference: text(field(row, ["id vente", "reference vente", "sale reference", "reference", "numero vente"])), productName: text(field(row, ["produit", "product", "nom produit"])) || product?.name || "", barcode: text(field(row, ["code barres", "barcode", "ean"])) || undefined, quantity: number(field(row, ["quantite", "quantity", "qte"])), unitPrice: number(field(row, ["prix unitaire ttc", "prix unitaire", "unit price", "prix", "price"])) || product?.salePrice || 0, purchasePrice: number(field(row, ["prix achat ht", "prix achat", "purchase price", "cost"])) || product?.purchasePrice || 0 };
+  }).filter((row) => Boolean(row.saleReference) && Boolean(row.productName) && row.quantity > 0 && row.unitPrice > 0);
 }
 function readExpenses(rows: SheetRows, sheet: string): MigrationData["expenses"] {
-  return rows.flatMap((row, index) => { const spentAt = parseSheetDate(field(row, ["date", "date depense", "expense date", "spent at"])); const amount = number(field(row, ["montant", "amount", "total"])); if (!spentAt || amount <= 0) return []; return [{ sourceId: `${sheet}-${index + 2}`, category: text(field(row, ["categorie", "category", "type"])) || "Autre", amount, note: text(field(row, ["note", "commentaire", "comment"])) || undefined, spentAt }]; });
+  return rows.flatMap((row, index) => { const spentAt = parseSheetDate(field(row, ["date", "date depense", "expense date", "spent at"])); const amount = number(field(row, ["total ttc", "montant ht", "montant", "amount", "total"])); if (!spentAt || amount <= 0) return []; return [{ sourceId: `${sheet}-${index + 1}`, category: text(field(row, ["categorie", "category", "type"])) || "Autre", amount, note: text(field(row, ["description", "note", "commentaire", "comment"])) || undefined, spentAt }]; });
 }
 
 export async function parseMigrationFile(file: File) {
@@ -106,18 +170,29 @@ export async function parseMigrationFile(file: File) {
   const sheets = /\.csv$/i.test(file.name)
     ? [{ sheet: "CSV", data: parseCsvRows(await file.text()) }]
     : await readXlsxFile(file);
+  const parsedSheets = sheets.map(({ sheet: name, data: matrix }) => { const rows = rowsFromMatrix(matrix as Array<Array<unknown>>); return { name, rows, kind: detectSheetKind(name, rows) }; });
   const data: MigrationData = { products: [], customers: [], sales: [], saleItems: [], expenses: [] };
-  const ignoredSheets: string[] = [];
-  for (const { sheet: name, data: matrix } of sheets) {
-    const rows = rowsFromMatrix(matrix as Array<Array<unknown>>);
-    const kind = detectSheetKind(name, rows);
-    if (kind === "products") data.products.push(...readProducts(rows, name));
-    else if (kind === "customers") data.customers.push(...readCustomers(rows, name));
-    else if (kind === "sales") data.sales.push(...readSales(rows, name));
-    else if (kind === "saleItems") data.saleItems.push(...readSaleItems(rows, name));
-    else if (kind === "expenses") data.expenses.push(...readExpenses(rows, name));
-    else ignoredSheets.push(name);
-  }
+  const ignoredSheets = parsedSheets.filter((sheet) => sheet.kind === "unknown").map((sheet) => sheet.name);
+  const movementDeltas = new Map<string, number>();
+  for (const sheet of parsedSheets.filter((item) => item.kind === "stockMovements")) for (const [reference, delta] of Array.from(stockDeltas(sheet.rows).entries())) movementDeltas.set(reference, (movementDeltas.get(reference) ?? 0) + delta);
+  for (const sheet of parsedSheets.filter((item) => item.kind === "customers")) data.customers.push(...readCustomers(sheet.rows, sheet.name));
+  const customersByReference = new Map<string, string>();
+  for (const sheet of parsedSheets.filter((item) => item.kind === "customers")) for (const row of sheet.rows) { const reference = text(field(row, ["id client", "reference", "code client"])); const name = text(field(row, ["nom complet", "nom", "name", "client"])); if (reference && name) customersByReference.set(reference, name); }
+  for (const sheet of parsedSheets.filter((item) => item.kind === "products")) data.products.push(...readProducts(sheet.rows, sheet.name, movementDeltas));
+  const productsByReference = new Map(data.products.filter((item) => item.reference).map((item) => [item.reference!, item]));
+  const rawSaleItems = parsedSheets.filter((item) => item.kind === "saleItems").flatMap((sheet) => readSaleItems(sheet.rows, sheet.name, productsByReference));
+  const rawSales = parsedSheets.filter((item) => item.kind === "sales").flatMap((sheet) => readSales(sheet.rows, sheet.name, customersByReference));
+  const totalsBySaleReference = new Map<string, number>();
+  for (const item of rawSaleItems) totalsBySaleReference.set(item.saleReference, (totalsBySaleReference.get(item.saleReference) ?? 0) + item.quantity * item.unitPrice);
+  data.sales = rawSales.map(({ paymentKind, ...sale }) => {
+    const total = sale.total > 0 ? sale.total : totalsBySaleReference.get(sale.reference || "") ?? 0;
+    const paid = sale.cash + sale.mobileMoney;
+    if (sale.total === 0 && paymentKind) return { ...sale, total, cash: paymentKind === "cash" ? total : 0, mobileMoney: paymentKind === "mobileMoney" ? total : 0 };
+    return { ...sale, total, cash: paid > 0 && sale.total === 0 ? Math.min(total, sale.cash) : sale.cash, mobileMoney: paid > 0 && sale.total === 0 ? Math.min(Math.max(0, total - sale.cash), sale.mobileMoney) : sale.mobileMoney };
+  }).filter((sale) => sale.total > 0);
+  const saleReferences = new Set(data.sales.map((sale) => sale.reference).filter((value): value is string => Boolean(value)));
+  data.saleItems = rawSaleItems.filter((item) => saleReferences.has(item.saleReference));
+  for (const sheet of parsedSheets.filter((item) => item.kind === "expenses")) data.expenses.push(...readExpenses(sheet.rows, sheet.name));
   if (serializedByteLength(data) > MAX_IMPORT_PAYLOAD_BYTES) throw new Error("Parsed import exceeds the supported payload size");
   return { data, ignoredSheets };
 }
