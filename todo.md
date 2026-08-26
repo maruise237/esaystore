@@ -283,3 +283,5 @@
 - [x] Tester, prévisualiser, publier et synchroniser le retrait du fond Gradient Bars sur GitHub `main`.
 - [x] Adapter et intégrer une grille interactive au hero EASYSTOR avec une palette evergreen lisible.
 - [x] Tester, prévisualiser, publier et synchroniser le fond de grille interactive sur GitHub `main`.
+- [x] Aligner la grille interactive sur la variante fournie : maille 20 px, masque radial et cellules lime au survol.
+- [x] Tester, prévisualiser, publier et synchroniser l’ajustement précis de la grille sur GitHub `main`.

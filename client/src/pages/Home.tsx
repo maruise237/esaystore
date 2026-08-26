@@ -128,9 +128,15 @@ export default function Home() {
 
       <main id="contenu-principal">
         <section className="relative isolate overflow-hidden bg-[#1e2924] pb-16 pt-12 text-[#f7f5ee] sm:pb-24 sm:pt-18 lg:pb-30 lg:pt-24">
-          <InteractiveGridPattern />
+          <InteractiveGridPattern
+            className="[mask-image:radial-gradient(400px_circle_at_center,white,transparent)]"
+            height={20}
+            squares={[80, 80]}
+            squaresClassName="hover:fill-[#d1e980]/[0.38]"
+            width={20}
+          />
           <div className="pointer-events-none absolute right-[-14rem] top-[-18rem] size-[42rem] rounded-full bg-[#d1e980]/[0.075] blur-3xl" aria-hidden="true" />
-          <div className="container relative grid items-center gap-14 lg:grid-cols-[0.96fr_1.04fr] lg:gap-12">
+          <div className="container relative z-10 grid items-center gap-14 lg:grid-cols-[0.96fr_1.04fr] lg:gap-12">
             <div className="max-w-2xl">
               <p className="mb-7 inline-flex items-center gap-2 text-sm font-semibold text-[#d1e980]">
                 <span className="size-2 rounded-full bg-[#d1e980]" aria-hidden="true" />

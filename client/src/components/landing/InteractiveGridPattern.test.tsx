@@ -11,6 +11,7 @@ describe("InteractiveGridPattern", () => {
 
     expect(grid?.getAttribute("aria-hidden")).toBe("true");
     expect(grid?.getAttribute("role")).toBe("presentation");
+    expect(grid?.getAttribute("data-grid-squares")).toBe("80x80");
   });
 
   it("met en évidence une cellule au survol sans la conserver au départ", () => {
@@ -22,9 +23,9 @@ describe("InteractiveGridPattern", () => {
       value: () => ({ left: 0, top: 0, width: 200, height: 200 }),
     });
 
-    expect(activeCell?.getAttribute("opacity")).toBe("0");
+    expect(activeCell?.getAttribute("class")).toContain("opacity-0");
     fireEvent.pointerMove(grid, { clientX: 45, clientY: 65, pointerType: "mouse" });
-    expect(activeCell?.getAttribute("opacity")).toBe("1");
+    expect(activeCell?.getAttribute("class")).toContain("opacity-100");
     expect(activeCell?.getAttribute("x")).toBe("40");
     expect(activeCell?.getAttribute("y")).toBe("60");
   });
