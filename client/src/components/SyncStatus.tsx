@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Cloud, CloudOff, RefreshCw, TriangleAlert } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { RefreshCw, TriangleAlert, Wifi, WifiOff } from "lucide-react";
 import { conflictCount, drainOutbox, pendingCount } from "@/lib/offline";
 import { cn } from "@/lib/utils";
 
@@ -11,7 +11,36 @@ export default function SyncStatus() {
   };
   useEffect(() => { refresh(); window.addEventListener("online", refresh); window.addEventListener("offline", refresh); window.addEventListener("easystor-sync-status", refresh); return () => { window.removeEventListener("online", refresh); window.removeEventListener("offline", refresh); window.removeEventListener("easystor-sync-status", refresh); }; }, []);
   const trigger = async () => { setState((current) => ({ ...current, syncing: true })); await drainOutbox(); await refresh(); setState((current) => ({ ...current, syncing: false })); };
-  const label = !state.online ? "Hors ligne" : state.conflicts ? `${state.conflicts} conflit${state.conflicts > 1 ? "s" : ""}` : state.pending ? `${state.pending} en attente` : "À jour";
-  const Icon = !state.online ? CloudOff : state.conflicts ? TriangleAlert : state.pending ? RefreshCw : Cloud;
-  return <button onClick={trigger} disabled={!state.online || state.syncing} className={cn("flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold transition", !state.online ? "bg-[#f8ddd6] text-[#9b4e3f]" : state.conflicts ? "bg-[#fdeac6] text-[#895a18]" : state.pending ? "bg-[#e7f3b5] text-[#365435]" : "bg-white/10 text-[#cdd6cc]")}><Icon className={cn("h-3.5 w-3.5", state.syncing && "animate-spin")} />{label}</button>;
+  const detail = state.conflicts
+    ? `${state.conflicts} conflit${state.conflicts > 1 ? "s" : ""}`
+    : state.pending
+      ? `${state.pending} en attente`
+      : state.syncing
+        ? "Synchronisation"
+        : null;
+  const networkLabel = state.online ? "Online" : "Hors ligne";
+  const NetworkIcon = state.online ? Wifi : WifiOff;
+  return (
+    <button
+      aria-label={detail ? `${networkLabel} — ${detail}` : networkLabel}
+      disabled={!state.online || state.syncing}
+      onClick={trigger}
+      className={cn(
+        "flex min-h-8 items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-bold transition-[background-color,border-color,color,box-shadow] duration-150 ease-out motion-reduce:transition-none",
+        !state.online
+          ? "border-[#f1b6a9] bg-[#fce8e3] text-[#a33d2c]"
+          : "border-[#a7c58d] bg-[#e9f5dc] text-[#2f6e42] hover:border-[#79a968] hover:bg-[#dff0cf]"
+      )}
+    >
+      <NetworkIcon className="h-4 w-4 shrink-0" strokeWidth={2.2} aria-hidden="true" />
+      <span>{networkLabel}</span>
+      {detail && (
+        <span className="ml-0.5 inline-flex items-center gap-1 border-l border-current/25 pl-1.5 font-semibold opacity-85">
+          {state.conflicts ? <TriangleAlert className="h-3 w-3" aria-hidden="true" /> : null}
+          {state.pending || state.syncing ? <RefreshCw className={cn("h-3 w-3", state.syncing && "animate-spin")} aria-hidden="true" /> : null}
+          {detail}
+        </span>
+      )}
+    </button>
+  );
 }
