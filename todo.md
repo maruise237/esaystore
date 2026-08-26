@@ -279,3 +279,5 @@
 - [x] Tester, prévisualiser, publier et synchroniser le fond Gradient Bars sur GitHub `main`.
 - [x] Renforcer la visibilité du fond Gradient Bars avec des bandes reconnaissables sans perdre la lisibilité evergreen.
 - [x] Tester, prévisualiser, publier et synchroniser l’intensité corrigée du fond Gradient Bars sur GitHub `main`.
+- [x] Retirer le fond Gradient Bars à la demande du propriétaire et restaurer un hero evergreen uni.
+- [x] Tester, prévisualiser, publier et synchroniser le retrait du fond Gradient Bars sur GitHub `main`.
