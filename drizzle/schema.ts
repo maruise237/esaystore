@@ -89,6 +89,24 @@ export const users = pgTable("users", {
     .notNull(),
 });
 
+export const neonAuthIdentities = pgTable(
+  "neon_auth_identities",
+  {
+    externalUserId: uuid("external_user_id").primaryKey(),
+    userId: uuid("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    email: varchar("email", { length: 320 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  table => [index("neon_auth_identities_user_idx").on(table.userId)]
+);
+
 export const authRateLimits = pgTable(
   "auth_rate_limits",
   {

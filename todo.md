@@ -208,3 +208,26 @@
 - [x] Vérifier puis synchroniser la branche principale locale vers maruise237/esaystore.
 - [x] Réconcilier les historiques divergents sur une branche dédiée afin de créer une pull request intégrable sans toucher à main.
 - [x] Vérifier et, si nécessaire, créer un commit direct de la dernière version sur la branche principale GitHub.
+- [x] Identifier les variables d’environnement strictement nécessaires au déploiement Vercel d’EASYSTOR.
+- [x] Fournir un modèle Vercel sans secret réel ni donnée de connexion exposée.
+- [x] Livrer un fichier modèle prêt à copier dans les variables Vercel, avec les intégrations optionnelles séparées.
+- [x] Identifier les valeurs Vercel sensibles qui ne doivent pas être insérées dans un fichier ou affichées en clair.
+- [x] Fournir la procédure de saisie sécurisée des variables EASYSTOR directement dans Vercel.
+- [x] Vérifier le projet Neon réellement associé à EASYSTOR sans exposer de chaîne de connexion.
+- [x] Expliquer l’écart éventuel entre le projet utilisé et les projets visibles dans le compte Neon.
+- [x] Clarifier les variables et le comportement d’authentification EASYSTOR requis sur Vercel.
+- [x] Analyser la migration de l’authentification e-mail/JWT actuelle vers Better Auth sans invalider les comptes existants, puis l’écarter au profit de Neon Auth managé.
+- [x] Préparer le guide Google Cloud OAuth, les URL de rappel et les actions nécessaires du propriétaire du projet.
+- [x] Écarter Better Auth auto-hébergé, ses tables et son adaptation de sessions au profit de Neon Auth managé avant toute publication.
+- [x] Écarter le plugin Better Auth Infrastructure `dash()` au profit de Neon Auth managé et de sa console Neon.
+- [x] Écarter l’exposition locale `/api/auth` Better Auth, qui n’a jamais été publiée, au profit de l’URL Neon Auth managée.
+- [x] Reporter la connexion Google sur Neon Auth, qui garde les rôles et boutiques EASYSTOR côté serveur.
+- [x] Remplacer le plan de tests Better Auth par la validation dédiée Neon Auth avant publication.
+- [x] Remplacer le guide Better Auth par la documentation d’exploitation Neon Auth sans exposer d’identifiants OAuth.
+- [x] Évaluer Neon Auth et remplacer la solution Better Auth préparée, sans migration destructive des données EASYSTOR.
+- [x] Retirer les dépendances, routes, tables et documentation Better Auth non publiées après validation de Neon Auth.
+- [x] Configurer Neon Auth, son origine Vercel autorisée et les variables client/serveur validées par JWKS.
+- [x] Activer la vérification e-mail Neon Auth par OTP afin de bloquer les comptes non confirmés avant l’accès EASYSTOR.
+- [x] Intégrer Neon Auth aux parcours de connexion, inscription, compte et première boutique EASYSTOR.
+- [x] Raccorder une session Neon Auth validée aux rôles plateforme et accès boutiques côté serveur.
+- [x] Tester puis publier Neon Auth avec la documentation d’exploitation Vercel/Neon.

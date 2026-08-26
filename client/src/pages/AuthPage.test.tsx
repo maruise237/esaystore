@@ -5,18 +5,31 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import AuthPage from "./AuthPage";
 
+const { signInSocial, signUpEmail } = vi.hoisted(() => ({ signInSocial: vi.fn(), signUpEmail: vi.fn() }));
+
 vi.mock("@/lib/trpc", () => ({
   trpc: {
     auth: {
       register: { useMutation: () => ({ isPending: false, mutate: vi.fn() }) },
       login: { useMutation: () => ({ isPending: false, mutate: vi.fn() }) },
     },
+    shops: { create: { useMutation: () => ({ isPending: false, mutateAsync: vi.fn() }) } },
+  },
+}));
+
+vi.mock("@/lib/neonAuth", () => ({
+  neonAuthClient: {
+    signIn: { social: signInSocial, email: vi.fn() },
+    signUp: { email: signUpEmail },
+    emailOtp: { verifyEmail: vi.fn() },
+    signOut: vi.fn(),
   },
 }));
 
 describe("parcours d’authentification", () => {
   afterEach(() => {
     cleanup();
+    signUpEmail.mockReset();
     window.history.replaceState({}, "", "/");
   });
 
@@ -48,5 +61,25 @@ describe("parcours d’authentification", () => {
       screen.getByRole("tab", { name: "Se connecter" }).getAttribute("aria-selected")
     ).toBe("true");
     expect(screen.getByRole("button", { name: "Accéder à ma boutique" })).toBeTruthy();
+  });
+
+  it("propose une connexion Google depuis l’onglet de connexion", () => {
+    window.history.replaceState({}, "", "/?mode=login");
+    render(<AuthPage />);
+
+    expect(screen.getByRole("button", { name: "Continuer avec Google" })).toBeTruthy();
+  });
+
+  it("demande le code envoyé par Neon Auth lorsque l’e-mail doit être vérifié", async () => {
+    signUpEmail.mockResolvedValue({ data: { user: { emailVerified: false } } });
+    render(<AuthPage />);
+    fireEvent.change(screen.getByLabelText("Votre nom"), { target: { value: "Jules Kamta" } });
+    fireEvent.change(screen.getByLabelText("Nom de la boutique"), { target: { value: "Épicerie du marché" } });
+    fireEvent.change(screen.getByLabelText("E-mail"), { target: { value: "jules@example.test" } });
+    fireEvent.change(screen.getByLabelText("Mot de passe"), { target: { value: "motdepasse-solide" } });
+    fireEvent.submit(screen.getByRole("button", { name: "Créer ma boutique" }).closest("form")!);
+
+    expect(await screen.findByText(/Un code de vérification a été envoyé/)).toBeTruthy();
+    expect(screen.getByLabelText("Code de vérification")).toBeTruthy();
   });
 });

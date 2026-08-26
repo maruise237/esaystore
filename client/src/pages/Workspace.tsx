@@ -208,7 +208,7 @@ export default function Workspace() {
   const activeShop =
     shopsQuery.data?.find(entry => entry.shop.id === shopId) ??
     shopsQuery.data?.[0];
-  if (!activeShop) return <EmptyShop onCreate={() => shopsQuery.refetch()} />;
+  if (!activeShop) return <EmptyShop />;
   const meta = sectionTitles[active];
 
   return (
@@ -2043,18 +2043,21 @@ function RecoveryBlock({
     </div>
   );
 }
-function EmptyShop({ onCreate }: { onCreate: () => void }) {
+function EmptyShop() {
+  const [shopName, setShopName] = useState("");
+  const createShop = trpc.shops.create.useMutation({ onSuccess: () => window.location.reload() });
   return (
     <div className="grid min-h-screen place-items-center bg-[#f7f5ee] p-6">
       <Card className="max-w-md border-0 bg-white">
         <CardContent className="p-8 text-center">
           <p className="font-serif text-2xl">Aucune boutique configurée</p>
-          <p className="mt-3 text-sm text-[#77776c]">
-            Votre compte ne possède pas encore de boutique accessible. Vérifiez votre invitation ou réessayez après une connexion réseau.
-          </p>
-          <Button onClick={onCreate} className="mt-6">
-            Réessayer
-          </Button>
+          <p className="mt-3 text-sm text-[#77776c]">Créez votre première boutique pour ouvrir la caisse et le catalogue.</p>
+          <form className="mt-6 grid gap-3 text-left" onSubmit={event => { event.preventDefault(); createShop.mutate({ name: shopName, currency: "XAF", country: "CMR" }); }}>
+            <Label htmlFor="first-shop-name">Nom de la boutique</Label>
+            <Input id="first-shop-name" required minLength={2} value={shopName} onChange={event => setShopName(event.target.value)} placeholder="Épicerie du marché" />
+            <Button type="submit" disabled={createShop.isPending}>{createShop.isPending ? "Création…" : "Créer ma boutique"}</Button>
+          </form>
+          {createShop.error && <p className="mt-3 text-sm text-red-700" role="alert">La boutique ne peut pas être créée pour le moment.</p>}
         </CardContent>
       </Card>
     </div>
