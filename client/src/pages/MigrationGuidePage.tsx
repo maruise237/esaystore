@@ -199,6 +199,7 @@ export default function MigrationGuidePage() {
               <p className="text-sm font-bold text-[#46684a]">Garder le contrôle</p>
               <h2 id="controle-donnees" className="mt-4 font-serif text-4xl leading-[1.02] tracking-[-0.025em] sm:text-5xl">Vos tableaux deviennent un point de départ, pas une prison.</h2>
               <p className="mt-6 max-w-[58ch] text-lg leading-relaxed text-[#536153]">Une migration n’empêche pas de revenir à vos données. EASYSTOR garde la possibilité d’exporter l’activité dans un fichier unique compatible avec Google Sheets afin que vous puissiez consulter et archiver vos informations comme vous le souhaitez.</p>
+              <a href="/guides/travailler-hors-connexion" className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-md text-sm font-bold text-[#304631] underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#567b4f]">Voir aussi : travailler hors connexion <ArrowRight className="size-4" aria-hidden="true" /></a>
             </div>
             <div className="rounded-2xl bg-[#1e2924] p-7 text-[#f7f5ee] shadow-[0_18px_42px_rgba(30,41,36,0.18)] sm:p-9">
               <Download className="size-7 text-[#d1e980]" aria-hidden="true" />

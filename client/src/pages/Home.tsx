@@ -322,6 +322,9 @@ export default function Home() {
                 <Wifi className="size-4 text-[#d1e980]" aria-hidden="true" />
                 Pensé pour les réseaux instables
               </div>
+              <a className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-md text-sm font-bold text-[#d1e980] underline-offset-4 hover:underline focus-visible:outline-none" href="/guides/travailler-hors-connexion">
+                Lire le guide pratique hors connexion <ArrowRight className="size-4" aria-hidden="true" />
+              </a>
             </div>
             <OfflinePreview />
           </FadeContent>
@@ -399,7 +402,7 @@ export default function Home() {
           <nav aria-label="Liens de fin de page" className="flex flex-wrap gap-x-5 gap-y-3 text-sm font-semibold text-[#304631]">
             <a className="underline-offset-4 transition-colors hover:text-[#142119] hover:underline" href="/guides/migrer-excel-google-sheets">Guide migration</a>
             <a className="underline-offset-4 transition-colors hover:text-[#142119] hover:underline" href="#tarifs">Tarifs</a>
-            <a className="underline-offset-4 transition-colors hover:text-[#142119] hover:underline" href="#hors-connexion">Hors connexion</a>
+            <a className="underline-offset-4 transition-colors hover:text-[#142119] hover:underline" href="/guides/travailler-hors-connexion">Guide hors connexion</a>
           </nav>
         </div>
         <div className="border-t border-[#d8dad0]">

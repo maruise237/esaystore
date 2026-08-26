@@ -8,6 +8,7 @@ import PlatformAdminPage from "./pages/PlatformAdminPage";
 import AuthPage from "./pages/AuthPage";
 import Home from "./pages/Home";
 import MigrationGuidePage from "./pages/MigrationGuidePage";
+import OfflineGuidePage from "./pages/OfflineGuidePage";
 import PwaInstallPrompt from "./components/PwaInstallPrompt";
 import PwaUpdatePrompt from "./components/PwaUpdatePrompt";
 import { useAuth } from "./_core/hooks/useAuth";
@@ -23,6 +24,7 @@ function App() {
   const isAuthRoute = pathname === "/auth";
   const isWorkspaceRoute = pathname === "/app";
   const isMigrationGuideRoute = pathname === "/guides/migrer-excel-google-sheets";
+  const isOfflineGuideRoute = pathname === "/guides/travailler-hors-connexion";
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
@@ -36,6 +38,8 @@ function App() {
             <Workspace />
           ) : isMigrationGuideRoute ? (
             <MigrationGuidePage />
+          ) : isOfflineGuideRoute ? (
+            <OfflineGuidePage />
           ) : (
             <PublicEntry />
           )}

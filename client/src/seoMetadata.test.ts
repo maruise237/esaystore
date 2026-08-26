@@ -26,5 +26,6 @@ describe("fondations SEO et GEO", () => {
     expect(robots).toContain("Sitemap: https://esaystor.kamtech.online/sitemap.xml");
     expect(sitemap).toContain("<loc>https://esaystor.kamtech.online/</loc>");
     expect(sitemap).toContain("<loc>https://esaystor.kamtech.online/guides/migrer-excel-google-sheets</loc>");
+    expect(sitemap).toContain("<loc>https://esaystor.kamtech.online/guides/travailler-hors-connexion</loc>");
   });
 });
