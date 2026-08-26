@@ -293,3 +293,5 @@
 - [x] Créer et relier un premier guide SEO/GEO utile, factuel et orienté migration Excel/Google Sheets vers EASYSTOR.
 - [x] Renforcer les signaux techniques, les données structurées et les fichiers de découverte adaptés au nouvel actif.
 - [x] Tester, prévisualiser, publier et synchroniser la montée en puissance SEO/GEO sur GitHub `main`.
+- [x] Vérifier la route du guide et rendre son accès immédiatement visible depuis la navigation et la landing.
+- [x] Tester, prévisualiser, publier et synchroniser l’accès renforcé au guide sur GitHub `main`.

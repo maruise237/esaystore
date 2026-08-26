@@ -19,7 +19,7 @@ describe("landing EASYSTOR", () => {
     expect(screen.getByRole("heading", { name: "Vos tableaux ne restent pas derrière." })).toBeTruthy();
     expect(screen.getAllByText(/Excel ou Google Sheets/i).length).toBeGreaterThan(1);
     expect(screen.getByRole("link", { name: "Importer mon activité" }).getAttribute("href")).toBe("/auth?mode=register");
-    expect(screen.getByRole("link", { name: "Lire le guide de migration" }).getAttribute("href")).toBe("/guides/migrer-excel-google-sheets");
+    expect(screen.getAllByRole("link", { name: /Migrer depuis Excel ou Google Sheets|Guide migration|Lire le guide gratuit de migration/ }).every(link => link.getAttribute("href") === "/guides/migrer-excel-google-sheets")).toBe(true);
     expect(screen.getByText(/Commencez avec toutes les fonctionnalités actuellement disponibles/i)).toBeTruthy();
     expect(screen.getByText(/Sans carte bancaire\. Sans paiement requis/i)).toBeTruthy();
     expect(screen.getAllByRole("link", { name: "Tarifs" }).every(link => link.getAttribute("href") === "#tarifs")).toBe(true);
@@ -28,7 +28,7 @@ describe("landing EASYSTOR", () => {
     expect(screen.getByText(/Nous les annoncerons clairement avant tout changement/i)).toBeTruthy();
     const footerNavigation = screen.getByRole("navigation", { name: "Liens de fin de page" });
     expect(footerNavigation).toBeTruthy();
-    expect(within(footerNavigation).getByRole("link", { name: "Migrer mes données" }).getAttribute("href")).toBe("#migrer");
+    expect(within(footerNavigation).getByRole("link", { name: "Guide migration" }).getAttribute("href")).toBe("/guides/migrer-excel-google-sheets");
     expect(screen.getByRole("link", { name: "Connectez-vous pour écrire au support" }).getAttribute("href")).toBe("/auth?mode=login");
     expect(screen.getByRole("heading", { name: "Les réponses utiles pour votre commerce." })).toBeTruthy();
     expect(screen.getByText("Puis-je importer mes fichiers Excel ou Google Sheets ?")).toBeTruthy();

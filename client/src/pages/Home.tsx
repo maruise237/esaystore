@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 
 const navigation = [
   { href: "#vendre", label: "Vendre" },
-  { href: "#migrer", label: "Migrer mes données" },
+  { href: "/guides/migrer-excel-google-sheets", label: "Guide migration" },
   { href: "#tarifs", label: "Tarifs" },
   { href: "#hors-ligne", label: "Hors connexion" },
   { href: "#suivre", label: "Suivre l’activité" },
@@ -181,6 +181,11 @@ export default function Home() {
                   Découvrir l’application <ChevronRight className="size-4" aria-hidden="true" />
                 </a>
               </div>
+              <a href="/guides/migrer-excel-google-sheets" className="mt-6 inline-flex min-h-12 items-center gap-3 rounded-xl border border-[#d1e980]/30 bg-[#26352d]/70 px-4 text-left text-sm font-bold text-[#f7f5ee] transition-colors duration-150 hover:border-[#d1e980] hover:bg-[#314236] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d1e980]">
+                <FileSpreadsheet className="size-5 shrink-0 text-[#d1e980]" aria-hidden="true" />
+                <span><span className="block text-xs font-semibold text-[#c8dc72]">Nouveau guide gratuit</span>Migrer depuis Excel ou Google Sheets</span>
+                <ArrowRight className="ml-auto size-4 shrink-0 text-[#d1e980]" aria-hidden="true" />
+              </a>
               <p className="mt-5 text-sm leading-relaxed text-[#b9c7b7]">
                 Inscription par e-mail, mot de passe et vérification de votre adresse. Vous pouvez aussi démarrer avec vos fichiers existants.
               </p>
@@ -266,7 +271,7 @@ export default function Home() {
                 Importer mon activité <ArrowRight className="size-4" aria-hidden="true" />
               </a>
               <a className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-md text-sm font-bold text-[#405140] underline-offset-4 hover:underline focus-visible:outline-none" href="/guides/migrer-excel-google-sheets">
-                Lire le guide de migration <ArrowRight className="size-4" aria-hidden="true" />
+                Lire le guide gratuit de migration <ArrowRight className="size-4" aria-hidden="true" />
               </a>
             </div>
             <MigrationPreview />
@@ -392,7 +397,7 @@ export default function Home() {
             <p className="mt-2 max-w-md text-sm leading-relaxed">La caisse, le stock et le suivi pour les commerces de proximité.</p>
           </div>
           <nav aria-label="Liens de fin de page" className="flex flex-wrap gap-x-5 gap-y-3 text-sm font-semibold text-[#304631]">
-            <a className="underline-offset-4 transition-colors hover:text-[#142119] hover:underline" href="#migrer">Migrer mes données</a>
+            <a className="underline-offset-4 transition-colors hover:text-[#142119] hover:underline" href="/guides/migrer-excel-google-sheets">Guide migration</a>
             <a className="underline-offset-4 transition-colors hover:text-[#142119] hover:underline" href="#tarifs">Tarifs</a>
             <a className="underline-offset-4 transition-colors hover:text-[#142119] hover:underline" href="#hors-connexion">Hors connexion</a>
           </nav>
