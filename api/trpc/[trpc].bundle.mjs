@@ -27,6 +27,9 @@ __export(schema_exports, {
   paymentMethodEnum: () => paymentMethodEnum,
   productVariants: () => productVariants,
   products: () => products,
+  purchaseItems: () => purchaseItems,
+  purchaseStatusEnum: () => purchaseStatusEnum,
+  purchases: () => purchases,
   receivables: () => receivables,
   repayments: () => repayments,
   saleItems: () => saleItems,
@@ -37,6 +40,7 @@ __export(schema_exports, {
   shopRoleEnum: () => shopRoleEnum,
   shops: () => shops,
   stockMovements: () => stockMovements,
+  suppliers: () => suppliers,
   supportAuthorTypeEnum: () => supportAuthorTypeEnum,
   supportMessages: () => supportMessages,
   supportTicketCategoryEnum: () => supportTicketCategoryEnum,
@@ -80,6 +84,10 @@ var paymentMethodEnum = pgEnum("payment_method", [
   "mobile_money",
   "credit",
   "mixed"
+]);
+var purchaseStatusEnum = pgEnum("purchase_status", [
+  "received",
+  "pending"
 ]);
 var saleStatusEnum = pgEnum("sale_status", ["completed", "cancelled"]);
 var syncKindEnum = pgEnum("sync_kind", [
@@ -360,6 +368,70 @@ var customers = pgTable(
   },
   (table) => [index("customers_shop_name_idx").on(table.shopId, table.name)]
 );
+var suppliers = pgTable(
+  "suppliers",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    shopId: uuid("shop_id").references(() => shops.id, { onDelete: "cascade" }).notNull(),
+    name: varchar("name", { length: 180 }).notNull(),
+    reference: varchar("reference", { length: 80 }),
+    contactName: varchar("contact_name", { length: 180 }),
+    phone: varchar("phone", { length: 48 }),
+    email: varchar("email", { length: 320 }),
+    city: varchar("city", { length: 120 }),
+    deliveryLeadDays: integer("delivery_lead_days"),
+    paymentTerms: varchar("payment_terms", { length: 120 }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [
+    uniqueIndex("suppliers_shop_name_unique").on(table.shopId, table.name),
+    index("suppliers_shop_reference_idx").on(table.shopId, table.reference)
+  ]
+);
+var purchases = pgTable(
+  "purchases",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    shopId: uuid("shop_id").references(() => shops.id, { onDelete: "cascade" }).notNull(),
+    supplierId: uuid("supplier_id").references(() => suppliers.id, {
+      onDelete: "set null"
+    }),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "restrict" }).notNull(),
+    purchaseNumber: varchar("purchase_number", { length: 80 }).notNull(),
+    operationId: varchar("operation_id", { length: 96 }),
+    status: purchaseStatusEnum("status").default("received").notNull(),
+    paymentMethod: varchar("payment_method", { length: 48 }),
+    subtotal: money("subtotal").default(0).notNull(),
+    taxAmount: money("tax_amount").default(0).notNull(),
+    total: money("total").default(0).notNull(),
+    purchasedAt: timestamp("purchased_at", { withTimezone: true }).defaultNow().notNull(),
+    receivedAt: timestamp("received_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [
+    uniqueIndex("purchases_shop_number_unique").on(
+      table.shopId,
+      table.purchaseNumber
+    ),
+    uniqueIndex("purchases_shop_operation_unique").on(
+      table.shopId,
+      table.operationId
+    ),
+    index("purchases_shop_purchased_at_idx").on(table.shopId, table.purchasedAt)
+  ]
+);
+var purchaseItems = pgTable("purchase_items", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  purchaseId: uuid("purchase_id").references(() => purchases.id, { onDelete: "cascade" }).notNull(),
+  productId: uuid("product_id").references(() => products.id, {
+    onDelete: "restrict"
+  }),
+  productName: varchar("product_name", { length: 240 }).notNull(),
+  quantity: quantity("quantity").notNull(),
+  unitPrice: money("unit_price").notNull(),
+  lineTotal: money("line_total").notNull()
+});
 var sales = pgTable(
   "sales",
   {
@@ -1378,10 +1450,13 @@ function serializedByteLength(value) {
 var sourceId = z6.string().trim().min(1).max(70);
 var productRow = z6.object({ sourceId, name: z6.string().trim().min(1).max(240), barcode: z6.string().trim().max(120).optional(), reference: z6.string().trim().max(120).optional(), category: z6.string().trim().max(120).optional(), unit: z6.string().trim().max(24).optional(), salePrice: z6.coerce.number().min(0), purchasePrice: z6.coerce.number().min(0).default(0), stockQuantity: z6.coerce.number().min(0).default(0), alertThreshold: z6.coerce.number().min(0).default(5) });
 var customerRow = z6.object({ sourceId, name: z6.string().trim().min(1).max(180), phone: z6.string().trim().max(48).optional(), note: z6.string().trim().max(1e3).optional() });
+var supplierRow = z6.object({ sourceId, name: z6.string().trim().min(1).max(180), reference: z6.string().trim().max(80).optional(), contactName: z6.string().trim().max(180).optional(), phone: z6.string().trim().max(48).optional(), email: z6.string().trim().email().max(320).optional(), city: z6.string().trim().max(120).optional(), deliveryLeadDays: z6.coerce.number().int().min(0).max(365).optional(), paymentTerms: z6.string().trim().max(120).optional() });
 var saleRow = z6.object({ sourceId, reference: z6.string().trim().max(40).optional(), soldAt: z6.coerce.date(), customerName: z6.string().trim().max(180).optional(), total: z6.coerce.number().positive(), cash: z6.coerce.number().min(0).default(0), mobileMoney: z6.coerce.number().min(0).default(0), discountAmount: z6.coerce.number().min(0).default(0), dueDate: z6.coerce.date().optional() });
 var saleItemRow = z6.object({ sourceId, saleReference: z6.string().trim().min(1).max(40), productName: z6.string().trim().min(1).max(240), barcode: z6.string().trim().max(120).optional(), quantity: z6.coerce.number().positive(), unitPrice: z6.coerce.number().min(0), purchasePrice: z6.coerce.number().min(0).default(0) });
+var purchaseRow = z6.object({ sourceId, reference: z6.string().trim().min(1).max(80), purchasedAt: z6.coerce.date(), supplierName: z6.string().trim().max(180).optional(), status: z6.enum(["received", "pending"]), paymentMethod: z6.string().trim().max(48).optional(), subtotal: z6.coerce.number().min(0).default(0), taxAmount: z6.coerce.number().min(0).default(0), total: z6.coerce.number().positive(), receivedAt: z6.coerce.date().optional() });
+var purchaseItemRow = z6.object({ sourceId, purchaseReference: z6.string().trim().min(1).max(80), productName: z6.string().trim().min(1).max(240), barcode: z6.string().trim().max(120).optional(), quantity: z6.coerce.number().positive(), unitPrice: z6.coerce.number().min(0) });
 var expenseRow = z6.object({ sourceId, category: z6.string().trim().min(1).max(120), amount: z6.coerce.number().positive(), note: z6.string().trim().max(1e3).optional(), spentAt: z6.coerce.date() });
-var payload = z6.object({ products: z6.array(productRow).max(1e3).default([]), customers: z6.array(customerRow).max(1e3).default([]), sales: z6.array(saleRow).max(1e3).default([]), saleItems: z6.array(saleItemRow).max(5e3).default([]), expenses: z6.array(expenseRow).max(1e3).default([]) }).superRefine((value, ctx) => {
+var payload = z6.object({ products: z6.array(productRow).max(1e3).default([]), customers: z6.array(customerRow).max(1e3).default([]), suppliers: z6.array(supplierRow).max(1e3).default([]), sales: z6.array(saleRow).max(1e3).default([]), saleItems: z6.array(saleItemRow).max(5e3).default([]), purchases: z6.array(purchaseRow).max(1e3).default([]), purchaseItems: z6.array(purchaseItemRow).max(5e3).default([]), expenses: z6.array(expenseRow).max(1e3).default([]) }).superRefine((value, ctx) => {
   if (serializedByteLength(value) > MAX_IMPORT_PAYLOAD_BYTES) ctx.addIssue({ code: "custom", message: "Les donn\xE9es d\u2019import d\xE9passent la limite s\xE9curis\xE9e de 2 Mo." });
 });
 var conflictStrategy = z6.enum(["skip", "update", "copy", "block"]);
@@ -1393,10 +1468,13 @@ async function detectConflicts(shopId, data, fileHash) {
   const db = getDb();
   const dates = Array.from(new Set(data.sales.map((row) => dateKey(row.soldAt)).concat(data.expenses.map((row) => dateKey(row.spentAt)))));
   const saleRefs = data.sales.map((row) => row.reference).filter((value) => Boolean(value));
-  const [knownProducts, knownCustomers, knownSales, closedDays, imported] = await Promise.all([
+  const purchaseRefs = data.purchases.map((row) => row.reference);
+  const [knownProducts, knownCustomers, knownSuppliers, knownSales, knownPurchases, closedDays, imported] = await Promise.all([
     db.select({ id: products.id, name: products.name, barcode: products.barcode }).from(products).where(eq7(products.shopId, shopId)),
     db.select({ id: customers.id, name: customers.name, phone: customers.phone }).from(customers).where(eq7(customers.shopId, shopId)),
+    db.select({ id: suppliers.id, name: suppliers.name, email: suppliers.email }).from(suppliers).where(eq7(suppliers.shopId, shopId)),
     saleRefs.length ? db.select({ saleNumber: sales.saleNumber }).from(sales).where(and6(eq7(sales.shopId, shopId), inArray2(sales.saleNumber, saleRefs))) : Promise.resolve([]),
+    purchaseRefs.length ? db.select({ purchaseNumber: purchases.purchaseNumber }).from(purchases).where(and6(eq7(purchases.shopId, shopId), inArray2(purchases.purchaseNumber, purchaseRefs))) : Promise.resolve([]),
     dates.length ? db.select({ businessDate: cashClosures.businessDate }).from(cashClosures).where(and6(eq7(cashClosures.shopId, shopId), inArray2(cashClosures.businessDate, dates))) : Promise.resolve([]),
     db.select({ id: dataImports.id }).from(dataImports).where(and6(eq7(dataImports.shopId, shopId), eq7(dataImports.fingerprint, fileHash))).limit(1)
   ]);
@@ -1404,10 +1482,15 @@ async function detectConflicts(shopId, data, fileHash) {
   const productBarcodes = new Set(knownProducts.map((row) => row.barcode).filter(Boolean));
   const customerNames = new Set(knownCustomers.map((row) => normal(row.name)));
   const customerPhones = new Set(knownCustomers.map((row) => row.phone).filter(Boolean));
+  const supplierNames = new Set(knownSuppliers.map((row) => normal(row.name)));
+  const supplierEmails = new Set(knownSuppliers.map((row) => row.email).filter(Boolean));
   const salesByNumber = new Set(knownSales.map((row) => row.saleNumber));
+  const purchasesByNumber = new Set(knownPurchases.map((row) => row.purchaseNumber));
   const closed = new Set(closedDays.map((row) => row.businessDate));
   const seenProducts = /* @__PURE__ */ new Set();
   const seenCustomers = /* @__PURE__ */ new Set();
+  const seenSuppliers = /* @__PURE__ */ new Set();
+  const seenPurchases = /* @__PURE__ */ new Set();
   const conflicts = [];
   if (imported[0]) conflicts.push({ type: "reimport", sourceId: "fichier", reason: "Ce m\xEAme contenu a d\xE9j\xE0 \xE9t\xE9 import\xE9 pour cette boutique." });
   for (const item of data.products) {
@@ -1420,15 +1503,29 @@ async function detectConflicts(shopId, data, fileHash) {
     if (seenCustomers.has(key) || item.phone && customerPhones.has(item.phone) || customerNames.has(normal(item.name))) conflicts.push({ type: "customer", sourceId: item.sourceId, reason: item.phone && customerPhones.has(item.phone) ? "T\xE9l\xE9phone d\xE9j\xE0 pr\xE9sent" : "Client d\xE9j\xE0 pr\xE9sent ou r\xE9p\xE9t\xE9 dans le fichier" });
     seenCustomers.add(key);
   }
+  for (const item of data.suppliers) {
+    const key = item.email ? `email:${item.email}` : `name:${normal(item.name)}`;
+    if (seenSuppliers.has(key) || item.email && supplierEmails.has(item.email) || supplierNames.has(normal(item.name))) conflicts.push({ type: "supplier", sourceId: item.sourceId, reason: item.email && supplierEmails.has(item.email) ? "E-mail fournisseur d\xE9j\xE0 pr\xE9sent" : "Fournisseur d\xE9j\xE0 pr\xE9sent ou r\xE9p\xE9t\xE9 dans le fichier" });
+    seenSuppliers.add(key);
+  }
   for (const item of data.sales) {
     if (item.reference && salesByNumber.has(item.reference)) conflicts.push({ type: "sale", sourceId: item.sourceId, reason: "R\xE9f\xE9rence de vente d\xE9j\xE0 pr\xE9sente" });
     if (closed.has(dateKey(item.soldAt))) conflicts.push({ type: "business_day", sourceId: item.sourceId, reason: `La caisse du ${dateKey(item.soldAt)} est d\xE9j\xE0 cl\xF4tur\xE9e` });
   }
+  const fileSupplierNames = new Set(data.suppliers.map((item) => normal(item.name)));
+  for (const item of data.purchases) {
+    if (seenPurchases.has(item.reference) || purchasesByNumber.has(item.reference)) conflicts.push({ type: "purchase", sourceId: item.sourceId, reason: "R\xE9f\xE9rence d\u2019achat d\xE9j\xE0 pr\xE9sente ou r\xE9p\xE9t\xE9e dans le fichier" });
+    if (item.supplierName && !supplierNames.has(normal(item.supplierName)) && !fileSupplierNames.has(normal(item.supplierName))) conflicts.push({ type: "purchase", sourceId: item.sourceId, reason: `Le fournisseur ${item.supplierName} est introuvable dans l\u2019onglet Fournisseurs` });
+    seenPurchases.add(item.reference);
+  }
   const fileSaleReferences = new Set(data.sales.map((item) => item.reference).filter((value) => Boolean(value)));
   for (const item of data.saleItems) if (!fileSaleReferences.has(item.saleReference)) conflicts.push({ type: "sale", sourceId: item.sourceId, reason: `La vente ${item.saleReference} est introuvable dans le fichier` });
+  const filePurchaseReferences = new Set(data.purchases.map((item) => item.reference));
+  for (const item of data.purchaseItems) if (!filePurchaseReferences.has(item.purchaseReference)) conflicts.push({ type: "purchase", sourceId: item.sourceId, reason: `L\u2019achat ${item.purchaseReference} est introuvable dans le fichier` });
   const fileProductNames = new Set(data.products.map((item) => normal(item.name)));
   const fileProductBarcodes = new Set(data.products.map((item) => item.barcode).filter(Boolean));
   for (const item of data.saleItems) if ((!item.barcode || !fileProductBarcodes.has(item.barcode)) && !fileProductNames.has(normal(item.productName))) conflicts.push({ type: "product", sourceId: item.sourceId, reason: `Ajoutez ${item.productName} dans l\u2019onglet Produits avec son stock final avant d\u2019importer ses ventes d\xE9taill\xE9es` });
+  for (const item of data.purchaseItems) if ((!item.barcode || !fileProductBarcodes.has(item.barcode)) && !fileProductNames.has(normal(item.productName))) conflicts.push({ type: "product", sourceId: item.sourceId, reason: `Ajoutez ${item.productName} dans l\u2019onglet Produits pour rattacher cette ligne d\u2019achat` });
   for (const product of data.products) if (conflicts.some((row) => row.type === "product" && row.sourceId === product.sourceId)) {
     for (const line of data.saleItems) if (line.barcode && product.barcode === line.barcode || normal(line.productName) === normal(product.name)) conflicts.push({ type: "product", sourceId: line.sourceId, reason: `Le produit ${product.name} existe d\xE9j\xE0 : choisissez \xAB Cr\xE9er une copie \xBB pour reconstituer son historique d\xE9taill\xE9 sans modifier son stock actuel` });
   }
@@ -1439,12 +1536,15 @@ var migrationRouter = router({
   exportData: protectedProcedure.input(z6.object({ shopId: z6.string().uuid() })).query(async ({ ctx, input }) => {
     await assertShopAccess(ctx.user.id, input.shopId, ["owner", "manager"]);
     const db = getDb();
-    const [productRows, variantRows, customerRows, saleRows, lineRows, expenseRows, receivableRows, repaymentRows, closureRows, movementRows, currencyRows, rateRows] = await Promise.all([
+    const [productRows, variantRows, customerRows, supplierRows, saleRows, lineRows, purchaseRows, purchaseLineRows, expenseRows, receivableRows, repaymentRows, closureRows, movementRows, currencyRows, rateRows] = await Promise.all([
       db.select().from(products).where(eq7(products.shopId, input.shopId)),
       db.select().from(productVariants).where(eq7(productVariants.shopId, input.shopId)),
       db.select().from(customers).where(eq7(customers.shopId, input.shopId)),
+      db.select().from(suppliers).where(eq7(suppliers.shopId, input.shopId)),
       db.select({ sale: sales, customerName: customers.name }).from(sales).leftJoin(customers, eq7(sales.customerId, customers.id)).where(eq7(sales.shopId, input.shopId)),
       db.select({ line: saleItems, saleNumber: sales.saleNumber, productBarcode: products.barcode }).from(saleItems).innerJoin(sales, eq7(saleItems.saleId, sales.id)).leftJoin(products, eq7(saleItems.productId, products.id)).where(eq7(sales.shopId, input.shopId)),
+      db.select({ purchase: purchases, supplierName: suppliers.name }).from(purchases).leftJoin(suppliers, eq7(purchases.supplierId, suppliers.id)).where(eq7(purchases.shopId, input.shopId)),
+      db.select({ line: purchaseItems, purchaseNumber: purchases.purchaseNumber, productBarcode: products.barcode }).from(purchaseItems).innerJoin(purchases, eq7(purchaseItems.purchaseId, purchases.id)).leftJoin(products, eq7(purchaseItems.productId, products.id)).where(eq7(purchases.shopId, input.shopId)),
       db.select().from(expenses).where(eq7(expenses.shopId, input.shopId)),
       db.select({ receivable: receivables, customerName: customers.name, saleNumber: sales.saleNumber }).from(receivables).innerJoin(customers, eq7(receivables.customerId, customers.id)).innerJoin(sales, eq7(receivables.saleId, sales.id)).where(eq7(receivables.shopId, input.shopId)),
       db.select({ repayment: repayments, customerName: customers.name, saleNumber: sales.saleNumber }).from(repayments).innerJoin(receivables, eq7(repayments.receivableId, receivables.id)).innerJoin(customers, eq7(receivables.customerId, customers.id)).innerJoin(sales, eq7(receivables.saleId, sales.id)).where(eq7(repayments.shopId, input.shopId)),
@@ -1453,39 +1553,47 @@ var migrationRouter = router({
       db.select().from(shopCurrencies).where(eq7(shopCurrencies.shopId, input.shopId)),
       db.select().from(exchangeRates).where(eq7(exchangeRates.shopId, input.shopId))
     ]);
-    return { products: productRows, variants: variantRows, customers: customerRows, sales: saleRows, saleItems: lineRows, expenses: expenseRows, receivables: receivableRows, repayments: repaymentRows, closures: closureRows, stockMovements: movementRows, currencies: currencyRows, exchangeRates: rateRows };
+    return { products: productRows, variants: variantRows, customers: customerRows, suppliers: supplierRows, sales: saleRows, saleItems: lineRows, purchases: purchaseRows, purchaseItems: purchaseLineRows, expenses: expenseRows, receivables: receivableRows, repayments: repaymentRows, closures: closureRows, stockMovements: movementRows, currencies: currencyRows, exchangeRates: rateRows };
   }),
   preview: protectedProcedure.input(z6.object({ shopId: z6.string().uuid(), data: payload })).mutation(async ({ ctx, input }) => {
     await assertShopAccess(ctx.user.id, input.shopId, ["owner", "manager"]);
     const fileHash = fingerprint(input.data);
     const conflicts = await detectConflicts(input.shopId, input.data, fileHash);
-    return { fingerprint: fileHash, totals: { products: input.data.products.length, customers: input.data.customers.length, sales: input.data.sales.length, saleItems: input.data.saleItems.length, expenses: input.data.expenses.length }, conflicts, importable: input.data.products.length + input.data.customers.length + input.data.sales.length + input.data.saleItems.length + input.data.expenses.length - conflicts.length };
+    return { fingerprint: fileHash, totals: { products: input.data.products.length, customers: input.data.customers.length, suppliers: input.data.suppliers.length, sales: input.data.sales.length, saleItems: input.data.saleItems.length, purchases: input.data.purchases.length, purchaseItems: input.data.purchaseItems.length, expenses: input.data.expenses.length }, conflicts, importable: input.data.products.length + input.data.customers.length + input.data.suppliers.length + input.data.sales.length + input.data.saleItems.length + input.data.purchases.length + input.data.purchaseItems.length + input.data.expenses.length - conflicts.length };
   }),
   run: protectedProcedure.input(z6.object({ shopId: z6.string().uuid(), fileName: z6.string().trim().min(1).max(240), data: payload, conflictStrategy })).mutation(async ({ ctx, input }) => {
     await assertShopAccess(ctx.user.id, input.shopId, ["owner", "manager"]);
     const db = getDb();
     const fileHash = fingerprint(input.data);
     const conflicts = await detectConflicts(input.shopId, input.data, fileHash);
-    if (conflicts.some((row) => row.type === "reimport")) return { replayed: true, imported: { products: 0, customers: 0, sales: 0, expenses: 0 }, skipped: 0, conflicts };
+    if (conflicts.some((row) => row.type === "reimport")) return { replayed: true, imported: { products: 0, customers: 0, suppliers: 0, sales: 0, saleItems: 0, purchases: 0, purchaseItems: 0, expenses: 0 }, skipped: 0, conflicts };
     if (conflicts.some((row) => row.type === "business_day")) throw new TRPCError6({ code: "CONFLICT", message: "L\u2019import contient une op\xE9ration dat\xE9e sur une journ\xE9e d\xE9j\xE0 cl\xF4tur\xE9e. Corrigez le fichier ou choisissez une autre boutique." });
     const lineProductConflicts = conflicts.filter((row) => row.type === "product" && input.data.saleItems.some((item) => item.sourceId === row.sourceId));
+    const purchaseLineProductConflicts = conflicts.filter((row) => row.type === "product" && input.data.purchaseItems.some((item) => item.sourceId === row.sourceId));
     if (lineProductConflicts.some((row) => row.reason.startsWith("Ajoutez"))) throw new TRPCError6({ code: "BAD_REQUEST", message: "Chaque ligne de vente d\xE9taill\xE9e doit avoir un produit correspondant dans l\u2019onglet Produits, avec son stock final." });
+    if (purchaseLineProductConflicts.some((row) => row.reason.startsWith("Ajoutez"))) throw new TRPCError6({ code: "BAD_REQUEST", message: "Chaque ligne d\u2019achat d\xE9taill\xE9e doit avoir un produit correspondant dans l\u2019onglet Produits." });
     if (lineProductConflicts.length && input.conflictStrategy !== "copy") throw new TRPCError6({ code: "CONFLICT", message: "Une vente d\xE9taill\xE9e vise un produit existant. Choisissez \xAB Cr\xE9er une copie \xBB pour conserver le stock actuel et reconstituer l\u2019historique s\xE9par\xE9ment." });
     if (input.conflictStrategy === "block" && conflicts.length) throw new TRPCError6({ code: "CONFLICT", message: "Des collisions ont \xE9t\xE9 d\xE9tect\xE9es. Choisissez ignorer, mettre \xE0 jour ou cr\xE9er une copie." });
-    const blocked = new Set(conflicts.filter((row) => row.type === "sale" || input.conflictStrategy === "skip" && (row.type === "product" || row.type === "customer")).map((row) => `${row.type}:${row.sourceId}`));
+    const blocked = new Set(conflicts.filter((row) => row.type === "sale" || row.type === "purchase" || input.conflictStrategy === "skip" && (row.type === "product" || row.type === "customer" || row.type === "supplier")).map((row) => `${row.type}:${row.sourceId}`));
     const sql3 = getSql();
     const knownProducts = await db.select({ id: products.id, name: products.name, barcode: products.barcode, stockQuantity: products.stockQuantity }).from(products).where(eq7(products.shopId, input.shopId));
     const knownCustomers = await db.select({ id: customers.id, name: customers.name, phone: customers.phone }).from(customers).where(eq7(customers.shopId, input.shopId));
+    const knownSuppliers = await db.select({ id: suppliers.id, name: suppliers.name, email: suppliers.email }).from(suppliers).where(eq7(suppliers.shopId, input.shopId));
     const queries = [];
     const customerByName = new Map(knownCustomers.map((row) => [normal(row.name), row.id]));
+    const supplierByName = new Map(knownSuppliers.map((row) => [normal(row.name), row.id]));
     const productByName = new Map(knownProducts.map((row) => [normal(row.name), row.id]));
     const productByBarcode = new Map(knownProducts.filter((row) => Boolean(row.barcode)).map((row) => [row.barcode, row.id]));
     const finalStockByProduct = /* @__PURE__ */ new Map();
     const saleByReference = /* @__PURE__ */ new Map();
+    const purchaseByReference = /* @__PURE__ */ new Map();
     let productCount = 0;
     let customerCount = 0;
+    let supplierCount = 0;
     let saleCount = 0;
     let saleItemCount = 0;
+    let purchaseCount = 0;
+    let purchaseItemCount = 0;
     let expenseCount = 0;
     for (const item of input.data.products) {
       const clash = conflicts.find((row) => row.type === "product" && row.sourceId === item.sourceId);
@@ -1525,6 +1633,23 @@ var migrationRouter = router({
       customerByName.set(normal(item.name), customerId);
       customerCount++;
     }
+    for (const item of input.data.suppliers) {
+      const clash = conflicts.find((row) => row.type === "supplier" && row.sourceId === item.sourceId);
+      const matched = knownSuppliers.find((row) => item.email && row.email === item.email || normal(row.name) === normal(item.name));
+      if (blocked.has(`supplier:${item.sourceId}`) || clash && input.conflictStrategy === "update" && !matched) continue;
+      if (clash && input.conflictStrategy === "update" && matched) {
+        queries.push(sql3`UPDATE suppliers SET reference = ${item.reference || null}, contact_name = ${item.contactName || null}, phone = ${item.phone || null}, email = ${item.email || matched.email}, city = ${item.city || null}, delivery_lead_days = ${item.deliveryLeadDays || null}, payment_terms = ${item.paymentTerms || null}, updated_at = now() WHERE id = ${matched.id}`);
+        supplierByName.set(normal(item.name), matched.id);
+        supplierCount++;
+        continue;
+      }
+      const copy = Boolean(clash && input.conflictStrategy === "copy");
+      const supplierId = crypto.randomUUID();
+      const supplierName = copy ? `${item.name} (import ${item.sourceId})` : item.name;
+      queries.push(sql3`INSERT INTO suppliers (id, shop_id, name, reference, contact_name, phone, email, city, delivery_lead_days, payment_terms) VALUES (${supplierId}, ${input.shopId}, ${supplierName}, ${item.reference || null}, ${item.contactName || null}, ${item.phone || null}, ${copy ? null : item.email || null}, ${item.city || null}, ${item.deliveryLeadDays || null}, ${item.paymentTerms || null})`);
+      supplierByName.set(normal(item.name), supplierId);
+      supplierCount++;
+    }
     for (const item of input.data.sales) {
       if (blocked.has(`sale:${item.sourceId}`)) continue;
       const customerId = item.customerName ? customerByName.get(normal(item.customerName)) : void 0;
@@ -1563,11 +1688,26 @@ var migrationRouter = router({
       queries.push(sql3`INSERT INTO stock_movements (shop_id, product_id, sale_id, created_by, type, quantity_delta, stock_after, reason, created_at) VALUES (${input.shopId}, ${item.productId}, ${item.saleId}, ${ctx.user.id}, 'sale'::stock_movement_type, ${-item.quantity}, ${remaining}, 'Vente historique importée', ${item.soldAt})`);
       saleItemCount++;
     }
+    for (const item of input.data.purchases) {
+      if (blocked.has(`purchase:${item.sourceId}`)) continue;
+      const purchaseId = crypto.randomUUID();
+      const supplierId = item.supplierName ? supplierByName.get(normal(item.supplierName)) : void 0;
+      queries.push(sql3`INSERT INTO purchases (id, shop_id, supplier_id, created_by, purchase_number, operation_id, status, payment_method, subtotal, tax_amount, total, purchased_at, received_at) VALUES (${purchaseId}, ${input.shopId}, ${supplierId || null}, ${ctx.user.id}, ${item.reference}, ${operation("purchase", fileHash, item.sourceId)}, ${item.status}::purchase_status, ${item.paymentMethod || null}, ${item.subtotal}, ${item.taxAmount}, ${item.total}, ${item.purchasedAt}, ${item.status === "received" ? item.receivedAt || item.purchasedAt : null})`);
+      purchaseByReference.set(item.reference, purchaseId);
+      purchaseCount++;
+    }
+    for (const item of input.data.purchaseItems) {
+      const purchaseId = purchaseByReference.get(item.purchaseReference);
+      const productId = item.barcode ? productByBarcode.get(item.barcode) : productByName.get(normal(item.productName));
+      if (!purchaseId || !productId || blocked.has(`product:${item.sourceId}`)) continue;
+      queries.push(sql3`INSERT INTO purchase_items (purchase_id, product_id, product_name, quantity, unit_price, line_total) VALUES (${purchaseId}, ${productId}, ${item.productName}, ${item.quantity}, ${item.unitPrice}, ${item.quantity * item.unitPrice})`);
+      purchaseItemCount++;
+    }
     for (const item of input.data.expenses) {
       queries.push(sql3`INSERT INTO expenses (shop_id, created_by, operation_id, category, amount, note, spent_at) VALUES (${input.shopId}, ${ctx.user.id}, ${operation("expense", fileHash, item.sourceId)}, ${item.category}, ${item.amount}, ${item.note || null}, ${item.spentAt})`);
       expenseCount++;
     }
-    const imported = { products: productCount, customers: customerCount, sales: saleCount, saleItems: saleItemCount, expenses: expenseCount };
+    const imported = { products: productCount, customers: customerCount, suppliers: supplierCount, sales: saleCount, saleItems: saleItemCount, purchases: purchaseCount, purchaseItems: purchaseItemCount, expenses: expenseCount };
     queries.unshift(sql3`INSERT INTO data_imports (shop_id, fingerprint, file_name, summary, imported_by) VALUES (${input.shopId}, ${fileHash}, ${input.fileName}, ${JSON.stringify(imported)}::jsonb, ${ctx.user.id})`);
     await sql3.transaction(queries);
     return { replayed: false, imported, skipped: conflicts.length, conflicts };

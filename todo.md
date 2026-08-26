@@ -309,3 +309,7 @@
 - [x] Analyser le fichier Excel client fourni et identifier précisément le format de gestion non accepté.
 - [x] Étendre l’import de migration pour reconnaître ce format sans régresser sur CSV/XLSX existants.
 - [x] Valider le fichier client, tester, publier et synchroniser la compatibilité étendue sur GitHub `main`.
+- [x] Auditer les modèles fournisseur/achat et les limites de la prévisualisation d’import actuelle.
+- [x] Importer fournisseurs, achats et lignes d’achat depuis les classeurs Excel de gestion.
+- [x] Afficher avant validation un résumé détaillé des entités détectées, onglets pris en compte et onglets ignorés.
+- [x] Valider le fichier client, tester, publier et synchroniser l’import étendu sur GitHub `main`.

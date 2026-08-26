@@ -17,8 +17,8 @@ describe("migration de fichiers", () => {
   });
 
   it("builds one Google Sheets-compatible workbook with all business tabs", () => {
-    const workbook = buildEasystorWorkbook({ products: [], variants: [], customers: [], sales: [], saleItems: [], expenses: [], receivables: [], repayments: [], closures: [], stockMovements: [], currencies: [], exchangeRates: [] });
-    expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual(["Guide", "Produits", "Variantes", "Clients", "Ventes", "Lignes de vente", "Dépenses", "Créances", "Remboursements", "Clôtures", "Mouvements stock", "Devises", "Taux de change"]);
+    const workbook = buildEasystorWorkbook({ products: [], variants: [], customers: [], suppliers: [], sales: [], saleItems: [], purchases: [], purchaseItems: [], expenses: [], receivables: [], repayments: [], closures: [], stockMovements: [], currencies: [], exchangeRates: [] });
+    expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual(["Guide", "Produits", "Variantes", "Clients", "Fournisseurs", "Ventes", "Lignes de vente", "Achats", "Lignes d’achat", "Dépenses", "Créances", "Remboursements", "Clôtures", "Mouvements stock", "Devises", "Taux de change"]);
   });
 
   it("parses a bounded CSV import without relying on the legacy XLSX parser", async () => {
@@ -56,5 +56,20 @@ describe("migration de fichiers", () => {
     expect(parsed.data.saleItems).toEqual([expect.objectContaining({ saleReference: "VEN-01", productName: "Robe importée", quantity: 2, unitPrice: 50, purchasePrice: 20 })]);
     expect(parsed.data.expenses).toEqual([expect.objectContaining({ category: "Transport", amount: 20, note: "Livraison" })]);
     expect(parsed.ignoredSheets).not.toContain("Stock_Mouvements");
+  });
+
+  it("parses suppliers, purchases and purchase lines while reporting non-imported sheets", async () => {
+    const workbook = new ExcelJS.Workbook();
+    const products = workbook.addWorksheet("Produits"); products.addRows([[], [], [], ["SKU", "Produit", "Prix achat HT (€)", "Prix vente TTC (€)", "Stock initial"], ["SKU-01", "Produit fournisseur", 8, 20, 10]]);
+    const suppliers = workbook.addWorksheet("Fournisseurs"); suppliers.addRows([[], [], [], ["ID fournisseur", "Entreprise", "Contact", "Téléphone", "Email", "Ville", "Délai livraison (j)", "Conditions paiement"], ["FOU-01", "Maison importée", "Maya Fournier", "+237612345678", "maya@example.test", "Douala", 4, "30 jours"]]);
+    const purchases = workbook.addWorksheet("Achats"); purchases.addRows([[], [], [], ["ID achat", "Date", "ID fournisseur", "Statut", "Mode paiement", "Sous-total HT (€)", "TVA (€)", "Total TTC (€)", "Date réception"], ["ACH-01", new Date("2026-01-02T00:00:00.000Z"), "FOU-01", "Reçue", "Virement", { formula: "SUMIFS(Lignes_Achats!$H:$H,Lignes_Achats!$B:$B,A5)" }, 0, { formula: "F5+G5" }, new Date("2026-01-03T00:00:00.000Z")]]);
+    const lines = workbook.addWorksheet("Lignes_Achats"); lines.addRows([[], [], [], ["ID ligne", "ID achat", "SKU", "Produit", "Quantité", "Prix achat HT (€)", "Total ligne HT (€)"], ["LA-01", "ACH-01", "SKU-01", { formula: "VLOOKUP(C5,Produits!A:B,2,FALSE)" }, 3, { formula: "VLOOKUP(C5,Produits!A:C,3,FALSE)" }, { formula: "E5*F5" }]]);
+    const ignored = workbook.addWorksheet("Rapport_Mensuel"); ignored.addRows([["Mois", "CA TTC"], ["2026-01", 1000]]);
+    const bytes = await workbook.xlsx.writeBuffer();
+    const parsed = await parseMigrationFile(new File([bytes], "achats.xlsx", { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+    expect(parsed.data.suppliers).toEqual([expect.objectContaining({ name: "Maison importée", reference: "FOU-01", deliveryLeadDays: 4 })]);
+    expect(parsed.data.purchases).toEqual([expect.objectContaining({ reference: "ACH-01", supplierName: "Maison importée", status: "received", subtotal: 24, total: 24 })]);
+    expect(parsed.data.purchaseItems).toEqual([expect.objectContaining({ purchaseReference: "ACH-01", productName: "Produit fournisseur", quantity: 3, unitPrice: 8 })]);
+    expect(parsed.sheetSummary).toEqual(expect.arrayContaining([expect.objectContaining({ name: "Fournisseurs", status: "imported" }), expect.objectContaining({ name: "Rapport_Mensuel", status: "ignored" })]));
   });
 });

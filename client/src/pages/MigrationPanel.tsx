@@ -13,6 +13,7 @@ import {
   downloadEasystorWorkbook,
   parseMigrationFile,
   type MigrationData,
+  type MigrationSheetSummary,
 } from "@/lib/sheetMigration";
 import { MAX_IMPORT_FILE_BYTES, MAX_IMPORT_PAYLOAD_BYTES, serializedByteLength } from "../../../shared/importLimits";
 import { trpc } from "@/lib/trpc";
@@ -41,6 +42,7 @@ export default function MigrationPanel({ shopId }: { shopId: string }) {
   const [fileName, setFileName] = useState("");
   const [data, setData] = useState<MigrationData | null>(null);
   const [ignoredSheets, setIgnoredSheets] = useState<string[]>([]);
+  const [sheetSummary, setSheetSummary] = useState<MigrationSheetSummary[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
   const [strategy, setStrategy] = useState<Strategy>("block");
   const preview = trpc.migration.preview.useMutation();
@@ -53,7 +55,7 @@ export default function MigrationPanel({ shopId }: { shopId: string }) {
       setNotice(
         result.replayed
           ? "Ce fichier avait déjà été importé : aucune donnée n’a été dupliquée."
-          : `Import terminé : ${result.imported.products} produits, ${result.imported.customers} clients, ${result.imported.sales} ventes et ${result.imported.expenses} dépenses.`
+          : `Import terminé : ${result.imported.products} produits, ${result.imported.customers} clients, ${result.imported.suppliers} fournisseurs, ${result.imported.sales} ventes, ${result.imported.purchases} achats et ${result.imported.expenses} dépenses.`
       );
     },
   });
@@ -83,8 +85,11 @@ export default function MigrationPanel({ shopId }: { shopId: string }) {
       const total =
         result.data.products.length +
         result.data.customers.length +
+        result.data.suppliers.length +
         result.data.sales.length +
         result.data.saleItems.length +
+        result.data.purchases.length +
+        result.data.purchaseItems.length +
         result.data.expenses.length;
       if (!total) {
         setNotice(
@@ -98,6 +103,7 @@ export default function MigrationPanel({ shopId }: { shopId: string }) {
       }
       setData(result.data);
       setIgnoredSheets(result.ignoredSheets);
+      setSheetSummary(result.sheetSummary);
       setFileName(file.name);
       preview.mutate({ shopId, data: result.data });
     } catch {
@@ -111,6 +117,7 @@ export default function MigrationPanel({ shopId }: { shopId: string }) {
     apply.reset();
     setData(null);
     setIgnoredSheets([]);
+    setSheetSummary([]);
     setFileName("");
   };
   const confirm = () => {
@@ -227,12 +234,15 @@ export default function MigrationPanel({ shopId }: { shopId: string }) {
                 <Loader2 className="h-5 w-5 animate-spin text-[#4e6b48]" />
               )}
             </div>
-            <div className="mt-5 grid gap-3 grid-cols-2 lg:grid-cols-5">
+            <div className="mt-5 grid gap-3 grid-cols-2 lg:grid-cols-4">
               {[
                 { label: "Produits", value: data.products.length },
                 { label: "Clients", value: data.customers.length },
+                { label: "Fournisseurs", value: data.suppliers.length },
                 { label: "Ventes", value: data.sales.length },
                 { label: "Lignes", value: data.saleItems.length },
+                { label: "Achats", value: data.purchases.length },
+                { label: "Lignes d’achat", value: data.purchaseItems.length },
                 { label: "Dépenses", value: data.expenses.length },
               ].map(item => (
                 <div key={item.label} className="rounded-2xl bg-[#f4f5ef] p-4">
@@ -243,9 +253,30 @@ export default function MigrationPanel({ shopId }: { shopId: string }) {
                 </div>
               ))}
             </div>
+            {sheetSummary.length > 0 && (
+              <div className="mt-6 rounded-2xl border border-[#e5e2d8] bg-[#fbfbf7] p-4 sm:p-5">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <p className="font-semibold text-[#30452f]">Onglets examinés avant import</p>
+                  <p className="text-xs text-[#6f786b]">Aucune écriture n’a encore été effectuée.</p>
+                </div>
+                <ul className="mt-4 space-y-2" aria-label="Résumé des onglets du fichier">
+                  {sheetSummary.map(sheet => (
+                    <li key={sheet.name} className="flex flex-col gap-1 rounded-xl bg-white px-3 py-2.5 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                      <div className="min-w-0">
+                        <p className="font-medium text-[#344534]">{sheet.name} <span className="font-normal text-[#737d70]">· {sheet.rows} ligne{sheet.rows > 1 ? "s" : ""}</span></p>
+                        <p className="mt-0.5 text-xs leading-relaxed text-[#737d70]">{sheet.reason}</p>
+                      </div>
+                      <span className={`w-fit shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${sheet.status === "imported" ? "bg-[#edf6e9] text-[#41623d]" : sheet.status === "support" ? "bg-[#edf2f7] text-[#45657d]" : "bg-[#fff4de] text-[#8a6b35]"}`}>
+                        {sheet.status === "imported" ? "Pris en compte" : sheet.status === "support" ? "Utilisé pour le stock" : "Ignoré"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             {ignoredSheets.length > 0 && (
               <p className="mt-4 text-xs text-[#8a6b35]">
-                Onglets ignorés car non reconnus : {ignoredSheets.join(", ")}.
+                {ignoredSheets.length} onglet{ignoredSheets.length > 1 ? "s" : ""} ignoré{ignoredSheets.length > 1 ? "s" : ""} : {ignoredSheets.join(", ")}.
               </p>
             )}
           </CardContent>
@@ -286,7 +317,11 @@ export default function MigrationPanel({ shopId }: { shopId: string }) {
                               ? "Réimport"
                               : item.type === "sale"
                                 ? "Vente"
-                                : item.type === "product"
+                                : item.type === "purchase"
+                                  ? "Achat"
+                                  : item.type === "supplier"
+                                    ? "Fournisseur"
+                                    : item.type === "product"
                                   ? "Produit"
                                   : "Client"}
                         </strong>{" "}

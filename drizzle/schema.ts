@@ -35,6 +35,10 @@ export const paymentMethodEnum = pgEnum("payment_method", [
   "credit",
   "mixed",
 ]);
+export const purchaseStatusEnum = pgEnum("purchase_status", [
+  "received",
+  "pending",
+]);
 export const saleStatusEnum = pgEnum("sale_status", ["completed", "cancelled"]);
 export const syncKindEnum = pgEnum("sync_kind", [
   "sale",
@@ -419,6 +423,89 @@ export const customers = pgTable(
   },
   table => [index("customers_shop_name_idx").on(table.shopId, table.name)]
 );
+
+export const suppliers = pgTable(
+  "suppliers",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    shopId: uuid("shop_id")
+      .references(() => shops.id, { onDelete: "cascade" })
+      .notNull(),
+    name: varchar("name", { length: 180 }).notNull(),
+    reference: varchar("reference", { length: 80 }),
+    contactName: varchar("contact_name", { length: 180 }),
+    phone: varchar("phone", { length: 48 }),
+    email: varchar("email", { length: 320 }),
+    city: varchar("city", { length: 120 }),
+    deliveryLeadDays: integer("delivery_lead_days"),
+    paymentTerms: varchar("payment_terms", { length: 120 }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  table => [
+    uniqueIndex("suppliers_shop_name_unique").on(table.shopId, table.name),
+    index("suppliers_shop_reference_idx").on(table.shopId, table.reference),
+  ]
+);
+
+export const purchases = pgTable(
+  "purchases",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    shopId: uuid("shop_id")
+      .references(() => shops.id, { onDelete: "cascade" })
+      .notNull(),
+    supplierId: uuid("supplier_id").references(() => suppliers.id, {
+      onDelete: "set null",
+    }),
+    createdBy: uuid("created_by")
+      .references(() => users.id, { onDelete: "restrict" })
+      .notNull(),
+    purchaseNumber: varchar("purchase_number", { length: 80 }).notNull(),
+    operationId: varchar("operation_id", { length: 96 }),
+    status: purchaseStatusEnum("status").default("received").notNull(),
+    paymentMethod: varchar("payment_method", { length: 48 }),
+    subtotal: money("subtotal").default(0).notNull(),
+    taxAmount: money("tax_amount").default(0).notNull(),
+    total: money("total").default(0).notNull(),
+    purchasedAt: timestamp("purchased_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    receivedAt: timestamp("received_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  table => [
+    uniqueIndex("purchases_shop_number_unique").on(
+      table.shopId,
+      table.purchaseNumber
+    ),
+    uniqueIndex("purchases_shop_operation_unique").on(
+      table.shopId,
+      table.operationId
+    ),
+    index("purchases_shop_purchased_at_idx").on(table.shopId, table.purchasedAt),
+  ]
+);
+
+export const purchaseItems = pgTable("purchase_items", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  purchaseId: uuid("purchase_id")
+    .references(() => purchases.id, { onDelete: "cascade" })
+    .notNull(),
+  productId: uuid("product_id").references(() => products.id, {
+    onDelete: "restrict",
+  }),
+  productName: varchar("product_name", { length: 240 }).notNull(),
+  quantity: quantity("quantity").notNull(),
+  unitPrice: money("unit_price").notNull(),
+  lineTotal: money("line_total").notNull(),
+});
 
 export const sales = pgTable(
   "sales",
