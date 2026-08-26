@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from "react";
 import axe from "axe-core";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import Home from "./Home";
 
@@ -21,10 +21,14 @@ describe("landing EASYSTOR", () => {
     expect(screen.getByRole("link", { name: "Importer mon activité" }).getAttribute("href")).toBe("/auth?mode=register");
     expect(screen.getByText(/Commencez avec toutes les fonctionnalités actuellement disponibles/i)).toBeTruthy();
     expect(screen.getByText(/Sans carte bancaire\. Sans paiement requis/i)).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Tarifs" }).getAttribute("href")).toBe("#tarifs");
+    expect(screen.getAllByRole("link", { name: "Tarifs" }).every(link => link.getAttribute("href") === "#tarifs")).toBe(true);
     expect(screen.getByRole("heading", { name: "Tarifs simples. Départ gratuit." })).toBeTruthy();
     expect(screen.getByText("Gratuit aujourd’hui")).toBeTruthy();
     expect(screen.getByText(/Nous les annoncerons clairement avant tout changement/i)).toBeTruthy();
+    const footerNavigation = screen.getByRole("navigation", { name: "Liens de fin de page" });
+    expect(footerNavigation).toBeTruthy();
+    expect(within(footerNavigation).getByRole("link", { name: "Migrer mes données" }).getAttribute("href")).toBe("#migration");
+    expect(screen.getByRole("link", { name: "Connectez-vous pour écrire au support" }).getAttribute("href")).toBe("/auth?mode=login");
   });
 
   it("rend la navigation mobile accessible sans introduire de contenu commercial non demandé", () => {

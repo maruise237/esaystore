@@ -330,11 +330,23 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-[#cfd3c7] bg-[#f0eee7] py-8 text-sm text-[#536153]">
-        <div className="container flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <p className="font-serif text-xl text-[#26352d]">EASYSTOR</p>
-          <p>La caisse et le stock pour les commerces de proximité.</p>
-          <a className="font-semibold text-[#304631] underline-offset-4 hover:underline" href="/auth?mode=login">Se connecter</a>
+      <footer className="border-t border-[#cfd3c7] bg-[#f0eee7] text-[#536153]">
+        <div className="container grid gap-7 py-8 sm:grid-cols-[1fr_auto] sm:items-end">
+          <div>
+            <p className="font-serif text-2xl text-[#26352d]">EASYSTOR</p>
+            <p className="mt-2 max-w-md text-sm leading-relaxed">La caisse, le stock et le suivi pour les commerces de proximité.</p>
+          </div>
+          <nav aria-label="Liens de fin de page" className="flex flex-wrap gap-x-5 gap-y-3 text-sm font-semibold text-[#304631]">
+            <a className="underline-offset-4 transition-colors hover:text-[#142119] hover:underline" href="#migration">Migrer mes données</a>
+            <a className="underline-offset-4 transition-colors hover:text-[#142119] hover:underline" href="#tarifs">Tarifs</a>
+            <a className="underline-offset-4 transition-colors hover:text-[#142119] hover:underline" href="#hors-connexion">Hors connexion</a>
+          </nav>
+        </div>
+        <div className="border-t border-[#d8dad0]">
+          <div className="container flex flex-col gap-3 py-4 text-xs sm:flex-row sm:items-center sm:justify-between sm:text-sm">
+            <p>© {new Date().getFullYear()} EASYSTOR. Tous droits réservés.</p>
+            <p>Besoin d’aide ? <a className="font-semibold text-[#304631] underline-offset-4 hover:underline" href="/auth?mode=login">Connectez-vous pour écrire au support</a>.</p>
+          </div>
         </div>
       </footer>
     </div>
