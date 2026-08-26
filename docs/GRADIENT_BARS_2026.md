@@ -17,3 +17,5 @@ Le composant de référence provient de la documentation [Mvpblocks Gradient Bar
 Le fond est décoratif et ne capte aucune interaction. Le fond evergreen CSS du hero reste la base visuelle en toutes circonstances.
 
 La vérification visuelle confirme que les barres restent derrière le texte et la preuve produit à 1440 × 900 et 390 × 844. Les CTA lime, le texte crème et le menu mobile conservent une lisibilité nette.
+
+Le contrôle Vercel confirme le montage de la landing, du titre principal et de neuf barres Gradient Bars animées dans le hero public.

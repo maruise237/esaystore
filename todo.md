@@ -276,4 +276,4 @@
 - [x] Tester le footer compact sur mobile et desktop, puis publier et synchroniser GitHub `main`.
 - [x] Obtenir ou reconstituer la source exacte du fond Gradient Bars et l’adapter à la palette evergreen EASYSTOR.
 - [x] Intégrer un fond Gradient Bars mesuré dans le hero, avec fallback statique et respect du mouvement réduit.
-- [ ] Tester, prévisualiser, publier et synchroniser le fond Gradient Bars sur GitHub `main`.
+- [x] Tester, prévisualiser, publier et synchroniser le fond Gradient Bars sur GitHub `main`.
