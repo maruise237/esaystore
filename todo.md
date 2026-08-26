@@ -255,3 +255,8 @@
 - [x] Ajouter des tests, vérifier les rendus desktop/mobile, publier et synchroniser la landing page sur GitHub `main`.
 - [x] Remplacer la récupération de jeton Neon Auth sans session par une lecture de session non bruyante côté client.
 - [x] Corriger le guide Google OAuth pour utiliser le callback Neon Auth et configurer les identifiants Google de production dans Neon.
+- [x] Auditer les CTA publics qui ne déclenchent pas la connexion ou l’inscription et identifier leur cause.
+- [x] Ajouter à la landing une preuve claire de migration depuis Excel ou Google Sheets, avec import historique et export global réversible.
+- [x] Ajouter un positionnement public honnête : toutes les fonctions actuelles sont gratuites, sans paiement requis, avec tarifs à venir abordables sans promesse chiffrée.
+- [ ] Corriger, tester et vérifier les parcours publics de connexion et de création de boutique depuis tous les CTA.
+- [ ] Valider la landing enrichie sur desktop et mobile, puis publier et synchroniser GitHub `main`.

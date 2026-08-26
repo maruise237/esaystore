@@ -8,7 +8,7 @@ import Home from "./Home";
 describe("landing EASYSTOR", () => {
   afterEach(cleanup);
 
-  it("présente la promesse métier et dirige les actions vers l’authentification e-mail", () => {
+  it("présente la promesse métier, la migration de données et dirige les actions vers l’authentification e-mail", () => {
     render(<Home />);
 
     expect(screen.getByRole("heading", { name: "Vendez vite. Gardez la main." })).toBeTruthy();
@@ -16,6 +16,11 @@ describe("landing EASYSTOR", () => {
     expect(screen.getAllByRole("link", { name: "Se connecter" }).every(link => link.getAttribute("href") === "/auth?mode=login")).toBe(true);
     expect(screen.getByText("Pensé pour les réseaux instables")).toBeTruthy();
     expect(screen.getAllByText("Aperçu illustratif de l’interface.").length).toBeGreaterThan(2);
+    expect(screen.getByRole("heading", { name: "Vos tableaux ne restent pas derrière." })).toBeTruthy();
+    expect(screen.getAllByText(/Excel ou Google Sheets/i).length).toBeGreaterThan(1);
+    expect(screen.getByRole("link", { name: "Importer mon activité" }).getAttribute("href")).toBe("/auth?mode=register");
+    expect(screen.getByText(/Toutes les fonctionnalités disponibles aujourd’hui sont gratuites/i)).toBeTruthy();
+    expect(screen.getByText(/sans carte bancaire ni paiement requis/i)).toBeTruthy();
   });
 
   it("rend la navigation mobile accessible sans introduire de contenu commercial non demandé", () => {
@@ -24,7 +29,7 @@ describe("landing EASYSTOR", () => {
 
     expect(screen.getByRole("navigation", { name: "Navigation mobile" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Connexion" }).getAttribute("href")).toBe("/auth?mode=login");
-    expect(screen.queryByText(/abonnement|tarif|facturation|annonce sponsorisée/i)).toBeNull();
+    expect(screen.queryByText(/abonnement|facturation|annonce sponsorisée/i)).toBeNull();
   });
 
   it("garde une structure sans violation axe détectée", async () => {

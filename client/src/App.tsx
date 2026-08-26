@@ -44,20 +44,18 @@ function App() {
 }
 
 function PublicEntry() {
-  const { user, loading } = useAuth();
-
-  if (loading) return <RouteLoading label="Préparation de votre espace…" />;
+  const { user } = useAuth();
   return user ? <Workspace /> : <Home />;
 }
 
 function AuthEntry() {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (user) window.location.replace("/app");
   }, [user]);
 
-  if (loading || user) {
+  if (user) {
     return <RouteLoading label="Ouverture de votre espace marchand…" />;
   }
   return <AuthPage />;

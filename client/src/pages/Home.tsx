@@ -7,12 +7,15 @@ import {
   CircleCheck,
   CloudOff,
   CreditCard,
+  Download,
+  FileSpreadsheet,
   Menu,
   PackageCheck,
   ReceiptText,
   ScanBarcode,
   ShieldCheck,
   ShoppingBasket,
+  Upload,
   Wifi,
   X,
 } from "lucide-react";
@@ -20,6 +23,7 @@ import { Button } from "@/components/ui/button";
 
 const navigation = [
   { href: "#vendre", label: "Vendre" },
+  { href: "#migrer", label: "Migrer mes données" },
   { href: "#hors-ligne", label: "Hors connexion" },
   { href: "#suivre", label: "Suivre l’activité" },
 ];
@@ -28,6 +32,7 @@ const operationalPoints = [
   "Caisse rapide, cash et mobile money",
   "Stock, catalogue et codes-barres au même endroit",
   "Créances, dépenses et clôture de caisse suivies",
+  "Import et export compatibles avec Google Sheets",
 ];
 
 export default function Home() {
@@ -144,7 +149,7 @@ export default function Home() {
                 </a>
               </div>
               <p className="mt-5 text-sm leading-relaxed text-[#b9c7b7]">
-                Inscription par e-mail, mot de passe et vérification de votre adresse.
+                Inscription par e-mail, mot de passe et vérification de votre adresse. Vous pouvez aussi démarrer avec vos fichiers existants.
               </p>
             </div>
 
@@ -207,6 +212,35 @@ export default function Home() {
                 </div>
                 <ActivityPreview />
               </article>
+            </div>
+          </div>
+        </section>
+
+        <section id="migrer" className="scroll-mt-8 bg-[#e9e6dc] py-20 sm:py-28">
+          <div className="container grid gap-12 lg:grid-cols-[0.88fr_1.12fr] lg:items-center lg:gap-16">
+            <div className="max-w-xl">
+              <FileSpreadsheet className="size-7 text-[#46684a]" aria-hidden="true" />
+              <h2 className="mt-5 font-serif text-4xl leading-[1.02] tracking-[-0.025em] text-[#243029] sm:text-5xl">Vos tableaux ne restent pas derrière.</h2>
+              <p className="mt-6 max-w-[56ch] text-lg leading-relaxed text-[#536153]">
+                Vous gérez déjà votre activité sur Excel ou Google Sheets&nbsp;? Importez votre fichier CSV ou XLSX. EASYSTOR vous aide à classer vos produits, ventes et données historiques avant de les ajouter à votre espace.
+              </p>
+              <p className="mt-5 max-w-[56ch] leading-relaxed text-[#536153]">
+                Vous gardez aussi la possibilité d’exporter l’ensemble de votre activité dans un fichier unique, compatible avec Google Sheets. Vos données restent à vous.
+              </p>
+              <a className="mt-7 inline-flex min-h-11 items-center gap-2 rounded-md text-sm font-bold text-[#304631] underline-offset-4 hover:underline focus-visible:outline-none" href="/auth?mode=register">
+                Importer mon activité <ArrowRight className="size-4" aria-hidden="true" />
+              </a>
+            </div>
+            <MigrationPreview />
+          </div>
+        </section>
+
+        <section className="border-y border-[#d8d8cb] bg-[#f7f5ee] py-16 sm:py-20" aria-label="Accès gratuit">
+          <div className="container grid gap-7 lg:grid-cols-[0.75fr_1.25fr] lg:items-start lg:gap-16">
+            <h2 className="max-w-md font-serif text-3xl leading-[1.04] tracking-[-0.025em] text-[#243029] sm:text-4xl">Toute la puissance actuelle, gratuitement.</h2>
+            <div className="max-w-3xl">
+              <p className="text-lg leading-relaxed text-[#405140]">Toutes les fonctionnalités disponibles aujourd’hui sont gratuites, sans carte bancaire ni paiement requis.</p>
+              <p className="mt-4 leading-relaxed text-[#536153]">Des tarifs pourront être annoncés à l’avenir. Notre engagement est de les communiquer avant tout changement et de garder EASYSTOR accessible aux commerces de proximité.</p>
             </div>
           </div>
         </section>
@@ -338,6 +372,30 @@ function StockPreview() {
 function StockLine({ product, detail, tone }: { product: string; detail: string; tone: "ok" | "alert" | "neutral" }) {
   const dotClass = tone === "ok" ? "bg-[#5b8455]" : tone === "alert" ? "bg-[#a76c43]" : "bg-[#7b887b]";
   return <div className="flex items-center justify-between gap-3 rounded-xl bg-[#f9fbf7] px-4 py-3 text-sm shadow-[0_5px_12px_rgba(45,76,60,0.08)]"><span className="font-semibold text-[#304432]">{product}</span><span className="inline-flex items-center gap-2 text-right font-medium text-[#536a5b]"><span className={`size-2 rounded-full ${dotClass}`} aria-hidden="true" />{detail}</span></div>;
+}
+
+function MigrationPreview() {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-[#d6d9ce] bg-[#fdfcf8] shadow-[0_18px_42px_rgba(46,55,43,0.11)]">
+      <div className="flex items-center justify-between gap-4 border-b border-[#e0e1da] px-5 py-4 sm:px-7">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.13em] text-[#667463]">Migration de données</p>
+          <h3 className="mt-1 font-serif text-2xl text-[#26352d]">Votre activité, prête à reprendre.</h3>
+        </div>
+        <FileSpreadsheet className="size-6 text-[#526f51]" aria-hidden="true" />
+      </div>
+      <ol className="divide-y divide-[#e0e1da] px-5 sm:px-7">
+        <MigrationStep icon={Upload} title="Importer un fichier" detail="CSV ou XLSX depuis Excel ou Google Sheets" />
+        <MigrationStep icon={ReceiptText} title="Vérifier avant d’ajouter" detail="Produits, ventes et dates sont organisés pour vous" />
+        <MigrationStep icon={Download} title="Exporter quand vous le souhaitez" detail="Un fichier global compatible avec Google Sheets" />
+      </ol>
+      <p className="px-5 py-3 text-xs font-medium text-[#6c7669] sm:px-7">Aperçu illustratif du parcours de migration.</p>
+    </div>
+  );
+}
+
+function MigrationStep({ icon: Icon, title, detail }: { icon: typeof Upload; title: string; detail: string }) {
+  return <li className="flex items-start gap-4 py-5"><span className="grid size-9 shrink-0 place-items-center rounded-lg bg-[#e7ecd6] text-[#35523a]"><Icon className="size-4" aria-hidden="true" /></span><div><p className="font-semibold text-[#30432f]">{title}</p><p className="mt-1 text-sm leading-relaxed text-[#5a6858]">{detail}</p></div></li>;
 }
 
 function ActivityPreview() {

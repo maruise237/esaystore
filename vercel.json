@@ -1,11 +1,12 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "buildCommand": "pnpm build:vercel",
   "outputDirectory": "dist/public",
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/manus-storage/(.*)", "destination": "/api/manus-storage/$1" },
-    { "source": "/((?!api/.*).*)", "destination": "/index.html" }
+    { "source": "/manus-storage/:path*", "destination": "/api/manus-storage/:path*" },
+    { "source": "/:path((?!api(?:/|$)).*)", "destination": "/index.html" }
   ],
   "headers": [
     {

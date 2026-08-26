@@ -42,4 +42,16 @@ describe("routes publiques EASYSTOR", () => {
     render(<App />);
     expect(screen.getByText("Espace marchand")).toBeTruthy();
   });
+
+  it("laisse la landing et le formulaire accessibles pendant la vérification anonyme", () => {
+    useAuth.mockReturnValue({ user: null, loading: true });
+    window.history.replaceState({}, "", "/");
+    const landing = render(<App />);
+    expect(screen.getByText("Landing publique")).toBeTruthy();
+    landing.unmount();
+
+    window.history.replaceState({}, "", "/auth?mode=register");
+    render(<App />);
+    expect(screen.getByText("Authentification e-mail")).toBeTruthy();
+  });
 });
