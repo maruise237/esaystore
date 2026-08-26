@@ -14,7 +14,6 @@ import {
   ReceiptText,
   ScanBarcode,
   ShieldCheck,
-  ShoppingBasket,
   Upload,
   Wifi,
   X,
@@ -22,6 +21,7 @@ import {
 import { FadeContent, HeroMotion } from "@/components/landing/FadeContent";
 import { InteractiveGridPattern } from "@/components/landing/InteractiveGridPattern";
 import { Button } from "@/components/ui/button";
+import { BrandMark } from "@/components/BrandMark";
 
 const navigation = [
   { href: "#vendre", label: "Vendre" },
@@ -82,7 +82,7 @@ export default function Home() {
             aria-label="EASYSTOR, accueil"
           >
             <span className="grid size-9 place-items-center rounded-xl bg-[#d1e980] text-[#1e2924] transition-transform duration-150 ease-out group-hover:-rotate-3 group-active:scale-95 motion-reduce:transition-none">
-              <ShoppingBasket className="size-[1.05rem]" aria-hidden="true" />
+              <BrandMark className="size-[1.05rem]" />
             </span>
             EASYSTOR
           </a>

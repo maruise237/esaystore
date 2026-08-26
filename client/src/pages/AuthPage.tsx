@@ -1,6 +1,7 @@
 import React, { useId, useState } from "react";
 import { ArrowRight, Check, Eye, EyeOff, Loader2, LockKeyhole, ShoppingBag, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BrandMark } from "@/components/BrandMark";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
@@ -102,7 +103,7 @@ export default function AuthPage() {
     <main className="grid min-h-screen bg-[#f7f5ee] lg:grid-cols-[1.1fr_0.9fr]">
       <section className="relative hidden overflow-hidden bg-[#1e2924] p-14 text-[#f7f5ee] lg:flex lg:flex-col">
         <div className="absolute -left-20 top-16 h-72 w-72 rounded-full bg-[#d1e980]/10 blur-3xl" />
-        <div className="relative flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-2xl bg-[#d1e980] text-[#1e2924]"><ShoppingBag className="h-5 w-5" /></div><span className="font-serif text-2xl">EASYSTOR</span></div>
+        <div className="relative flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-2xl bg-[#d1e980] text-[#1e2924]"><BrandMark className="h-5 w-5" /></div><span className="font-serif text-2xl">EASYSTOR</span></div>
         <div className="relative my-auto max-w-xl">
           <p className="mb-5 text-xs font-bold uppercase tracking-[0.24em] text-[#c4da72]">La caisse de proximité</p>
           <h1 className="font-serif text-6xl leading-[1.02] tracking-tight">Vendez vite.<br />Pilotez clair.</h1>
@@ -125,7 +126,7 @@ export default function AuthPage() {
 
       <section className="flex items-center justify-center p-6 sm:p-10">
         <div className="w-full max-w-md">
-          <div className="mb-10 flex items-center gap-3 lg:hidden"><div className="grid h-10 w-10 place-items-center rounded-2xl bg-[#1e2924] text-[#d1e980]"><ShoppingBag className="h-5 w-5" /></div><span className="font-serif text-2xl">EASYSTOR</span></div>
+          <div className="mb-10 flex items-center gap-3 lg:hidden"><div className="grid h-10 w-10 place-items-center rounded-2xl bg-[#1e2924] text-[#d1e980]"><BrandMark className="h-5 w-5" /></div><span className="font-serif text-2xl">EASYSTOR</span></div>
           <div className="mb-8"><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#718165]">Espace marchand</p><h2 className="mt-3 font-serif text-4xl tracking-tight">{mode === "register" ? "Ouvrez votre boutique" : "Bon retour"}</h2><p className="mt-3 text-sm leading-relaxed text-[#77776c]">{mode === "register" ? "Créez votre espace, ajoutez un article, puis réalisez votre première vente." : "Connectez-vous pour reprendre la gestion de votre activité."}</p>{mode === "register" && <ol className="mt-5 flex flex-wrap gap-x-4 gap-y-2 border-l border-[#c4da72] pl-3 text-xs font-medium text-[#536153]"><li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-[#567b4f]" />1. Boutique</li><li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-[#567b4f]" />2. Produit</li><li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-[#567b4f]" />3. Vente</li></ol>}</div>
           <div className="mb-7 grid grid-cols-2 rounded-xl bg-[#eceae2] p-1" role="tablist" aria-label="Accès à EASYSTOR"><button type="button" role="tab" aria-selected={mode === "register"} onClick={() => { setMode("register"); setError(null); setShowPassword(false); }} className={`rounded-lg py-2 text-sm font-semibold transition ${mode === "register" ? "bg-white text-[#27332d] shadow-sm" : "text-[#77776c]"}`}>Créer un compte</button><button type="button" role="tab" aria-selected={mode === "login"} onClick={() => { setMode("login"); setError(null); setShowPassword(false); }} className={`rounded-lg py-2 text-sm font-semibold transition ${mode === "login" ? "bg-white text-[#27332d] shadow-sm" : "text-[#77776c]"}`}>Se connecter</button></div>
           {error && <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{error}</div>}

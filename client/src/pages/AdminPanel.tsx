@@ -21,6 +21,7 @@ import {
   LifeBuoy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BrandMark } from "@/components/BrandMark";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
@@ -311,7 +312,7 @@ export default function AdminPanel({
         <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-7">
           <div className="flex items-center gap-3">
             <div className="grid h-10 w-10 place-items-center rounded-xl bg-[#d1e980] text-[#1e2924] shadow-[0_8px_22px_rgba(209,233,128,0.16)]">
-              <ShieldCheck className="h-5 w-5" />
+              <BrandMark className="h-5 w-5" />
             </div>
             <div>
               <p className="font-serif text-lg">EASYSTOR Control</p>

@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import React, { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { BrandMark } from "@/components/BrandMark";
 import { Button } from "@/components/ui/button";
 import SyncStatus from "./SyncStatus";
 import {
@@ -114,7 +115,7 @@ export default function AppShell({
           )}
         >
           <div className="grid h-10 w-10 place-items-center rounded-2xl bg-[#d1e980] text-[#1e2924] shadow-[0_8px_22px_rgba(209,233,128,0.18)]">
-            <ShoppingBag className="h-5 w-5" strokeWidth={2.8} />
+            <BrandMark className="h-5 w-5" />
           </div>
           {!sidebarCollapsed && (
             <div className="min-w-0 flex-1">

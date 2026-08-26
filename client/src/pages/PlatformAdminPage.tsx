@@ -2,6 +2,7 @@ import React from "react";
 import { ArrowLeft, Loader2, LogIn, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { BrandMark } from "@/components/BrandMark";
 import { Card, CardContent } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import AdminPanel from "./AdminPanel";
@@ -61,7 +62,7 @@ function RestrictedRoute({ message }: { message: string }) {
       <aside className="absolute inset-y-0 left-0 hidden w-[38%] bg-[#1e2924] p-12 text-[#f7f5ee] lg:flex lg:flex-col">
         <div className="flex items-center gap-3">
           <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[#d1e980] text-[#1e2924]">
-            <ShieldCheck className="h-5 w-5" />
+            <BrandMark className="h-5 w-5" />
           </div>
           <span className="font-serif text-2xl">EASYSTOR</span>
         </div>

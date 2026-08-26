@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 const manifest = JSON.parse(readFileSync(new URL("../../public/manifest.webmanifest", import.meta.url), "utf8")) as { display: string; start_url: string; scope: string; icons: Array<{ src: string; sizes: string }> };
 const serviceWorkerRegistration = readFileSync(new URL("./offline.ts", import.meta.url), "utf8");
+const favicon = readFileSync(new URL("../../public/icon.svg", import.meta.url), "utf8");
 
 describe("prérequis PWA autonome", () => {
   it("declares standalone mode, a root start URL and installation icons", () => {
@@ -14,5 +15,11 @@ describe("prérequis PWA autonome", () => {
 
   it("registers the service worker across the full application scope", () => {
     expect(serviceWorkerRegistration).toContain('register("/sw.js", { scope: "/" })');
+  });
+
+  it("utilise le même fond lime et le même symbole evergreen pour le favicon et les icônes installées", () => {
+    expect(favicon).toContain('fill="#d1e980"');
+    expect(favicon).toContain('fill="#1e2924"');
+    expect(manifest.icons).toEqual(expect.arrayContaining([expect.objectContaining({ src: "/icon.svg", sizes: "any" })]));
   });
 });

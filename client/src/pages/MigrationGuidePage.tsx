@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { ArrowLeft, ArrowRight, Check, CircleCheck, Download, FileSpreadsheet, ShieldCheck, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BrandMark } from "@/components/BrandMark";
 
 const guideUrl = "https://esaystor.kamtech.online/guides/migrer-excel-google-sheets";
 
@@ -129,7 +130,7 @@ export default function MigrationGuidePage() {
       <header className="border-b border-[#d6d9ce] bg-[#f7f5ee]">
         <div className="container flex min-h-18 items-center justify-between gap-4 py-4">
           <a href="/" className="inline-flex items-center gap-3 rounded-md font-serif text-2xl text-[#243029] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#567b4f]">
-            <span className="grid size-9 place-items-center rounded-xl bg-[#d1e980] text-sm font-sans font-bold text-[#1e2924]">E</span>
+            <span className="grid size-9 place-items-center rounded-xl bg-[#d1e980] text-[#1e2924]"><BrandMark className="size-4" /></span>
             EASYSTOR
           </a>
           <div className="flex items-center gap-2 sm:gap-4"><a href="/guides" className="rounded-md px-2 py-2 text-sm font-bold text-[#304631] underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#567b4f]">Guides</a><a href="/auth?mode=login" className="rounded-md px-2 py-2 text-sm font-bold text-[#304631] underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#567b4f]">Se connecter</a></div>

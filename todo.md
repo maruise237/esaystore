@@ -301,3 +301,6 @@
 - [x] Cartographier les pages publiques, sections et liens EASYSTOR afin d’identifier les accès insuffisants.
 - [x] Créer un hub de guides et relier chaque page publique pertinente avec une navigation et des liens contextuels utiles.
 - [x] Tester, prévisualiser, publier et synchroniser le maillage interne renforcé sur GitHub `main`.
+- [x] Auditer les variantes de logo, favicon, icônes PWA et marques visibles dans les surfaces EASYSTOR.
+- [x] Définir et appliquer une icône maîtresse cohérente sur la landing, les guides, l’espace marchand, le dashboard et les manifests.
+- [x] Tester, prévisualiser, publier et synchroniser l’identité visuelle unifiée sur GitHub `main`.
