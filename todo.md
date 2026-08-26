@@ -285,3 +285,6 @@
 - [x] Tester, prévisualiser, publier et synchroniser le fond de grille interactive sur GitHub `main`.
 - [x] Aligner la grille interactive sur la variante fournie : maille 20 px, masque radial et cellules lime au survol.
 - [x] Tester, prévisualiser, publier et synchroniser l’ajustement précis de la grille sur GitHub `main`.
+- [x] Auditer les fondations SEO et GEO de la landing EASYSTOR, ses entités et ses intentions de recherche.
+- [x] Mettre en œuvre les améliorations SEO et GEO vérifiables : métadonnées, contenu sémantique, données structurées et robots.
+- [x] Tester, vérifier le rendu public, publier et synchroniser les améliorations SEO/GEO sur GitHub `main`.

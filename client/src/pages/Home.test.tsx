@@ -27,8 +27,11 @@ describe("landing EASYSTOR", () => {
     expect(screen.getByText(/Nous les annoncerons clairement avant tout changement/i)).toBeTruthy();
     const footerNavigation = screen.getByRole("navigation", { name: "Liens de fin de page" });
     expect(footerNavigation).toBeTruthy();
-    expect(within(footerNavigation).getByRole("link", { name: "Migrer mes données" }).getAttribute("href")).toBe("#migration");
+    expect(within(footerNavigation).getByRole("link", { name: "Migrer mes données" }).getAttribute("href")).toBe("#migrer");
     expect(screen.getByRole("link", { name: "Connectez-vous pour écrire au support" }).getAttribute("href")).toBe("/auth?mode=login");
+    expect(screen.getByRole("heading", { name: "Les réponses utiles pour votre commerce." })).toBeTruthy();
+    expect(screen.getByText("Puis-je importer mes fichiers Excel ou Google Sheets ?")).toBeTruthy();
+    expect(screen.getByText("EASYSTOR est-il payant aujourd’hui ?")).toBeTruthy();
   });
 
   it("rend la navigation mobile accessible sans introduire de contenu commercial non demandé", () => {

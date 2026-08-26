@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://esaystor.kamtech.online/sitemap.xml

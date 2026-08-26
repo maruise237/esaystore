@@ -38,6 +38,29 @@ const operationalPoints = [
   "Import et export compatibles avec Google Sheets",
 ];
 
+const frequentlyAskedQuestions = [
+  {
+    question: "Qu’est-ce qu’EASYSTOR ?",
+    answer: "EASYSTOR est une application de caisse et de gestion de stock pour les commerces de proximité. Elle rassemble les ventes, les créances, les dépenses, la clôture de caisse et le suivi de l’activité dans le même espace.",
+  },
+  {
+    question: "Puis-je importer mes fichiers Excel ou Google Sheets ?",
+    answer: "Oui. Vous pouvez importer un fichier CSV ou XLSX issu d’Excel ou de Google Sheets. Avant l’ajout, EASYSTOR vous aide à organiser les produits, ventes et données historiques de votre fichier.",
+  },
+  {
+    question: "Puis-je récupérer mes données plus tard ?",
+    answer: "Oui. L’export global réunit vos données dans un fichier unique compatible avec Google Sheets. Vos données restent à vous.",
+  },
+  {
+    question: "Que se passe-t-il si le réseau ralentit ?",
+    answer: "Les opérations peuvent rester en attente localement, puis être synchronisées lorsque la connexion revient. Vous gardez une vue sur ce qui est parti et ce qui attend.",
+  },
+  {
+    question: "EASYSTOR est-il payant aujourd’hui ?",
+    answer: "Non. Les fonctionnalités actuellement disponibles sont gratuites, sans carte bancaire ni paiement requis. Tout éventuel changement de tarif sera annoncé clairement à l’avance.",
+  },
+];
+
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const closeMobileMenu = () => setMobileMenuOpen(false);
@@ -321,6 +344,27 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="scroll-mt-8 border-y border-[#d8d8cb] bg-[#f7f5ee] py-20 sm:py-28" aria-labelledby="questions-easystor" data-seo-section="questions-easystor">
+          <div className="container grid gap-10 lg:grid-cols-[0.76fr_1.24fr] lg:gap-16">
+            <div className="max-w-xl">
+              <p className="text-sm font-bold text-[#46684a]">Comprendre avant de commencer</p>
+              <h2 id="questions-easystor" className="mt-4 font-serif text-4xl leading-[1.02] tracking-[-0.025em] text-[#243029] sm:text-5xl">Les réponses utiles pour votre commerce.</h2>
+              <p className="mt-5 max-w-[52ch] text-lg leading-relaxed text-[#536153]">Retrouvez les points essentiels sur la caisse, le stock, vos tableaux existants et le travail lorsque la connexion n’est pas stable.</p>
+            </div>
+            <div className="divide-y divide-[#d9ddd3] border-y border-[#d9ddd3]">
+              {frequentlyAskedQuestions.map(({ question, answer }) => (
+                <details className="group py-1" key={question}>
+                  <summary className="flex min-h-15 cursor-pointer list-none items-center justify-between gap-6 py-4 text-left text-base font-bold text-[#26352d] marker:content-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#567b4f]">
+                    {question}
+                    <span className="grid size-7 shrink-0 place-items-center rounded-full border border-[#b9c6b6] text-lg font-normal text-[#46684a] transition-transform duration-150 ease-out group-open:rotate-45 motion-reduce:transition-none" aria-hidden="true">+</span>
+                  </summary>
+                  <p className="max-w-[64ch] pb-5 pr-11 leading-relaxed text-[#536153]">{answer}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section className="bg-[#f7f5ee] py-20 sm:py-28">
           <div className="container">
             <div className="relative overflow-hidden rounded-2xl bg-[#1e2924] px-6 py-12 text-[#f7f5ee] shadow-[0_20px_55px_rgba(30,41,36,0.18)] sm:px-10 sm:py-16 lg:px-16">
@@ -345,7 +389,7 @@ export default function Home() {
             <p className="mt-2 max-w-md text-sm leading-relaxed">La caisse, le stock et le suivi pour les commerces de proximité.</p>
           </div>
           <nav aria-label="Liens de fin de page" className="flex flex-wrap gap-x-5 gap-y-3 text-sm font-semibold text-[#304631]">
-            <a className="underline-offset-4 transition-colors hover:text-[#142119] hover:underline" href="#migration">Migrer mes données</a>
+            <a className="underline-offset-4 transition-colors hover:text-[#142119] hover:underline" href="#migrer">Migrer mes données</a>
             <a className="underline-offset-4 transition-colors hover:text-[#142119] hover:underline" href="#tarifs">Tarifs</a>
             <a className="underline-offset-4 transition-colors hover:text-[#142119] hover:underline" href="#hors-connexion">Hors connexion</a>
           </nav>
