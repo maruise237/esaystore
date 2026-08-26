@@ -28,3 +28,5 @@ Lors du contrôle initial, l’aperçu géré localement a affiché une surface 
 Après désactivation du HMR local incompatible avec ce montage Express/Vite, le contrôle desktop confirme la hiérarchie attendue : marque et CTA visibles, promesse éditoriale dominante, preuve de caisse immédiatement lisible, puis alternance aérée des séquences vente, stock, synchronisation et suivi. La vérification mobile reste à effectuer avant publication.
 
 Le contrôle mobile à 390 px confirme que le contenu passe en une colonne sans texte tronqué ni débordement horizontal observable, avec un accès menu tactile distinct. La route `/auth?mode=login` a aussi été contrôlée visuellement : elle ouvre bien le parcours e-mail/mot de passe existant, sans bouton Google.
+
+Après synchronisation GitHub, le domaine Vercel a bien exposé le nouveau titre public. Son premier cliché navigateur a présenté une surface blanche, mais l’inspection DOM a confirmé que la landing était montée côté client avec son contenu, ses CTA et ses sections. Le bundle référencé est servi en HTTP 200 ; ce blanc est donc un artefact de capture, pas un échec de déploiement applicatif.
