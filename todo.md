@@ -231,3 +231,6 @@
 - [x] Intégrer Neon Auth aux parcours de connexion, inscription, compte et première boutique EASYSTOR.
 - [x] Raccorder une session Neon Auth validée aux rôles plateforme et accès boutiques côté serveur.
 - [x] Tester puis publier Neon Auth avec la documentation d’exploitation Vercel/Neon.
+- [ ] Vérifier le statut GitHub de la version Neon Auth par rapport à `maruise237/esaystore` sur `main`.
+- [ ] Préparer la liste Vercel de variables requises pour Neon Auth sans révéler de secret.
+- [ ] Committer et pousser sur GitHub `main` la version Neon Auth validée si le dépôt distant est en retard.
