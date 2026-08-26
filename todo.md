@@ -281,3 +281,5 @@
 - [x] Tester, prévisualiser, publier et synchroniser l’intensité corrigée du fond Gradient Bars sur GitHub `main`.
 - [x] Retirer le fond Gradient Bars à la demande du propriétaire et restaurer un hero evergreen uni.
 - [x] Tester, prévisualiser, publier et synchroniser le retrait du fond Gradient Bars sur GitHub `main`.
+- [x] Adapter et intégrer une grille interactive au hero EASYSTOR avec une palette evergreen lisible.
+- [x] Tester, prévisualiser, publier et synchroniser le fond de grille interactive sur GitHub `main`.
