@@ -248,5 +248,10 @@
 - [x] Retirer le bouton et le flux de connexion Google à la demande du propriétaire.
 - [x] Mettre à jour les tests et la documentation pour ne présenter que l’authentification e-mail Neon Auth.
 - [x] Valider, publier et synchroniser sur GitHub l’authentification e-mail seule.
+- [x] Auditer l’identité EASYSTOR et définir la stratégie de contenu de la landing page.
+- [x] Créer une landing page responsive avec promesse métier, bénéfices, parcours produit et appels à l’inscription.
+- [x] Relier les appels à l’action de la landing page au parcours e-mail EASYSTOR.
+- [x] Raffiner l’accessibilité, les états d’interaction et les comportements mobile de la landing page.
+- [ ] Ajouter des tests, vérifier les rendus desktop/mobile, publier et synchroniser la landing page sur GitHub `main`.
 - [x] Remplacer la récupération de jeton Neon Auth sans session par une lecture de session non bruyante côté client.
 - [x] Corriger le guide Google OAuth pour utiliser le callback Neon Auth et configurer les identifiants Google de production dans Neon.

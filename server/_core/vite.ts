@@ -9,7 +9,9 @@ import viteConfig from "../../vite.config";
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
-    hmr: { server },
+    // L’aperçu Express sert un document transformé hors du cycle HMR standard.
+    // Désactiver HMR évite que le runtime React cherche un préambule absent.
+    hmr: false as const,
     allowedHosts: true as const,
   };
 

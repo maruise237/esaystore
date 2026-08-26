@@ -54,7 +54,7 @@ describe("parcours d’authentification", () => {
   });
 
   it("ouvre directement la connexion lorsqu’une intention est fournie dans l’URL", () => {
-    window.history.replaceState({}, "", "/?mode=login");
+    window.history.replaceState({}, "", "/auth?mode=login");
     render(<AuthPage />);
 
     expect(
@@ -64,7 +64,7 @@ describe("parcours d’authentification", () => {
   });
 
   it("propose uniquement l’accès e-mail depuis l’onglet de connexion", () => {
-    window.history.replaceState({}, "", "/?mode=login");
+    window.history.replaceState({}, "", "/auth?mode=login");
     render(<AuthPage />);
 
     expect(screen.queryByRole("button", { name: "Continuer avec Google" })).toBeNull();

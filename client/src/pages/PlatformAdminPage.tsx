@@ -7,7 +7,7 @@ import { trpc } from "@/lib/trpc";
 import AdminPanel from "./AdminPanel";
 
 const returnToWorkspace = () => window.location.replace("/");
-const returnToLogin = () => window.location.assign("/?mode=login");
+const returnToLogin = () => window.location.assign("/auth?mode=login");
 
 export default function PlatformAdminPage() {
   const { user, loading } = useAuth();

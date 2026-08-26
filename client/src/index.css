@@ -120,7 +120,12 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-variant-numeric: tabular-nums;
+    scrollbar-color: #6d7e68 #eceae2;
+    scrollbar-width: thin;
   }
+  body::-webkit-scrollbar { width: 0.75rem; }
+  body::-webkit-scrollbar-track { background: #eceae2; }
+  body::-webkit-scrollbar-thumb { border: 3px solid #eceae2; border-radius: 999px; background: #6d7e68; }
   ::selection {
     background: #d1e980;
     color: #1e2924;
