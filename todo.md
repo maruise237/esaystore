@@ -238,3 +238,7 @@
 - [x] Autoriser strictement l’origine Neon Auth dans les directives CSP pertinentes sans élargir inutilement la politique.
 - [ ] Vérifier les variables Neon Auth Vercel et rétablir les parcours de connexion e-mail et Google.
 - [ ] Tester, publier et vérifier le correctif CSP Neon Auth sur le domaine Vercel.
+- [x] Diagnostiquer le 401 Neon Auth et le 500 tRPC restant sur le domaine Vercel après le correctif CSP.
+- [x] Corriger la résolution ESM de `server/routers` dans la fonction Vercel tRPC signalée par les Runtime Logs.
+- [x] Corriger la récupération de session sans compte connecté et stabiliser la réponse JSON tRPC en production.
+- [ ] Vérifier sur le domaine Vercel le parcours sans session, puis e-mail et Google après authentification.

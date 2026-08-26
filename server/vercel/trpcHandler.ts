@@ -1,10 +1,10 @@
 import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { appRouter } from "../../server/routers";
-import { createContext } from "../../server/_core/context";
+import { appRouter } from "../routers";
+import { createContext } from "../_core/context";
 import { API_BODY_LIMIT } from "../../shared/importLimits";
-import { configureTrustedProxy } from "../../server/_core/proxyTrust";
-import { securityHeadersMiddleware } from "../../server/_core/securityHeaders";
+import { configureTrustedProxy } from "../_core/proxyTrust";
+import { securityHeadersMiddleware } from "../_core/securityHeaders";
 
 const api = express();
 configureTrustedProxy(api);
