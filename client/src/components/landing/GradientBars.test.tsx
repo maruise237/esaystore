@@ -10,11 +10,11 @@ describe("fond Gradient Bars EASYSTOR", () => {
     vi.unstubAllGlobals();
   });
 
-  it("rend une texture compacte de neuf barres décoratives", () => {
+  it("rend une texture visible de dix barres décoratives", () => {
     render(<GradientBars />);
 
     expect(document.querySelector('[data-motion="gradient-bars"]')).toBeTruthy();
-    expect(document.querySelectorAll('[data-gradient-bar="easystor"]')).toHaveLength(9);
+    expect(document.querySelectorAll('[data-gradient-bar="easystor"]')).toHaveLength(10);
   });
 
   it("laisse le fond statique lorsque le mouvement réduit est demandé", () => {

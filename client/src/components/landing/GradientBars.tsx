@@ -11,15 +11,15 @@ type GradientBarsProps = {
  * animation décorative prioritaire. Le hero evergreen reste son fallback.
  */
 export function GradientBars({
-  bars = 9,
-  colors = ["rgba(149, 181, 100, 0.2)", "rgba(68, 98, 70, 0.08)", "transparent"],
+  bars = 10,
+  colors = ["rgba(197, 225, 116, 0.5)", "rgba(111, 150, 71, 0.22)", "rgba(29, 47, 34, 0.03)"],
 }: GradientBarsProps) {
   const reduceMotion = useAccessibleReducedMotion();
   const gradientStyle = `linear-gradient(to top, ${colors.join(", ")})`;
 
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-[-1] overflow-hidden" data-motion="gradient-bars">
-      <div className="flex size-full" data-animated={!reduceMotion || undefined}>
+      <div className="flex size-full gap-px bg-[#17231d]/70 px-3 sm:px-5" data-animated={!reduceMotion || undefined}>
         {Array.from({ length: bars }).map((_, index) => {
           const position = bars > 1 ? index / (bars - 1) : 0.5;
           const distanceFromCenter = Math.abs(position - 0.5);
@@ -27,12 +27,12 @@ export function GradientBars({
 
           return (
             <motion.div
-              animate={reduceMotion ? undefined : { opacity: [0.55, 0.72, 0.55], scaleY: [restingScale, restingScale + 0.075, restingScale] }}
+              animate={reduceMotion ? undefined : { opacity: [0.68, 0.92, 0.68], scaleY: [restingScale, restingScale + 0.105, restingScale] }}
               aria-hidden="true"
               className="h-full flex-1 origin-bottom"
               data-gradient-bar="easystor"
               key={`gradient-bar-${index}`}
-              style={{ background: gradientStyle, opacity: 0.55, transform: `scaleY(${restingScale})` }}
+              style={{ background: gradientStyle, boxShadow: "0 0 34px rgba(178, 214, 101, 0.1)", opacity: 0.72, transform: `scaleY(${restingScale})` }}
               transition={{ delay: index * 0.16, duration: 5.4, ease: "easeInOut", repeat: Infinity, repeatType: "mirror" }}
             />
           );
