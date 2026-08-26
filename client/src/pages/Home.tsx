@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 const navigation = [
   { href: "#vendre", label: "Vendre" },
   { href: "#migrer", label: "Migrer mes données" },
+  { href: "#tarifs", label: "Tarifs" },
   { href: "#hors-ligne", label: "Hors connexion" },
   { href: "#suivre", label: "Suivre l’activité" },
 ];
@@ -235,12 +236,36 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="border-y border-[#d8d8cb] bg-[#f7f5ee] py-16 sm:py-20" aria-label="Accès gratuit">
-          <div className="container grid gap-7 lg:grid-cols-[0.75fr_1.25fr] lg:items-start lg:gap-16">
-            <h2 className="max-w-md font-serif text-3xl leading-[1.04] tracking-[-0.025em] text-[#243029] sm:text-4xl">Toute la puissance actuelle, gratuitement.</h2>
-            <div className="max-w-3xl">
-              <p className="text-lg leading-relaxed text-[#405140]">Toutes les fonctionnalités disponibles aujourd’hui sont gratuites, sans carte bancaire ni paiement requis.</p>
-              <p className="mt-4 leading-relaxed text-[#536153]">Des tarifs pourront être annoncés à l’avenir. Notre engagement est de les communiquer avant tout changement et de garder EASYSTOR accessible aux commerces de proximité.</p>
+        <section id="tarifs" className="scroll-mt-8 border-y border-[#d8d8cb] bg-[#f7f5ee] py-20 sm:py-28" aria-labelledby="titre-tarifs">
+          <div className="container">
+            <div className="max-w-2xl">
+              <h2 id="titre-tarifs" className="font-serif text-4xl leading-[1.02] tracking-[-0.025em] text-[#243029] sm:text-5xl">Tarifs simples. Départ gratuit.</h2>
+              <p className="mt-5 max-w-[58ch] text-lg leading-relaxed text-[#536153]">Commencez avec toutes les fonctionnalités actuellement disponibles. Aucun paiement n’est demandé aujourd’hui.</p>
+            </div>
+
+            <div className="mt-12 grid gap-8 lg:mt-14 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch lg:gap-12">
+              <article className="rounded-2xl bg-[#1e2924] p-7 text-[#f7f5ee] shadow-[0_18px_42px_rgba(30,41,36,0.18)] sm:p-9">
+                <p className="text-sm font-bold text-[#d1e980]">Accès EASYSTOR</p>
+                <p className="mt-5 font-serif text-4xl tracking-[-0.03em] sm:text-5xl">Gratuit aujourd’hui</p>
+                <p className="mt-4 max-w-[38ch] leading-relaxed text-[#d1dcd0]">Sans carte bancaire. Sans paiement requis. Vous pouvez ouvrir votre boutique et utiliser les fonctions déjà disponibles.</p>
+                <ul className="mt-7 space-y-3 text-sm text-[#e7ede5]">
+                  {["Caisse, stock et catalogue", "Import, export et données historiques", "Créances, rapports et clôture de caisse", "Mode hors connexion et synchronisation"].map(item => (
+                    <li className="flex items-start gap-3" key={item}><CircleCheck className="mt-0.5 size-4 shrink-0 text-[#d1e980]" aria-hidden="true" />{item}</li>
+                  ))}
+                </ul>
+                <Button asChild size="lg" className="mt-9 h-12 rounded-lg bg-[#d1e980] px-6 text-base font-bold text-[#1e2924] hover:bg-[#e1f29b]">
+                  <a href="/auth?mode=register">Créer ma boutique <ArrowRight className="size-4" aria-hidden="true" /></a>
+                </Button>
+              </article>
+
+              <div className="flex flex-col justify-between rounded-2xl border border-[#d8ddd3] bg-[#eeece4] p-7 sm:p-9">
+                <div>
+                  <p className="font-serif text-3xl tracking-[-0.025em] text-[#26352d]">Et après&nbsp;?</p>
+                  <p className="mt-5 max-w-[52ch] text-lg leading-relaxed text-[#465645]">Des tarifs pourront être proposés à l’avenir. Nous les annoncerons clairement avant tout changement.</p>
+                  <p className="mt-4 max-w-[52ch] leading-relaxed text-[#5e6c5b]">Notre engagement est de garder EASYSTOR accessible et adapté aux réalités des commerces de proximité.</p>
+                </div>
+                <p className="mt-8 border-t border-[#d2d6cc] pt-5 text-sm font-semibold text-[#405140]">Aucune action de votre part n’est nécessaire pour profiter de l’accès gratuit actuel.</p>
+              </div>
             </div>
           </div>
         </section>

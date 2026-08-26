@@ -12,15 +12,19 @@ describe("landing EASYSTOR", () => {
     render(<Home />);
 
     expect(screen.getByRole("heading", { name: "Vendez vite. Gardez la main." })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Créer ma boutique" }).getAttribute("href")).toBe("/auth?mode=register");
+    expect(screen.getAllByRole("link", { name: "Créer ma boutique" }).every(link => link.getAttribute("href") === "/auth?mode=register")).toBe(true);
     expect(screen.getAllByRole("link", { name: "Se connecter" }).every(link => link.getAttribute("href") === "/auth?mode=login")).toBe(true);
     expect(screen.getByText("Pensé pour les réseaux instables")).toBeTruthy();
     expect(screen.getAllByText("Aperçu illustratif de l’interface.").length).toBeGreaterThan(2);
     expect(screen.getByRole("heading", { name: "Vos tableaux ne restent pas derrière." })).toBeTruthy();
     expect(screen.getAllByText(/Excel ou Google Sheets/i).length).toBeGreaterThan(1);
     expect(screen.getByRole("link", { name: "Importer mon activité" }).getAttribute("href")).toBe("/auth?mode=register");
-    expect(screen.getByText(/Toutes les fonctionnalités disponibles aujourd’hui sont gratuites/i)).toBeTruthy();
-    expect(screen.getByText(/sans carte bancaire ni paiement requis/i)).toBeTruthy();
+    expect(screen.getByText(/Commencez avec toutes les fonctionnalités actuellement disponibles/i)).toBeTruthy();
+    expect(screen.getByText(/Sans carte bancaire\. Sans paiement requis/i)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Tarifs" }).getAttribute("href")).toBe("#tarifs");
+    expect(screen.getByRole("heading", { name: "Tarifs simples. Départ gratuit." })).toBeTruthy();
+    expect(screen.getByText("Gratuit aujourd’hui")).toBeTruthy();
+    expect(screen.getByText(/Nous les annoncerons clairement avant tout changement/i)).toBeTruthy();
   });
 
   it("rend la navigation mobile accessible sans introduire de contenu commercial non demandé", () => {
