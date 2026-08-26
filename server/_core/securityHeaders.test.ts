@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { applySecurityHeaders, SECURITY_HEADERS } from "./securityHeaders";
+import { applySecurityHeaders, NEON_AUTH_ORIGIN, SECURITY_HEADERS } from "./securityHeaders";
 
 describe("en-têtes de sécurité", () => {
   it("applique les protections navigateur attendues à chaque réponse serveur", () => {
@@ -8,5 +8,6 @@ describe("en-têtes de sécurité", () => {
     expect(setHeader).toHaveBeenCalledTimes(Object.keys(SECURITY_HEADERS).length);
     expect(setHeader).toHaveBeenCalledWith("X-Frame-Options", "DENY");
     expect(setHeader).toHaveBeenCalledWith("Content-Security-Policy", expect.stringContaining("frame-ancestors 'none'"));
+    expect(setHeader).toHaveBeenCalledWith("Content-Security-Policy", expect.stringContaining(`connect-src 'self' ${NEON_AUTH_ORIGIN}`));
   });
 });

@@ -3,11 +3,9 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter } from "../../server/routers";
 import { createContext } from "../../server/_core/context";
 import { API_BODY_LIMIT } from "../../shared/importLimits";
-import { assertSessionSecretConfigured } from "../../server/auth";
 import { configureTrustedProxy } from "../../server/_core/proxyTrust";
 import { securityHeadersMiddleware } from "../../server/_core/securityHeaders";
 
-assertSessionSecretConfigured();
 const api = express();
 configureTrustedProxy(api);
 api.use(securityHeadersMiddleware);

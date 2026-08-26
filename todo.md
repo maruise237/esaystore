@@ -234,3 +234,7 @@
 - [x] Vérifier le statut GitHub de la version Neon Auth par rapport à `maruise237/esaystore` sur `main`.
 - [x] Préparer la liste Vercel de variables requises pour Neon Auth sans révéler de secret.
 - [x] Committer et pousser sur GitHub `main` la version Neon Auth validée si le dépôt distant est en retard.
+- [x] Diagnostiquer le blocage CSP de Neon Auth et l’erreur tRPC 500 observés sur le domaine Vercel.
+- [x] Autoriser strictement l’origine Neon Auth dans les directives CSP pertinentes sans élargir inutilement la politique.
+- [ ] Vérifier les variables Neon Auth Vercel et rétablir les parcours de connexion e-mail et Google.
+- [ ] Tester, publier et vérifier le correctif CSP Neon Auth sur le domaine Vercel.
