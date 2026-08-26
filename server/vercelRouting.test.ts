@@ -11,7 +11,7 @@ describe("routage Vercel de la SPA", () => {
 
     expect(config.rewrites).toContainEqual({
       source: "/:path((?!api(?:/|$)).*)",
-      destination: "/index.html",
+      destination: "/",
     });
     expect(config.rewrites).toContainEqual({
       source: "/manus-storage/:path*",
