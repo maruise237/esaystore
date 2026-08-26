@@ -15,6 +15,8 @@ La landing mettait correctement en avant la caisse, le stock, le suivi et le tra
 
 Le rendu desktop conserve la séquence caisse, stock, suivi, migration, gratuité et synchronisation hors connexion sans en faire une grille de cartes génériques. À 390 px, la landing passe en une colonne lisible ; les formulaires de connexion et d’inscription restent directement affichés, avec leurs champs et cibles tactiles visibles.
 
+Après le déploiement du fallback SPA corrigé, l’URL publique `/auth?mode=login` ne renvoie plus de 404. Le contrôle DOM du domaine Vercel confirme le montage du champ `#login-email` et du formulaire e-mail. Le cliché navigateur reste parfois blanc dans cet environnement, mais le titre, le texte et les contrôles réellement montés confirment la disponibilité du parcours.
+
 ## Périmètre assumé
 
 Cette mise à jour n’ajoute ni abonnement, ni paiement, ni paywall, ni annonce sponsorisée. La fonction de prix reste une information marketing honnête : gratuit aujourd’hui, tarifs éventuels communiqués avant changement, sans montant ou échéance inventés.
