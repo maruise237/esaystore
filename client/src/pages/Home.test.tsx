@@ -19,6 +19,7 @@ describe("landing EASYSTOR", () => {
     expect(screen.getByRole("heading", { name: "Vos tableaux ne restent pas derrière." })).toBeTruthy();
     expect(screen.getAllByText(/Excel ou Google Sheets/i).length).toBeGreaterThan(1);
     expect(screen.getByRole("link", { name: "Importer mon activité" }).getAttribute("href")).toBe("/auth?mode=register");
+    expect(screen.getByRole("link", { name: "Lire le guide de migration" }).getAttribute("href")).toBe("/guides/migrer-excel-google-sheets");
     expect(screen.getByText(/Commencez avec toutes les fonctionnalités actuellement disponibles/i)).toBeTruthy();
     expect(screen.getByText(/Sans carte bancaire\. Sans paiement requis/i)).toBeTruthy();
     expect(screen.getAllByRole("link", { name: "Tarifs" }).every(link => link.getAttribute("href") === "#tarifs")).toBe(true);

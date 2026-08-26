@@ -14,6 +14,7 @@ vi.mock("@/components/ui/sonner", () => ({ Toaster: () => null }));
 vi.mock("./components/PwaInstallPrompt", () => ({ default: () => null }));
 vi.mock("./components/PwaUpdatePrompt", () => ({ default: () => null }));
 vi.mock("./pages/Home", () => ({ default: () => <p>Landing publique</p> }));
+vi.mock("./pages/MigrationGuidePage", () => ({ default: () => <p>Guide de migration public</p> }));
 vi.mock("./pages/AuthPage", () => ({ default: () => <p>Authentification e-mail</p> }));
 vi.mock("./pages/Workspace", () => ({ default: () => <p>Espace marchand</p> }));
 vi.mock("./pages/PlatformAdminPage", () => ({ default: () => <p>Console plateforme</p> }));
@@ -41,6 +42,13 @@ describe("routes publiques EASYSTOR", () => {
     window.history.replaceState({}, "", "/app");
     render(<App />);
     expect(screen.getByText("Espace marchand")).toBeTruthy();
+  });
+
+  it("expose le guide de migration public sur une URL stable", () => {
+    useAuth.mockReturnValue({ user: null, loading: false });
+    window.history.replaceState({}, "", "/guides/migrer-excel-google-sheets");
+    render(<App />);
+    expect(screen.getByText("Guide de migration public")).toBeTruthy();
   });
 
   it("laisse la landing et le formulaire accessibles pendant la vérification anonyme", () => {

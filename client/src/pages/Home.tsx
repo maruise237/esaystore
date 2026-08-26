@@ -265,6 +265,9 @@ export default function Home() {
               <a className="mt-7 inline-flex min-h-11 items-center gap-2 rounded-md text-sm font-bold text-[#304631] underline-offset-4 hover:underline focus-visible:outline-none" href="/auth?mode=register">
                 Importer mon activité <ArrowRight className="size-4" aria-hidden="true" />
               </a>
+              <a className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-md text-sm font-bold text-[#405140] underline-offset-4 hover:underline focus-visible:outline-none" href="/guides/migrer-excel-google-sheets">
+                Lire le guide de migration <ArrowRight className="size-4" aria-hidden="true" />
+              </a>
             </div>
             <MigrationPreview />
           </FadeContent>

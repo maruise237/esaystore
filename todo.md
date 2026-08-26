@@ -288,3 +288,8 @@
 - [x] Auditer les fondations SEO et GEO de la landing EASYSTOR, ses entités et ses intentions de recherche.
 - [x] Mettre en œuvre les améliorations SEO et GEO vérifiables : métadonnées, contenu sémantique, données structurées et robots.
 - [x] Tester, vérifier le rendu public, publier et synchroniser les améliorations SEO/GEO sur GitHub `main`.
+- [x] Rechercher et documenter les meilleures pratiques SEO/GEO 2026 applicables à une landing SaaS française.
+- [x] Auditer les intentions de recherche et les actifs éditoriaux EASYSTOR afin de sélectionner un premier contenu à forte valeur.
+- [x] Créer et relier un premier guide SEO/GEO utile, factuel et orienté migration Excel/Google Sheets vers EASYSTOR.
+- [x] Renforcer les signaux techniques, les données structurées et les fichiers de découverte adaptés au nouvel actif.
+- [x] Tester, prévisualiser, publier et synchroniser la montée en puissance SEO/GEO sur GitHub `main`.
