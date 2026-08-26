@@ -262,4 +262,4 @@
 - [x] Valider la landing enrichie sur desktop et mobile, puis publier et synchroniser GitHub `main`.
 - [x] Définir une section Tarifs publique, honnête et sans montant inventé pour annoncer la gratuité actuelle et les futurs tarifs.
 - [x] Ajouter le lien Tarifs à la navigation et une section dédiée avec l’annonce claire de l’accès gratuit aujourd’hui.
-- [ ] Tester, prévisualiser, publier et synchroniser la section Tarifs sur GitHub `main`.
+- [x] Tester, prévisualiser, publier et synchroniser la section Tarifs sur GitHub `main`.
