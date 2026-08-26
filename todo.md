@@ -236,9 +236,11 @@
 - [x] Committer et pousser sur GitHub `main` la version Neon Auth validée si le dépôt distant est en retard.
 - [x] Diagnostiquer le blocage CSP de Neon Auth et l’erreur tRPC 500 observés sur le domaine Vercel.
 - [x] Autoriser strictement l’origine Neon Auth dans les directives CSP pertinentes sans élargir inutilement la politique.
-- [ ] Vérifier les variables Neon Auth Vercel et rétablir les parcours de connexion e-mail et Google.
-- [ ] Tester, publier et vérifier le correctif CSP Neon Auth sur le domaine Vercel.
+- [x] Vérifier les variables Neon Auth Vercel et rétablir le parcours public sans session Neon Auth.
+- [x] Tester, publier et vérifier le correctif CSP Neon Auth sur le domaine Vercel.
 - [x] Diagnostiquer le 401 Neon Auth et le 500 tRPC restant sur le domaine Vercel après le correctif CSP.
 - [x] Corriger la résolution ESM de `server/routers` dans la fonction Vercel tRPC signalée par les Runtime Logs.
 - [x] Corriger la récupération de session sans compte connecté et stabiliser la réponse JSON tRPC en production.
 - [ ] Vérifier sur le domaine Vercel le parcours sans session, puis e-mail et Google après authentification.
+- [x] Remplacer la récupération de jeton Neon Auth sans session par une lecture de session non bruyante côté client.
+- [x] Corriger le guide Google OAuth pour utiliser le callback Neon Auth et configurer les identifiants Google de production dans Neon.

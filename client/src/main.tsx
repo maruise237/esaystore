@@ -5,24 +5,12 @@ import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
 import { neonAuthClient } from "./lib/neonAuth";
+import { getNeonSessionToken } from "./lib/neonSessionToken";
 import { setupOfflineSync } from "./lib/offline";
 import "./index.css";
 
 const queryClient = new QueryClient();
 setupOfflineSync();
-
-async function getNeonAccessToken() {
-  try {
-    const timeout = new Promise<null>(resolve => window.setTimeout(() => resolve(null), 1_500));
-    const result = await Promise.race([
-      neonAuthClient.token({ fetchOptions: { credentials: "include" } }),
-      timeout,
-    ]);
-    return result && "data" in result ? result.data?.token ?? null : null;
-  } catch {
-    return null;
-  }
-}
 
 queryClient.getQueryCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
@@ -45,7 +33,7 @@ const trpcClient = trpc.createClient({
       transformer: superjson,
       async fetch(input, init) {
         const headers = new Headers(init?.headers);
-        const token = await getNeonAccessToken();
+        const token = await getNeonSessionToken(neonAuthClient);
         if (token) headers.set("Authorization", `Bearer ${token}`);
         return globalThis.fetch(input, {
           ...(init ?? {}),

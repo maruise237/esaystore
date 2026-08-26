@@ -40,7 +40,7 @@ Saisir ces clés dans **Vercel → Project Settings → Environment Variables**,
 | Priorité | Action du propriétaire |
 | --- | --- |
 | Haute | Dans Neon **Settings → Auth**, définir le nom d’application visible : `EASYSTOR`. |
-| Haute | Créer un client OAuth Google propre à EASYSTOR, puis le configurer dans Neon Auth pour remplacer les clés Google partagées de développement. |
+| Haute | Créer un client OAuth Google propre à EASYSTOR, puis renseigner son Client ID et son Client Secret dans **Neon → branche `main` → Auth → Providers → Google** pour remplacer les clés Google partagées de développement. |
 | Haute | Configurer un SMTP personnalisé avant un volume réel d’inscriptions ; le SMTP partagé Neon est adapté aux essais et limité. |
 | Haute | Après les derniers essais locaux, désactiver **Allow localhost** dans Neon Auth de production. |
 | Moyenne | Créer une branche Neon dédiée aux previews Vercel afin d’isoler comptes et données de test. |
@@ -52,6 +52,16 @@ Saisir ces clés dans **Vercel → Project Settings → Environment Variables**,
 - La vérification e-mail OTP est requise à l’inscription.
 - La table `public.neon_auth_identities` a été testée en branche Neon isolée puis ajoutée en production sans suppression de données.
 - Les tests EASYSTOR, le typage et le build Vercel couvrent la configuration, le refus des identités non vérifiées, le bouton Google et l’étape OTP.
+
+## Google OAuth de production
+
+Dans Google Cloud Console, créer un client OAuth de type **Web application**. Dans ses URI de redirection autorisés, saisir exactement :
+
+```text
+{Auth Base URL de Neon Auth}/callback/google
+```
+
+Cette URL est le callback géré par Neon Auth, et non l’URL de la page EASYSTOR. L’URL de retour après connexion reste `https://esaystor.kamtech.online`, qui doit être présente dans les domaines de confiance Neon Auth. Une fois le Client ID et le Client Secret enregistrés dans Neon, ne les copiez ni dans Vercel, ni dans Git, ni dans le navigateur.
 
 ## Références
 
