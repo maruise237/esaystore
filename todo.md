@@ -266,4 +266,4 @@
 - [x] Auditer les capacités Framer Motion existantes et la disponibilité du registre React Bits avant toute intégration.
 - [x] Ajouter des animations de landing utiles : entrée hero, révélation au défilement et micro-interactions de preuves produit.
 - [x] Respecter les préférences de mouvement réduit, tester la navigation et vérifier le rendu desktop/mobile.
-- [ ] Publier les animations de landing et synchroniser GitHub `main`.
+- [x] Publier les animations de landing et synchroniser GitHub `main`.

@@ -18,4 +18,6 @@ Les arrière-plans animés, curseurs spéciaux, glitchs, particules, cartes incl
 
 ## Vérifications
 
-La landing est rendue à 1440 px et 390 px après redémarrage de l’aperçu. Les sections restent lisibles, la pile mobile ne déborde pas et les CTA restent visibles. Les tests ciblés de landing et de motion passent ; la suite complète et le build Vercel restent à exécuter avant publication.
+La landing est rendue à 1440 px et 390 px après redémarrage de l’aperçu. Les sections restent lisibles, la pile mobile ne déborde pas et les CTA restent visibles. Les tests ciblés de landing et de motion passent.
+
+La suite complète, le build Vercel et le contrôle du domaine public sont effectués. Le navigateur de contrôle peut capturer une surface blanche malgré un DOM chargé ; l’inspection du domaine confirme le titre EASYSTOR, le contenu de la landing et les quatre cibles de motion montées (`hero-product-proof` et trois `fade-content`).
