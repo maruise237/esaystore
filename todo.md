@@ -263,3 +263,7 @@
 - [x] Définir une section Tarifs publique, honnête et sans montant inventé pour annoncer la gratuité actuelle et les futurs tarifs.
 - [x] Ajouter le lien Tarifs à la navigation et une section dédiée avec l’annonce claire de l’accès gratuit aujourd’hui.
 - [x] Tester, prévisualiser, publier et synchroniser la section Tarifs sur GitHub `main`.
+- [x] Auditer les capacités Framer Motion existantes et la disponibilité du registre React Bits avant toute intégration.
+- [x] Ajouter des animations de landing utiles : entrée hero, révélation au défilement et micro-interactions de preuves produit.
+- [x] Respecter les préférences de mouvement réduit, tester la navigation et vérifier le rendu desktop/mobile.
+- [ ] Publier les animations de landing et synchroniser GitHub `main`.

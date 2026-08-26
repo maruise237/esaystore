@@ -19,6 +19,7 @@ import {
   Wifi,
   X,
 } from "lucide-react";
+import { FadeContent, HeroMotion } from "@/components/landing/FadeContent";
 import { Button } from "@/components/ui/button";
 
 const navigation = [
@@ -154,7 +155,9 @@ export default function Home() {
               </p>
             </div>
 
-            <ProductProof />
+            <HeroMotion>
+              <ProductProof />
+            </HeroMotion>
           </div>
         </section>
 
@@ -218,7 +221,7 @@ export default function Home() {
         </section>
 
         <section id="migrer" className="scroll-mt-8 bg-[#e9e6dc] py-20 sm:py-28">
-          <div className="container grid gap-12 lg:grid-cols-[0.88fr_1.12fr] lg:items-center lg:gap-16">
+          <FadeContent className="container grid gap-12 lg:grid-cols-[0.88fr_1.12fr] lg:items-center lg:gap-16" direction="right">
             <div className="max-w-xl">
               <FileSpreadsheet className="size-7 text-[#46684a]" aria-hidden="true" />
               <h2 className="mt-5 font-serif text-4xl leading-[1.02] tracking-[-0.025em] text-[#243029] sm:text-5xl">Vos tableaux ne restent pas derrière.</h2>
@@ -233,11 +236,11 @@ export default function Home() {
               </a>
             </div>
             <MigrationPreview />
-          </div>
+          </FadeContent>
         </section>
 
         <section id="tarifs" className="scroll-mt-8 border-y border-[#d8d8cb] bg-[#f7f5ee] py-20 sm:py-28" aria-labelledby="titre-tarifs">
-          <div className="container">
+          <FadeContent className="container" delay={0.06}>
             <div className="max-w-2xl">
               <h2 id="titre-tarifs" className="font-serif text-4xl leading-[1.02] tracking-[-0.025em] text-[#243029] sm:text-5xl">Tarifs simples. Départ gratuit.</h2>
               <p className="mt-5 max-w-[58ch] text-lg leading-relaxed text-[#536153]">Commencez avec toutes les fonctionnalités actuellement disponibles. Aucun paiement n’est demandé aujourd’hui.</p>
@@ -267,11 +270,11 @@ export default function Home() {
                 <p className="mt-8 border-t border-[#d2d6cc] pt-5 text-sm font-semibold text-[#405140]">Aucune action de votre part n’est nécessaire pour profiter de l’accès gratuit actuel.</p>
               </div>
             </div>
-          </div>
+          </FadeContent>
         </section>
 
         <section id="hors-ligne" className="scroll-mt-8 bg-[#2a3931] py-20 text-[#f7f5ee] sm:py-28">
-          <div className="container grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:items-center lg:gap-16">
+          <FadeContent className="container grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:items-center lg:gap-16" direction="left">
             <div className="max-w-xl">
               <div className="flex items-center gap-3 text-[#d1e980]"><CloudOff className="size-5" aria-hidden="true" /><span className="text-sm font-bold">Le travail ne s’arrête pas à une coupure.</span></div>
               <h2 className="mt-6 font-serif text-4xl leading-[1.02] tracking-[-0.025em] sm:text-5xl">Continuez d’avancer, même hors connexion.</h2>
@@ -282,7 +285,7 @@ export default function Home() {
               </div>
             </div>
             <OfflinePreview />
-          </div>
+          </FadeContent>
         </section>
 
         <section id="suivre" className="scroll-mt-8 bg-[#e9e6dc] py-20 sm:py-28">
