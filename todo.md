@@ -271,6 +271,6 @@
 - [x] Intégrer le fond WebGL au hero avec un fallback statique, mouvement réduit et limites de performance adaptées au mobile.
 - [x] Tester, prévisualiser, publier et synchroniser le fond animé sur GitHub `main`.
 - [x] Retirer le fond Gradient Blinds non retenu, sa dépendance WebGL et ses artefacts de test et de documentation.
-- [ ] Restaurer, vérifier, publier et synchroniser le hero EASYSTOR précédent sur GitHub `main`.
+- [x] Restaurer, vérifier, publier et synchroniser le hero EASYSTOR précédent sur GitHub `main`.
 - [x] Définir et intégrer un footer EASYSTOR court avec identité, liens de landing pertinents, accès support et mentions essentielles.
-- [ ] Tester le footer compact sur mobile et desktop, puis publier et synchroniser GitHub `main`.
+- [x] Tester le footer compact sur mobile et desktop, puis publier et synchroniser GitHub `main`.

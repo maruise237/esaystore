@@ -10,3 +10,5 @@ Le footer fourni comme référence a été volontairement réduit. Les réseaux 
 | Mention essentielle | Copyright et droits réservés. |
 
 Le footer est validé dans la page complète à 1440 × 900 et 390 × 844. Il reste compact sur desktop et s’empile proprement sur mobile, sans introduire de liens sociaux, de formulaire marketing ou de destinations inexistantes.
+
+Le contrôle Vercel après déploiement confirme la landing montée, la présence du lien d’aide du footer compact et l’absence de conteneur ou canvas Gradient Blinds.
