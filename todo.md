@@ -313,3 +313,7 @@
 - [x] Importer fournisseurs, achats et lignes d’achat depuis les classeurs Excel de gestion.
 - [x] Afficher avant validation un résumé détaillé des entités détectées, onglets pris en compte et onglets ignorés.
 - [x] Valider le fichier client, tester, publier et synchroniser l’import étendu sur GitHub `main`.
+- [x] Auditer les ventes, dépenses, créances, clôtures et rapports existants pour définir les indicateurs journaliers et hebdomadaires fiables.
+- [x] Ajouter des agrégations sécurisées par boutique pour l’évolution journalière, hebdomadaire, les comparaisons et l’historique d’activité.
+- [x] Construire une vue Rapports claire avec période, évolution, indicateurs et historique accessible sur mobile.
+- [x] Tester les calculs, l’isolation des boutiques, l’accessibilité et publier les rapports journaliers et hebdomadaires sur GitHub `main`.
