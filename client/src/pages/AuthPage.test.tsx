@@ -5,7 +5,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import AuthPage from "./AuthPage";
 
-const { signInSocial, signUpEmail } = vi.hoisted(() => ({ signInSocial: vi.fn(), signUpEmail: vi.fn() }));
+const { signUpEmail } = vi.hoisted(() => ({ signUpEmail: vi.fn() }));
 
 vi.mock("@/lib/trpc", () => ({
   trpc: {
@@ -19,7 +19,7 @@ vi.mock("@/lib/trpc", () => ({
 
 vi.mock("@/lib/neonAuth", () => ({
   neonAuthClient: {
-    signIn: { social: signInSocial, email: vi.fn() },
+    signIn: { email: vi.fn() },
     signUp: { email: signUpEmail },
     emailOtp: { verifyEmail: vi.fn() },
     signOut: vi.fn(),
@@ -63,11 +63,12 @@ describe("parcours d’authentification", () => {
     expect(screen.getByRole("button", { name: "Accéder à ma boutique" })).toBeTruthy();
   });
 
-  it("propose une connexion Google depuis l’onglet de connexion", () => {
+  it("propose uniquement l’accès e-mail depuis l’onglet de connexion", () => {
     window.history.replaceState({}, "", "/?mode=login");
     render(<AuthPage />);
 
-    expect(screen.getByRole("button", { name: "Continuer avec Google" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Continuer avec Google" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Accéder à ma boutique" })).toBeTruthy();
   });
 
   it("demande le code envoyé par Neon Auth lorsque l’e-mail doit être vérifié", async () => {

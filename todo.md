@@ -241,9 +241,12 @@
 - [x] Diagnostiquer le 401 Neon Auth et le 500 tRPC restant sur le domaine Vercel après le correctif CSP.
 - [x] Corriger la résolution ESM de `server/routers` dans la fonction Vercel tRPC signalée par les Runtime Logs.
 - [x] Corriger la récupération de session sans compte connecté et stabiliser la réponse JSON tRPC en production.
-- [ ] Vérifier sur le domaine Vercel le parcours sans session, puis e-mail et Google après authentification.
+- [x] Vérifier sur le domaine Vercel le parcours sans session et limiter l’authentification au parcours e-mail demandé.
 - [x] Diagnostiquer pourquoi une session Google Neon Auth validée revient sur l’écran de connexion EASYSTOR.
 - [x] Corriger la restauration de session Neon Auth Google et sa transmission à l’utilisateur EASYSTOR.
-- [ ] Tester puis publier le retour Google OAuth jusqu’à l’espace boutique.
+- [x] Abandonner le test et la publication du retour Google OAuth, à la demande du propriétaire.
+- [x] Retirer le bouton et le flux de connexion Google à la demande du propriétaire.
+- [x] Mettre à jour les tests et la documentation pour ne présenter que l’authentification e-mail Neon Auth.
+- [x] Valider, publier et synchroniser sur GitHub l’authentification e-mail seule.
 - [x] Remplacer la récupération de jeton Neon Auth sans session par une lecture de session non bruyante côté client.
 - [x] Corriger le guide Google OAuth pour utiliser le callback Neon Auth et configurer les identifiants Google de production dans Neon.

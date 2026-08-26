@@ -1,6 +1,6 @@
 # Neon Auth, Google et Vercel
 
-EASYSTOR utilise **Neon Auth** pour les nouveaux comptes e-mail et Google. L’application garde ses données métier, ses rôles plateforme et ses droits de boutiques dans le schéma `public`, tandis que Neon conserve comptes, sessions et fournisseurs dans le schéma `neon_auth`.
+EASYSTOR utilise **Neon Auth** pour les nouveaux comptes e-mail et mot de passe. L’application garde ses données métier, ses rôles plateforme et ses droits de boutiques dans le schéma `public`, tandis que Neon conserve comptes et sessions dans le schéma `neon_auth`.
 
 ## Configuration actuellement retenue
 
@@ -8,7 +8,6 @@ EASYSTOR utilise **Neon Auth** pour les nouveaux comptes e-mail et Google. L’a
 | --- | --- |
 | Fournisseur e-mail | E-mail/mot de passe Neon Auth, avec code OTP à l’inscription |
 | Vérification d’e-mail | Requise avant l’accès EASYSTOR |
-| Google | Fournisseur Google partagé Neon, adapté aux essais |
 | Domaine de production autorisé | `https://esaystor.kamtech.online` |
 | Domaine de prévisualisation autorisé | Domaine EASYSTOR géré actuel |
 | Liaison applicative | `public.neon_auth_identities` relie `neon_auth.user.id` à `public.users.id` |
@@ -32,15 +31,13 @@ Saisir ces clés dans **Vercel → Project Settings → Environment Variables**,
 ## Parcours utilisateur
 
 1. **E-mail** : inscription, réception d’un code OTP, saisie du code, création de la première boutique.
-2. **Google** : clic sur « Continuer avec Google », consentement chez Google, retour vers l’application, création ou liaison sécurisée du profil EASYSTOR.
-3. **Comptes historiques** : la connexion e-mail locale reste disponible pendant la transition. Aucun utilisateur, rôle, stock ou vente n’est supprimé.
+2. **Comptes historiques** : la connexion e-mail locale reste disponible pendant la transition. Aucun utilisateur, rôle, stock ou vente n’est supprimé.
 
 ## Actions avant ouverture au public
 
 | Priorité | Action du propriétaire |
 | --- | --- |
 | Haute | Dans Neon **Settings → Auth**, définir le nom d’application visible : `EASYSTOR`. |
-| Haute | Créer un client OAuth Google propre à EASYSTOR, puis renseigner son Client ID et son Client Secret dans **Neon → branche `main` → Auth → Providers → Google** pour remplacer les clés Google partagées de développement. |
 | Haute | Configurer un SMTP personnalisé avant un volume réel d’inscriptions ; le SMTP partagé Neon est adapté aux essais et limité. |
 | Haute | Après les derniers essais locaux, désactiver **Allow localhost** dans Neon Auth de production. |
 | Moyenne | Créer une branche Neon dédiée aux previews Vercel afin d’isoler comptes et données de test. |
@@ -53,19 +50,9 @@ Saisir ces clés dans **Vercel → Project Settings → Environment Variables**,
 - La table `public.neon_auth_identities` a été testée en branche Neon isolée puis ajoutée en production sans suppression de données.
 - Les tests EASYSTOR, le typage et le build Vercel couvrent la configuration, le refus des identités non vérifiées, le bouton Google et l’étape OTP.
 
-## Google OAuth de production
-
-Dans Google Cloud Console, créer un client OAuth de type **Web application**. Dans ses URI de redirection autorisés, saisir exactement :
-
-```text
-{Auth Base URL de Neon Auth}/callback/google
-```
-
-Cette URL est le callback géré par Neon Auth, et non l’URL de la page EASYSTOR. L’URL de retour après connexion reste `https://esaystor.kamtech.online`, qui doit être présente dans les domaines de confiance Neon Auth. Une fois le Client ID et le Client Secret enregistrés dans Neon, ne les copiez ni dans Vercel, ni dans Git, ni dans le navigateur.
 
 ## Références
 
 - [Neon Auth : flux d’authentification](https://neon.com/docs/auth/authentication-flow)
 - [Neon Auth : vérification e-mail](https://neon.com/docs/auth/guides/email-verification)
 - [Neon Auth : checklist de production](https://neon.com/docs/auth/production-checklist)
-- [Neon Auth : OAuth](https://neon.com/docs/auth/guides/setup-oauth)

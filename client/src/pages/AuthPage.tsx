@@ -25,22 +25,6 @@ export default function AuthPage() {
   const createShop = trpc.shops.create.useMutation();
   const pending = register.isPending || login.isPending || createShop.isPending || neonPending;
 
-  const signInWithGoogle = async () => {
-    setError(null);
-    setNeonPending(true);
-    try {
-      const result = await neonAuthClient.signIn.social({
-        provider: "google",
-        callbackURL: window.location.origin,
-      });
-      if (result.error) setError("La connexion Google est momentanément indisponible. Réessayez dans un instant.");
-    } catch {
-      setError("La connexion Google est momentanément indisponible. Réessayez dans un instant.");
-    } finally {
-      setNeonPending(false);
-    }
-  };
-
   const registerWithNeon = async () => {
     setError(null);
     setNeonPending(true);
@@ -160,16 +144,12 @@ export default function AuthPage() {
               <Field label="Mot de passe" inputId="register-password"><PasswordInput id="register-password" value={registerForm.password} onChange={(value) => setRegisterForm({ ...registerForm, password: value })} visible={showPassword} onVisibilityChange={setShowPassword} autoComplete="new-password" ariaDescribedBy={passwordHintId} /><p id={passwordHintId} className="text-xs leading-relaxed text-[#697466]">10 caractères minimum. Vous pourrez l’utiliser sur tous vos appareils.</p></Field>
               <div className="grid grid-cols-2 gap-4"><Field label="Devise" inputId="register-currency"><select id="register-currency" value={registerForm.currency} onChange={(event) => setRegisterForm({ ...registerForm, currency: event.target.value as "XAF" | "XOF" | "NGN" })} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="XAF">XAF</option><option value="XOF">XOF</option><option value="NGN">NGN</option></select></Field><Field label="Pays (code ISO)" inputId="register-country"><Input id="register-country" required autoComplete="country" maxLength={3} value={registerForm.country} onChange={(event) => setRegisterForm({ ...registerForm, country: event.target.value.toUpperCase() })} /></Field></div>
               <Button disabled={pending} type="submit" className="mt-3 h-11 w-full bg-[#26352d] text-[#f5f7e8] shadow-[0_10px_22px_rgba(30,41,36,0.18)] hover:bg-[#1b2721]" aria-live="polite">{pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Création en cours…</> : <><ArrowRight className="mr-2 h-4 w-4" />Créer ma boutique</>}</Button>
-              <SocialDivider />
-              <GoogleButton disabled={pending} onClick={() => void signInWithGoogle()} />
             </form>
           ) : (
             <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); void loginWithNeon(); }}>
               <Field label="E-mail" inputId="login-email"><Input id="login-email" required autoComplete="email" type="email" value={loginForm.email} onChange={(event) => setLoginForm({ ...loginForm, email: event.target.value })} placeholder="vous@boutique.com" /></Field>
               <Field label="Mot de passe" inputId="login-password"><PasswordInput id="login-password" value={loginForm.password} onChange={(value) => setLoginForm({ ...loginForm, password: value })} visible={showPassword} onVisibilityChange={setShowPassword} autoComplete="current-password" /></Field>
               <Button disabled={pending} type="submit" className="mt-3 h-11 w-full bg-[#26352d] text-[#f5f7e8] hover:bg-[#1b2721]" aria-live="polite">{pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Connexion en cours…</> : <><LockKeyhole className="mr-2 h-4 w-4" />Accéder à ma boutique</>}</Button>
-              <SocialDivider />
-              <GoogleButton disabled={pending} onClick={() => void signInWithGoogle()} />
             </form>
           )}
         </div>
@@ -183,7 +163,3 @@ function Field({ label, inputId, children }: { label: string; inputId: string; c
 function PasswordInput({ id, value, onChange, visible, onVisibilityChange, autoComplete, ariaDescribedBy }: { id: string; value: string; onChange: (value: string) => void; visible: boolean; onVisibilityChange: (visible: boolean) => void; autoComplete: string; ariaDescribedBy?: string }) {
   return <div className="relative"><Input id={id} required autoComplete={autoComplete} type={visible ? "text" : "password"} value={value} onChange={(event) => onChange(event.target.value)} placeholder={autoComplete === "new-password" ? "10 caractères minimum" : "Votre mot de passe"} aria-describedby={ariaDescribedBy} className="pr-12" /><button type="button" onClick={() => onVisibilityChange(!visible)} className="absolute inset-y-0 right-0 grid w-11 place-items-center rounded-r-md text-[#596456] hover:bg-[#eef0e7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e7b52]" aria-label={visible ? "Masquer le mot de passe" : "Afficher le mot de passe"}>{visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div>;
 }
-
-function SocialDivider() { return <div className="flex items-center gap-3 py-1 text-xs text-[#77776c]"><span className="h-px flex-1 bg-[#d9d8d0]" /><span>ou</span><span className="h-px flex-1 bg-[#d9d8d0]" /></div>; }
-
-function GoogleButton({ disabled, onClick }: { disabled: boolean; onClick: () => void }) { return <Button type="button" variant="outline" disabled={disabled} onClick={onClick} className="h-11 w-full border-[#cdcfc8] bg-white text-[#26352d] hover:bg-[#f5f7ee]"><span aria-hidden="true" className="mr-2 grid h-5 w-5 place-items-center rounded-full bg-[#4285f4] text-[11px] font-bold text-white">G</span>Continuer avec Google</Button>; }
