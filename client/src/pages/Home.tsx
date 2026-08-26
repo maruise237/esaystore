@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 
 const navigation = [
   { href: "#vendre", label: "Vendre" },
-  { href: "/guides/migrer-excel-google-sheets", label: "Guide migration" },
+  { href: "/guides", label: "Guides pratiques" },
   { href: "#tarifs", label: "Tarifs" },
   { href: "#hors-ligne", label: "Hors connexion" },
   { href: "#suivre", label: "Suivre l’activité" },
@@ -181,9 +181,9 @@ export default function Home() {
                   Découvrir l’application <ChevronRight className="size-4" aria-hidden="true" />
                 </a>
               </div>
-              <a href="/guides/migrer-excel-google-sheets" className="mt-6 inline-flex min-h-12 items-center gap-3 rounded-xl border border-[#d1e980]/30 bg-[#26352d]/70 px-4 text-left text-sm font-bold text-[#f7f5ee] transition-colors duration-150 hover:border-[#d1e980] hover:bg-[#314236] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d1e980]">
+              <a href="/guides" className="mt-6 inline-flex min-h-12 items-center gap-3 rounded-xl border border-[#d1e980]/30 bg-[#26352d]/70 px-4 text-left text-sm font-bold text-[#f7f5ee] transition-colors duration-150 hover:border-[#d1e980] hover:bg-[#314236] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d1e980]">
                 <FileSpreadsheet className="size-5 shrink-0 text-[#d1e980]" aria-hidden="true" />
-                <span><span className="block text-xs font-semibold text-[#c8dc72]">Nouveau guide gratuit</span>Migrer depuis Excel ou Google Sheets</span>
+                <span><span className="block text-xs font-semibold text-[#c8dc72]">Guides pratiques gratuits</span>Migration et travail hors connexion</span>
                 <ArrowRight className="ml-auto size-4 shrink-0 text-[#d1e980]" aria-hidden="true" />
               </a>
               <p className="mt-5 text-sm leading-relaxed text-[#b9c7b7]">
@@ -400,6 +400,7 @@ export default function Home() {
             <p className="mt-2 max-w-md text-sm leading-relaxed">La caisse, le stock et le suivi pour les commerces de proximité.</p>
           </div>
           <nav aria-label="Liens de fin de page" className="flex flex-wrap gap-x-5 gap-y-3 text-sm font-semibold text-[#304631]">
+            <a className="underline-offset-4 transition-colors hover:text-[#142119] hover:underline" href="/guides">Guides pratiques</a>
             <a className="underline-offset-4 transition-colors hover:text-[#142119] hover:underline" href="/guides/migrer-excel-google-sheets">Guide migration</a>
             <a className="underline-offset-4 transition-colors hover:text-[#142119] hover:underline" href="#tarifs">Tarifs</a>
             <a className="underline-offset-4 transition-colors hover:text-[#142119] hover:underline" href="/guides/travailler-hors-connexion">Guide hors connexion</a>

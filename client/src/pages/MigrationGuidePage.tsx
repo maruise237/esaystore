@@ -132,7 +132,7 @@ export default function MigrationGuidePage() {
             <span className="grid size-9 place-items-center rounded-xl bg-[#d1e980] text-sm font-sans font-bold text-[#1e2924]">E</span>
             EASYSTOR
           </a>
-          <a href="/auth?mode=login" className="rounded-md px-3 py-2 text-sm font-bold text-[#304631] underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#567b4f]">Se connecter</a>
+          <div className="flex items-center gap-2 sm:gap-4"><a href="/guides" className="rounded-md px-2 py-2 text-sm font-bold text-[#304631] underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#567b4f]">Guides</a><a href="/auth?mode=login" className="rounded-md px-2 py-2 text-sm font-bold text-[#304631] underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#567b4f]">Se connecter</a></div>
         </div>
       </header>
 

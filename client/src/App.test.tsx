@@ -16,6 +16,7 @@ vi.mock("./components/PwaUpdatePrompt", () => ({ default: () => null }));
 vi.mock("./pages/Home", () => ({ default: () => <p>Landing publique</p> }));
 vi.mock("./pages/MigrationGuidePage", () => ({ default: () => <p>Guide de migration public</p> }));
 vi.mock("./pages/OfflineGuidePage", () => ({ default: () => <p>Guide hors connexion public</p> }));
+vi.mock("./pages/GuidesHubPage", () => ({ default: () => <p>Hub des guides publics</p> }));
 vi.mock("./pages/AuthPage", () => ({ default: () => <p>Authentification e-mail</p> }));
 vi.mock("./pages/Workspace", () => ({ default: () => <p>Espace marchand</p> }));
 vi.mock("./pages/PlatformAdminPage", () => ({ default: () => <p>Console plateforme</p> }));
@@ -57,6 +58,13 @@ describe("routes publiques EASYSTOR", () => {
     window.history.replaceState({}, "", "/guides/travailler-hors-connexion");
     render(<App />);
     expect(screen.getByText("Guide hors connexion public")).toBeTruthy();
+  });
+
+  it("expose un hub public qui rassemble les guides", () => {
+    useAuth.mockReturnValue({ user: null, loading: false });
+    window.history.replaceState({}, "", "/guides");
+    render(<App />);
+    expect(screen.getByText("Hub des guides publics")).toBeTruthy();
   });
 
   it("laisse la landing et le formulaire accessibles pendant la vérification anonyme", () => {

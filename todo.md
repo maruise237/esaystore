@@ -298,3 +298,6 @@
 - [x] Vérifier les comportements hors connexion réels et rédiger un guide pratique public fidèle à EASYSTOR.
 - [x] Relier le guide hors connexion à la landing, au guide de migration, aux métadonnées et au sitemap.
 - [x] Tester, prévisualiser, publier et synchroniser le second guide pratique sur GitHub `main`.
+- [x] Cartographier les pages publiques, sections et liens EASYSTOR afin d’identifier les accès insuffisants.
+- [x] Créer un hub de guides et relier chaque page publique pertinente avec une navigation et des liens contextuels utiles.
+- [x] Tester, prévisualiser, publier et synchroniser le maillage interne renforcé sur GitHub `main`.
