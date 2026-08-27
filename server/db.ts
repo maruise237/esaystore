@@ -18,6 +18,23 @@ export const authenticatedUserFields = {
   lastSignedIn: users.lastSignedIn,
 };
 
+export const shopFieldsWithoutLogo = {
+  id: shops.id,
+  name: shops.name,
+  slug: shops.slug,
+  currency: shops.currency,
+  country: shops.country,
+  isActive: shops.isActive,
+  suspendedAt: shops.suspendedAt,
+  suspensionReason: shops.suspensionReason,
+  suspendedBy: shops.suspendedBy,
+  createdBy: shops.createdBy,
+  createdAt: shops.createdAt,
+  updatedAt: shops.updatedAt,
+};
+
+type CompatibleShop = typeof shops.$inferSelect;
+
 export type AuthenticatedUser = {
   id: string;
   openId: string | null;
@@ -36,6 +53,7 @@ type AppDb = ReturnType<typeof createDb>;
 
 let cachedDb: AppDb | null = null;
 let cachedSql: ReturnType<typeof neon> | null = null;
+const optionalColumnAvailability = new Map<string, Promise<boolean>>();
 
 function connectionString() {
   const value = process.env.NEON_DATABASE_URL;
@@ -66,6 +84,41 @@ export async function rawRows<T extends Record<string, unknown>>(
   return (response as { rows?: T[] }).rows ?? [];
 }
 
+export function hasOptionalColumn(
+  tableName: "shops" | "users",
+  columnName: "logo_url" | "phone"
+) {
+  const key = `${tableName}.${columnName}`;
+  const cached = optionalColumnAvailability.get(key);
+  if (cached) return cached;
+
+  const availability = rawRows<{ present: boolean | "t" | "f" }>(
+    "SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2) AS present",
+    [tableName, columnName]
+  ).then(rows => rows[0]?.present === true || rows[0]?.present === "t");
+  optionalColumnAvailability.set(key, availability);
+  return availability;
+}
+
+export async function getShopById(
+  shopId: string
+): Promise<CompatibleShop | undefined> {
+  const db = getDb();
+  if (await hasOptionalColumn("shops", "logo_url")) {
+    return (
+      await db.select().from(shops).where(eq(shops.id, shopId)).limit(1)
+    )[0];
+  }
+  const row = (
+    await db
+      .select(shopFieldsWithoutLogo)
+      .from(shops)
+      .where(eq(shops.id, shopId))
+      .limit(1)
+  )[0];
+  return row ? { ...row, logoUrl: null } : undefined;
+}
+
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) throw new Error("User openId is required for OAuth upsert");
   await getDb()
@@ -85,11 +138,11 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 
 export async function getUserByOpenId(openId: string) {
   const rows = await getDb()
-    .select()
+    .select(authenticatedUserFields)
     .from(users)
     .where(eq(users.openId, openId))
     .limit(1);
-  return rows[0];
+  return rows[0] ? { ...rows[0], phone: null } : undefined;
 }
 
 export async function getUserById(id: string) {
@@ -111,11 +164,23 @@ export async function getUserByEmail(email: string) {
 }
 
 export async function listUserShops(userId: string) {
-  return getDb()
-    .select({ shop: shops, role: shopMembers.role })
+  const db = getDb();
+  if (await hasOptionalColumn("shops", "logo_url")) {
+    return db
+      .select({ shop: shops, role: shopMembers.role })
+      .from(shopMembers)
+      .innerJoin(shops, eq(shopMembers.shopId, shops.id))
+      .where(eq(shopMembers.userId, userId));
+  }
+  const rows = await db
+    .select({ shop: shopFieldsWithoutLogo, role: shopMembers.role })
     .from(shopMembers)
     .innerJoin(shops, eq(shopMembers.shopId, shops.id))
     .where(eq(shopMembers.userId, userId));
+  return rows.map(row => ({
+    shop: { ...row.shop, logoUrl: null },
+    role: row.role,
+  }));
 }
 
 export async function getMembership(userId: string, shopId: string) {

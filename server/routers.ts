@@ -2,7 +2,13 @@ import { COOKIE_NAME } from "@shared/const";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { shopMembers, shops, users } from "../drizzle/schema";
-import { getDb, getSql, getUserByEmail, listUserShops } from "./db";
+import {
+  getDb,
+  getShopById,
+  getUserByEmail,
+  getSql,
+  listUserShops,
+} from "./db";
 import { protectedProcedure, router } from "./_core/trpc";
 import { authRouter } from "./routers/auth";
 import { catalogRouter } from "./routers/catalog";
@@ -45,13 +51,7 @@ export const appRouter = router({
           sql`INSERT INTO shop_members (shop_id, user_id, role) VALUES (${shopId}, ${ctx.user.id}, 'owner')`,
           sql`INSERT INTO shop_currencies (shop_id, currency, label, is_active) VALUES (${shopId}, ${input.currency}, 'Devise de référence', true)`,
         ]);
-        return (
-          await getDb()
-            .select()
-            .from(shops)
-            .where(eq(shops.id, shopId))
-            .limit(1)
-        )[0];
+        return getShopById(shopId);
       }),
     memberRole: protectedProcedure
       .input(z.object({ shopId: z.string().uuid() }))

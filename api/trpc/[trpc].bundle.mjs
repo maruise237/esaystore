@@ -650,8 +650,23 @@ var authenticatedUserFields = {
   updatedAt: users.updatedAt,
   lastSignedIn: users.lastSignedIn
 };
+var shopFieldsWithoutLogo = {
+  id: shops.id,
+  name: shops.name,
+  slug: shops.slug,
+  currency: shops.currency,
+  country: shops.country,
+  isActive: shops.isActive,
+  suspendedAt: shops.suspendedAt,
+  suspensionReason: shops.suspensionReason,
+  suspendedBy: shops.suspendedBy,
+  createdBy: shops.createdBy,
+  createdAt: shops.createdAt,
+  updatedAt: shops.updatedAt
+};
 var cachedDb = null;
 var cachedSql = null;
+var optionalColumnAvailability = /* @__PURE__ */ new Map();
 function connectionString() {
   const value = process.env.NEON_DATABASE_URL;
   if (!value) throw new Error("NEON_DATABASE_URL is not configured");
@@ -673,6 +688,25 @@ async function rawRows(query, params = []) {
   if (Array.isArray(response)) return response;
   return response.rows ?? [];
 }
+function hasOptionalColumn(tableName, columnName) {
+  const key = `${tableName}.${columnName}`;
+  const cached = optionalColumnAvailability.get(key);
+  if (cached) return cached;
+  const availability = rawRows(
+    "SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2) AS present",
+    [tableName, columnName]
+  ).then((rows) => rows[0]?.present === true || rows[0]?.present === "t");
+  optionalColumnAvailability.set(key, availability);
+  return availability;
+}
+async function getShopById(shopId) {
+  const db = getDb();
+  if (await hasOptionalColumn("shops", "logo_url")) {
+    return (await db.select().from(shops).where(eq(shops.id, shopId)).limit(1))[0];
+  }
+  const row = (await db.select(shopFieldsWithoutLogo).from(shops).where(eq(shops.id, shopId)).limit(1))[0];
+  return row ? { ...row, logoUrl: null } : void 0;
+}
 async function getUserById(id) {
   const rows = await getDb().select(authenticatedUserFields).from(users).where(eq(users.id, id)).limit(1);
   return rows[0];
@@ -682,7 +716,15 @@ async function getUserByEmail(email) {
   return user;
 }
 async function listUserShops(userId) {
-  return getDb().select({ shop: shops, role: shopMembers.role }).from(shopMembers).innerJoin(shops, eq(shopMembers.shopId, shops.id)).where(eq(shopMembers.userId, userId));
+  const db = getDb();
+  if (await hasOptionalColumn("shops", "logo_url")) {
+    return db.select({ shop: shops, role: shopMembers.role }).from(shopMembers).innerJoin(shops, eq(shopMembers.shopId, shops.id)).where(eq(shopMembers.userId, userId));
+  }
+  const rows = await db.select({ shop: shopFieldsWithoutLogo, role: shopMembers.role }).from(shopMembers).innerJoin(shops, eq(shopMembers.shopId, shops.id)).where(eq(shopMembers.userId, userId));
+  return rows.map((row) => ({
+    shop: { ...row.shop, logoUrl: null },
+    role: row.role
+  }));
 }
 async function getMembership(userId, shopId) {
   const rows = await getDb().select().from(shopMembers).where(and(eq(shopMembers.userId, userId), eq(shopMembers.shopId, shopId))).limit(1);
@@ -884,37 +926,54 @@ var authRouter = router({
   me: publicProcedure.query(({ ctx }) => ctx.user),
   register: publicProcedure.input(registerInput).mutation(async ({ ctx, input }) => {
     const email = input.email.toLowerCase();
-    if (await consumeAuthAttempt(ctx.req, "register", email)) throw new TRPCError3({ code: "TOO_MANY_REQUESTS", message: AUTH_RATE_LIMIT_MESSAGE });
+    if (await consumeAuthAttempt(ctx.req, "register", email))
+      throw new TRPCError3({
+        code: "TOO_MANY_REQUESTS",
+        message: AUTH_RATE_LIMIT_MESSAGE
+      });
     if (await getUserByEmail(email)) {
-      throw new TRPCError3({ code: "BAD_REQUEST", message: "La cr\xE9ation de compte est impossible avec ces informations." });
+      throw new TRPCError3({
+        code: "BAD_REQUEST",
+        message: "La cr\xE9ation de compte est impossible avec ces informations."
+      });
     }
     const userId = crypto.randomUUID();
     const shopId = crypto.randomUUID();
     const passwordHash = await hashPassword(input.password);
     const shopSlug = makeShopSlug(input.shopName);
-    const sql3 = getSql();
-    await sql3.transaction([
-      sql3`INSERT INTO users (id, name, email, phone, password_hash, login_method) VALUES (${userId}, ${input.name}, ${email}, ${input.phone ?? null}, ${passwordHash}, 'password')`,
-      sql3`INSERT INTO shops (id, name, slug, currency, country, created_by) VALUES (${shopId}, ${input.shopName}, ${shopSlug}, ${input.currency}, ${input.country.toUpperCase()}, ${userId})`,
-      sql3`INSERT INTO shop_members (shop_id, user_id, role) VALUES (${shopId}, ${userId}, 'owner')`
+    const sql4 = getSql();
+    await sql4.transaction([
+      sql4`INSERT INTO users (id, name, email, phone, password_hash, login_method) VALUES (${userId}, ${input.name}, ${email}, ${input.phone ?? null}, ${passwordHash}, 'password')`,
+      sql4`INSERT INTO shops (id, name, slug, currency, country, created_by) VALUES (${shopId}, ${input.shopName}, ${shopSlug}, ${input.currency}, ${input.country.toUpperCase()}, ${userId})`,
+      sql4`INSERT INTO shop_members (shop_id, user_id, role) VALUES (${shopId}, ${userId}, 'owner')`
     ]);
     await writeSessionCookie(ctx.req, ctx.res, userId);
     await clearAuthAttempts(ctx.req, "register", email);
     const user = await getUserById(userId);
-    const shop = (await getDb().select().from(shops).where(eq3(shops.id, shopId)).limit(1))[0];
+    const shop = await getShopById(shopId);
     return { user, shop, role: "owner" };
   }),
   login: publicProcedure.input(z.object({ email: z.string().email(), password: z.string().min(1) })).mutation(async ({ ctx, input }) => {
     const email = input.email.toLowerCase();
-    if (await consumeAuthAttempt(ctx.req, "login", email)) throw new TRPCError3({ code: "TOO_MANY_REQUESTS", message: AUTH_RATE_LIMIT_MESSAGE });
+    if (await consumeAuthAttempt(ctx.req, "login", email))
+      throw new TRPCError3({
+        code: "TOO_MANY_REQUESTS",
+        message: AUTH_RATE_LIMIT_MESSAGE
+      });
     const user = await getUserByEmail(email);
     if (!user?.passwordHash || !user.isActive || !await verifyPassword(input.password, user.passwordHash)) {
-      throw new TRPCError3({ code: "UNAUTHORIZED", message: "Identifiants invalides." });
+      throw new TRPCError3({
+        code: "UNAUTHORIZED",
+        message: "Identifiants invalides."
+      });
     }
     await getDb().update(users).set({ lastSignedIn: /* @__PURE__ */ new Date(), updatedAt: /* @__PURE__ */ new Date() }).where(eq3(users.id, user.id));
     await writeSessionCookie(ctx.req, ctx.res, user.id);
     await clearAuthAttempts(ctx.req, "login", email);
-    return { user: await getUserById(user.id), shops: await listUserShops(user.id) };
+    return {
+      user: await getUserById(user.id),
+      shops: await listUserShops(user.id)
+    };
   }),
   logout: publicProcedure.mutation(({ ctx }) => {
     clearSessionCookie(ctx.req, ctx.res);
@@ -1406,23 +1465,23 @@ var reportInput = z5.object({
 var insightsRouter = router({
   dashboard: protectedProcedure.input(z5.object({ shopId: z5.string().uuid() })).query(async ({ ctx, input }) => {
     await assertShopAccess(ctx.user.id, input.shopId);
-    const sql3 = getSql();
-    const [totals, lowStock, debts, trend, lowStockItems, overdueReceivables] = await sql3.transaction([
-      sql3`SELECT COALESCE(SUM(total) FILTER (WHERE sold_at::date = CURRENT_DATE), 0) AS sales_today,
+    const sql4 = getSql();
+    const [totals, lowStock, debts, trend, lowStockItems, overdueReceivables] = await sql4.transaction([
+      sql4`SELECT COALESCE(SUM(total) FILTER (WHERE sold_at::date = CURRENT_DATE), 0) AS sales_today,
                  COALESCE(SUM(total) FILTER (WHERE sold_at::date = CURRENT_DATE - INTERVAL '1 day'), 0) AS sales_yesterday,
                  COALESCE(SUM((payment_breakdown->>'cash')::numeric) FILTER (WHERE sold_at::date = CURRENT_DATE), 0) AS cash_today,
                  COALESCE(SUM((payment_breakdown->>'mobileMoney')::numeric) FILTER (WHERE sold_at::date = CURRENT_DATE), 0) AS mobile_today
           FROM sales WHERE shop_id = ${input.shopId} AND status = 'completed'`,
-      sql3`SELECT count(*)::int AS count FROM products WHERE shop_id = ${input.shopId} AND is_active = true AND stock_quantity <= alert_threshold`,
-      sql3`SELECT COALESCE(SUM(balance), 0) AS outstanding FROM receivables WHERE shop_id = ${input.shopId} AND is_settled = false`,
-      sql3`SELECT to_char(day, 'Dy') AS label, COALESCE(SUM(s.total), 0) AS value
+      sql4`SELECT count(*)::int AS count FROM products WHERE shop_id = ${input.shopId} AND is_active = true AND stock_quantity <= alert_threshold`,
+      sql4`SELECT COALESCE(SUM(balance), 0) AS outstanding FROM receivables WHERE shop_id = ${input.shopId} AND is_settled = false`,
+      sql4`SELECT to_char(day, 'Dy') AS label, COALESCE(SUM(s.total), 0) AS value
           FROM generate_series(CURRENT_DATE - INTERVAL '6 days', CURRENT_DATE, INTERVAL '1 day') AS day
           LEFT JOIN sales s ON s.shop_id = ${input.shopId} AND s.status = 'completed' AND s.sold_at::date = day::date
           GROUP BY day ORDER BY day`,
-      sql3`SELECT id, name, stock_quantity, alert_threshold FROM products
+      sql4`SELECT id, name, stock_quantity, alert_threshold FROM products
           WHERE shop_id = ${input.shopId} AND is_active = true AND stock_quantity <= alert_threshold
           ORDER BY stock_quantity ASC, name ASC LIMIT 5`,
-      sql3`SELECT r.id, c.name AS customer_name, r.balance, r.due_date FROM receivables r
+      sql4`SELECT r.id, c.name AS customer_name, r.balance, r.due_date FROM receivables r
           JOIN customers c ON c.id = r.customer_id
           WHERE r.shop_id = ${input.shopId} AND r.is_settled = false AND r.due_date IS NOT NULL AND r.due_date < now()
           ORDER BY r.due_date ASC LIMIT 5`
@@ -1441,11 +1500,11 @@ var insightsRouter = router({
   }),
   report: protectedProcedure.input(reportInput).query(async ({ ctx, input }) => {
     await assertShopAccess(ctx.user.id, input.shopId, ["owner", "manager"]);
-    const sql3 = getSql();
+    const sql4 = getSql();
     const periodDuration = input.to.valueOf() - input.from.valueOf() + 1;
     const previousFrom = new Date(input.from.valueOf() - periodDuration);
     const previousTo = new Date(input.from.valueOf() - 1);
-    const timelineQuery = input.granularity === "week" ? sql3`WITH periods AS (
+    const timelineQuery = input.granularity === "week" ? sql4`WITH periods AS (
           SELECT date_trunc('week', bucket)::date AS start_at
           FROM generate_series(date_trunc('week', ${input.from}::timestamptz), date_trunc('week', ${input.to}::timestamptz), interval '1 week') AS bucket
         )
@@ -1461,7 +1520,7 @@ var insightsRouter = router({
           SELECT SUM(amount) AS expenses FROM expenses
           WHERE shop_id = ${input.shopId} AND spent_at >= periods.start_at AND spent_at < periods.start_at + interval '1 week'
         ) e ON true
-        ORDER BY start_at` : sql3`WITH periods AS (
+        ORDER BY start_at` : sql4`WITH periods AS (
           SELECT bucket::date AS start_at FROM generate_series(${input.from}::date, ${input.to}::date, interval '1 day') AS bucket
         )
         SELECT to_char(start_at, 'DD Mon') AS label, start_at,
@@ -1477,28 +1536,28 @@ var insightsRouter = router({
           WHERE shop_id = ${input.shopId} AND spent_at >= periods.start_at AND spent_at < periods.start_at + interval '1 day'
         ) e ON true
         ORDER BY start_at`;
-    const [summary, expenseSummary, previousSummary, previousExpenseSummary, topProducts, expenseCategories, timeline] = await sql3.transaction([
-      sql3`SELECT COALESCE(SUM(s.total), 0) AS turnover,
+    const [summary, expenseSummary, previousSummary, previousExpenseSummary, topProducts, expenseCategories, timeline] = await sql4.transaction([
+      sql4`SELECT COALESCE(SUM(s.total), 0) AS turnover,
                  COALESCE(SUM(s.total - si.purchase_price * si.quantity), 0) AS gross_margin,
                  COUNT(DISTINCT s.id)::int AS sale_count,
                  COALESCE(AVG(s.total), 0) AS average_ticket,
                  COALESCE(SUM(s.credit_amount), 0) AS credit_amount
           FROM sales s LEFT JOIN sale_items si ON si.sale_id = s.id
           WHERE s.shop_id = ${input.shopId} AND s.status = 'completed' AND s.sold_at >= ${input.from} AND s.sold_at <= ${input.to}`,
-      sql3`SELECT COALESCE(SUM(amount), 0) AS expenses, COUNT(*)::int AS expense_count FROM expenses
+      sql4`SELECT COALESCE(SUM(amount), 0) AS expenses, COUNT(*)::int AS expense_count FROM expenses
           WHERE shop_id = ${input.shopId} AND spent_at >= ${input.from} AND spent_at <= ${input.to}`,
-      sql3`SELECT COALESCE(SUM(s.total), 0) AS turnover,
+      sql4`SELECT COALESCE(SUM(s.total), 0) AS turnover,
                  COALESCE(SUM(s.total - si.purchase_price * si.quantity), 0) AS gross_margin,
                  COUNT(DISTINCT s.id)::int AS sale_count
           FROM sales s LEFT JOIN sale_items si ON si.sale_id = s.id
           WHERE s.shop_id = ${input.shopId} AND s.status = 'completed' AND s.sold_at >= ${previousFrom} AND s.sold_at <= ${previousTo}`,
-      sql3`SELECT COALESCE(SUM(amount), 0) AS expenses FROM expenses
+      sql4`SELECT COALESCE(SUM(amount), 0) AS expenses FROM expenses
           WHERE shop_id = ${input.shopId} AND spent_at >= ${previousFrom} AND spent_at <= ${previousTo}`,
-      sql3`SELECT si.product_name AS name, SUM(si.quantity) AS quantity, SUM(si.line_total) AS revenue
+      sql4`SELECT si.product_name AS name, SUM(si.quantity) AS quantity, SUM(si.line_total) AS revenue
           FROM sale_items si JOIN sales s ON s.id = si.sale_id
           WHERE s.shop_id = ${input.shopId} AND s.status = 'completed' AND s.sold_at >= ${input.from} AND s.sold_at <= ${input.to}
           GROUP BY si.product_name ORDER BY revenue DESC LIMIT 10`,
-      sql3`SELECT category, SUM(amount) AS amount FROM expenses
+      sql4`SELECT category, SUM(amount) AS amount FROM expenses
           WHERE shop_id = ${input.shopId} AND spent_at >= ${input.from} AND spent_at <= ${input.to}
           GROUP BY category ORDER BY amount DESC LIMIT 5`,
       timelineQuery
@@ -1682,7 +1741,7 @@ var migrationRouter = router({
     if (lineProductConflicts.length && input.conflictStrategy !== "copy") throw new TRPCError6({ code: "CONFLICT", message: "Une vente d\xE9taill\xE9e vise un produit existant. Choisissez \xAB Cr\xE9er une copie \xBB pour conserver le stock actuel et reconstituer l\u2019historique s\xE9par\xE9ment." });
     if (input.conflictStrategy === "block" && conflicts.length) throw new TRPCError6({ code: "CONFLICT", message: "Des collisions ont \xE9t\xE9 d\xE9tect\xE9es. Choisissez ignorer, mettre \xE0 jour ou cr\xE9er une copie." });
     const blocked = new Set(conflicts.filter((row) => row.type === "sale" || row.type === "purchase" || input.conflictStrategy === "skip" && (row.type === "product" || row.type === "customer" || row.type === "supplier")).map((row) => `${row.type}:${row.sourceId}`));
-    const sql3 = getSql();
+    const sql4 = getSql();
     const knownProducts = await db.select({ id: products.id, name: products.name, barcode: products.barcode, stockQuantity: products.stockQuantity }).from(products).where(eq7(products.shopId, input.shopId));
     const knownCustomers = await db.select({ id: customers.id, name: customers.name, phone: customers.phone }).from(customers).where(eq7(customers.shopId, input.shopId));
     const knownSuppliers = await db.select({ id: suppliers.id, name: suppliers.name, email: suppliers.email }).from(suppliers).where(eq7(suppliers.shopId, input.shopId));
@@ -1707,7 +1766,7 @@ var migrationRouter = router({
       const matched = knownProducts.find((row) => item.barcode && row.barcode === item.barcode || normal(row.name) === normal(item.name));
       if (blocked.has(`product:${item.sourceId}`) || clash && input.conflictStrategy === "update" && !matched) continue;
       if (clash && input.conflictStrategy === "update" && matched) {
-        queries.push(sql3`UPDATE products SET sale_price = ${item.salePrice}, purchase_price = ${item.purchasePrice}, category = ${item.category || "Sans cat\xE9gorie"}, unit = ${item.unit || "unit\xE9"}, alert_threshold = ${item.alertThreshold}, updated_at = now() WHERE id = ${matched.id}`);
+        queries.push(sql4`UPDATE products SET sale_price = ${item.salePrice}, purchase_price = ${item.purchasePrice}, category = ${item.category || "Sans cat\xE9gorie"}, unit = ${item.unit || "unit\xE9"}, alert_threshold = ${item.alertThreshold}, updated_at = now() WHERE id = ${matched.id}`);
         productByName.set(normal(item.name), matched.id);
         if (item.barcode) productByBarcode.set(item.barcode, matched.id);
         finalStockByProduct.set(matched.id, matched.stockQuantity);
@@ -1717,7 +1776,7 @@ var migrationRouter = router({
       const copy = Boolean(clash && input.conflictStrategy === "copy");
       const productId = crypto.randomUUID();
       const productName = copy ? `${item.name} (import ${item.sourceId})` : item.name;
-      queries.push(sql3`INSERT INTO products (id, shop_id, name, barcode, reference, category, unit, sale_price, purchase_price, stock_quantity, alert_threshold) VALUES (${productId}, ${input.shopId}, ${productName}, ${copy ? null : item.barcode || null}, ${item.reference || null}, ${item.category || "Sans cat\xE9gorie"}, ${item.unit || "unit\xE9"}, ${item.salePrice}, ${item.purchasePrice}, ${item.stockQuantity}, ${item.alertThreshold})`);
+      queries.push(sql4`INSERT INTO products (id, shop_id, name, barcode, reference, category, unit, sale_price, purchase_price, stock_quantity, alert_threshold) VALUES (${productId}, ${input.shopId}, ${productName}, ${copy ? null : item.barcode || null}, ${item.reference || null}, ${item.category || "Sans cat\xE9gorie"}, ${item.unit || "unit\xE9"}, ${item.salePrice}, ${item.purchasePrice}, ${item.stockQuantity}, ${item.alertThreshold})`);
       productByName.set(normal(item.name), productId);
       if (item.barcode) productByBarcode.set(item.barcode, productId);
       finalStockByProduct.set(productId, item.stockQuantity);
@@ -1728,7 +1787,7 @@ var migrationRouter = router({
       const matched = knownCustomers.find((row) => item.phone && row.phone === item.phone || normal(row.name) === normal(item.name));
       if (blocked.has(`customer:${item.sourceId}`) || clash && input.conflictStrategy === "update" && !matched) continue;
       if (clash && input.conflictStrategy === "update" && matched) {
-        queries.push(sql3`UPDATE customers SET phone = ${item.phone || matched.phone}, note = ${item.note || null}, updated_at = now() WHERE id = ${matched.id}`);
+        queries.push(sql4`UPDATE customers SET phone = ${item.phone || matched.phone}, note = ${item.note || null}, updated_at = now() WHERE id = ${matched.id}`);
         customerByName.set(normal(item.name), matched.id);
         customerCount++;
         continue;
@@ -1736,7 +1795,7 @@ var migrationRouter = router({
       const copy = Boolean(clash && input.conflictStrategy === "copy");
       const customerId = crypto.randomUUID();
       const customerName = copy ? `${item.name} (import ${item.sourceId})` : item.name;
-      queries.push(sql3`INSERT INTO customers (id, shop_id, name, phone, note) VALUES (${customerId}, ${input.shopId}, ${customerName}, ${copy ? null : item.phone || null}, ${item.note || null})`);
+      queries.push(sql4`INSERT INTO customers (id, shop_id, name, phone, note) VALUES (${customerId}, ${input.shopId}, ${customerName}, ${copy ? null : item.phone || null}, ${item.note || null})`);
       customerByName.set(normal(item.name), customerId);
       customerCount++;
     }
@@ -1745,7 +1804,7 @@ var migrationRouter = router({
       const matched = knownSuppliers.find((row) => item.email && row.email === item.email || normal(row.name) === normal(item.name));
       if (blocked.has(`supplier:${item.sourceId}`) || clash && input.conflictStrategy === "update" && !matched) continue;
       if (clash && input.conflictStrategy === "update" && matched) {
-        queries.push(sql3`UPDATE suppliers SET reference = ${item.reference || null}, contact_name = ${item.contactName || null}, phone = ${item.phone || null}, email = ${item.email || matched.email}, city = ${item.city || null}, delivery_lead_days = ${item.deliveryLeadDays || null}, payment_terms = ${item.paymentTerms || null}, updated_at = now() WHERE id = ${matched.id}`);
+        queries.push(sql4`UPDATE suppliers SET reference = ${item.reference || null}, contact_name = ${item.contactName || null}, phone = ${item.phone || null}, email = ${item.email || matched.email}, city = ${item.city || null}, delivery_lead_days = ${item.deliveryLeadDays || null}, payment_terms = ${item.paymentTerms || null}, updated_at = now() WHERE id = ${matched.id}`);
         supplierByName.set(normal(item.name), matched.id);
         supplierCount++;
         continue;
@@ -1753,7 +1812,7 @@ var migrationRouter = router({
       const copy = Boolean(clash && input.conflictStrategy === "copy");
       const supplierId = crypto.randomUUID();
       const supplierName = copy ? `${item.name} (import ${item.sourceId})` : item.name;
-      queries.push(sql3`INSERT INTO suppliers (id, shop_id, name, reference, contact_name, phone, email, city, delivery_lead_days, payment_terms) VALUES (${supplierId}, ${input.shopId}, ${supplierName}, ${item.reference || null}, ${item.contactName || null}, ${item.phone || null}, ${copy ? null : item.email || null}, ${item.city || null}, ${item.deliveryLeadDays || null}, ${item.paymentTerms || null})`);
+      queries.push(sql4`INSERT INTO suppliers (id, shop_id, name, reference, contact_name, phone, email, city, delivery_lead_days, payment_terms) VALUES (${supplierId}, ${input.shopId}, ${supplierName}, ${item.reference || null}, ${item.contactName || null}, ${item.phone || null}, ${copy ? null : item.email || null}, ${item.city || null}, ${item.deliveryLeadDays || null}, ${item.paymentTerms || null})`);
       supplierByName.set(normal(item.name), supplierId);
       supplierCount++;
     }
@@ -1766,8 +1825,8 @@ var migrationRouter = router({
       const saleId = crypto.randomUUID();
       const paymentMethod = creditAmount > 0 ? amountPaid > 0 ? "mixed" : "credit" : item.mobileMoney > 0 && item.cash > 0 ? "mixed" : item.mobileMoney > 0 ? "mobile_money" : "cash";
       const saleNumber = item.reference || `IMP-${fileHash.slice(0, 8).toUpperCase()}-${item.sourceId.slice(0, 24).toUpperCase()}`;
-      queries.push(sql3`INSERT INTO sales (id, shop_id, customer_id, created_by, sale_number, operation_id, subtotal, discount_amount, total, amount_paid, credit_amount, payment_method, payment_breakdown, sold_at) VALUES (${saleId}, ${input.shopId}, ${customerId || null}, ${ctx.user.id}, ${saleNumber}, ${operation("sale", fileHash, item.sourceId)}, ${item.total + item.discountAmount}, ${item.discountAmount}, ${item.total}, ${amountPaid}, ${creditAmount}, ${paymentMethod}::payment_method, ${JSON.stringify({ cash: Math.min(item.cash, item.total), mobileMoney: Math.min(item.mobileMoney, Math.max(0, item.total - item.cash)) })}::jsonb, ${item.soldAt})`);
-      if (creditAmount > 0 && customerId) queries.push(sql3`INSERT INTO receivables (shop_id, customer_id, sale_id, original_amount, balance, due_date) VALUES (${input.shopId}, ${customerId}, ${saleId}, ${creditAmount}, ${creditAmount}, ${item.dueDate || null})`);
+      queries.push(sql4`INSERT INTO sales (id, shop_id, customer_id, created_by, sale_number, operation_id, subtotal, discount_amount, total, amount_paid, credit_amount, payment_method, payment_breakdown, sold_at) VALUES (${saleId}, ${input.shopId}, ${customerId || null}, ${ctx.user.id}, ${saleNumber}, ${operation("sale", fileHash, item.sourceId)}, ${item.total + item.discountAmount}, ${item.discountAmount}, ${item.total}, ${amountPaid}, ${creditAmount}, ${paymentMethod}::payment_method, ${JSON.stringify({ cash: Math.min(item.cash, item.total), mobileMoney: Math.min(item.mobileMoney, Math.max(0, item.total - item.cash)) })}::jsonb, ${item.soldAt})`);
+      if (creditAmount > 0 && customerId) queries.push(sql4`INSERT INTO receivables (shop_id, customer_id, sale_id, original_amount, balance, due_date) VALUES (${input.shopId}, ${customerId}, ${saleId}, ${creditAmount}, ${creditAmount}, ${item.dueDate || null})`);
       if (item.reference) saleByReference.set(item.reference, { id: saleId, soldAt: item.soldAt });
       saleCount++;
     }
@@ -1786,20 +1845,20 @@ var migrationRouter = router({
       const firstSaleAt = plannedLines.find((item) => item.productId === productId)?.soldAt;
       const openingAt = new Date((firstSaleAt?.valueOf() ?? Date.now()) - 1);
       stockAfter.set(productId, openingStock);
-      queries.push(sql3`INSERT INTO stock_movements (shop_id, product_id, created_by, type, quantity_delta, stock_after, reason, created_at) VALUES (${input.shopId}, ${productId}, ${ctx.user.id}, 'opening'::stock_movement_type, ${openingStock}, ${openingStock}, ${soldQuantity > 0 ? "Solde d\u2019ouverture historique reconstitu\xE9" : "Stock initial import\xE9"}, ${openingAt})`);
+      queries.push(sql4`INSERT INTO stock_movements (shop_id, product_id, created_by, type, quantity_delta, stock_after, reason, created_at) VALUES (${input.shopId}, ${productId}, ${ctx.user.id}, 'opening'::stock_movement_type, ${openingStock}, ${openingStock}, ${soldQuantity > 0 ? "Solde d\u2019ouverture historique reconstitu\xE9" : "Stock initial import\xE9"}, ${openingAt})`);
     }
     for (const item of plannedLines) {
       const remaining = Math.max(0, (stockAfter.get(item.productId) ?? item.quantity) - item.quantity);
       stockAfter.set(item.productId, remaining);
-      queries.push(sql3`INSERT INTO sale_items (sale_id, product_id, product_name, quantity, unit_price, purchase_price, line_total) VALUES (${item.saleId}, ${item.productId}, ${item.productName}, ${item.quantity}, ${item.unitPrice}, ${item.purchasePrice}, ${item.quantity * item.unitPrice})`);
-      queries.push(sql3`INSERT INTO stock_movements (shop_id, product_id, sale_id, created_by, type, quantity_delta, stock_after, reason, created_at) VALUES (${input.shopId}, ${item.productId}, ${item.saleId}, ${ctx.user.id}, 'sale'::stock_movement_type, ${-item.quantity}, ${remaining}, 'Vente historique importée', ${item.soldAt})`);
+      queries.push(sql4`INSERT INTO sale_items (sale_id, product_id, product_name, quantity, unit_price, purchase_price, line_total) VALUES (${item.saleId}, ${item.productId}, ${item.productName}, ${item.quantity}, ${item.unitPrice}, ${item.purchasePrice}, ${item.quantity * item.unitPrice})`);
+      queries.push(sql4`INSERT INTO stock_movements (shop_id, product_id, sale_id, created_by, type, quantity_delta, stock_after, reason, created_at) VALUES (${input.shopId}, ${item.productId}, ${item.saleId}, ${ctx.user.id}, 'sale'::stock_movement_type, ${-item.quantity}, ${remaining}, 'Vente historique importée', ${item.soldAt})`);
       saleItemCount++;
     }
     for (const item of input.data.purchases) {
       if (blocked.has(`purchase:${item.sourceId}`)) continue;
       const purchaseId = crypto.randomUUID();
       const supplierId = item.supplierName ? supplierByName.get(normal(item.supplierName)) : void 0;
-      queries.push(sql3`INSERT INTO purchases (id, shop_id, supplier_id, created_by, purchase_number, operation_id, status, payment_method, subtotal, tax_amount, total, purchased_at, received_at) VALUES (${purchaseId}, ${input.shopId}, ${supplierId || null}, ${ctx.user.id}, ${item.reference}, ${operation("purchase", fileHash, item.sourceId)}, ${item.status}::purchase_status, ${item.paymentMethod || null}, ${item.subtotal}, ${item.taxAmount}, ${item.total}, ${item.purchasedAt}, ${item.status === "received" ? item.receivedAt || item.purchasedAt : null})`);
+      queries.push(sql4`INSERT INTO purchases (id, shop_id, supplier_id, created_by, purchase_number, operation_id, status, payment_method, subtotal, tax_amount, total, purchased_at, received_at) VALUES (${purchaseId}, ${input.shopId}, ${supplierId || null}, ${ctx.user.id}, ${item.reference}, ${operation("purchase", fileHash, item.sourceId)}, ${item.status}::purchase_status, ${item.paymentMethod || null}, ${item.subtotal}, ${item.taxAmount}, ${item.total}, ${item.purchasedAt}, ${item.status === "received" ? item.receivedAt || item.purchasedAt : null})`);
       purchaseByReference.set(item.reference, purchaseId);
       purchaseCount++;
     }
@@ -1807,16 +1866,16 @@ var migrationRouter = router({
       const purchaseId = purchaseByReference.get(item.purchaseReference);
       const productId = item.barcode ? productByBarcode.get(item.barcode) : productByName.get(normal(item.productName));
       if (!purchaseId || !productId || blocked.has(`product:${item.sourceId}`)) continue;
-      queries.push(sql3`INSERT INTO purchase_items (purchase_id, product_id, product_name, quantity, unit_price, line_total) VALUES (${purchaseId}, ${productId}, ${item.productName}, ${item.quantity}, ${item.unitPrice}, ${item.quantity * item.unitPrice})`);
+      queries.push(sql4`INSERT INTO purchase_items (purchase_id, product_id, product_name, quantity, unit_price, line_total) VALUES (${purchaseId}, ${productId}, ${item.productName}, ${item.quantity}, ${item.unitPrice}, ${item.quantity * item.unitPrice})`);
       purchaseItemCount++;
     }
     for (const item of input.data.expenses) {
-      queries.push(sql3`INSERT INTO expenses (shop_id, created_by, operation_id, category, amount, note, spent_at) VALUES (${input.shopId}, ${ctx.user.id}, ${operation("expense", fileHash, item.sourceId)}, ${item.category}, ${item.amount}, ${item.note || null}, ${item.spentAt})`);
+      queries.push(sql4`INSERT INTO expenses (shop_id, created_by, operation_id, category, amount, note, spent_at) VALUES (${input.shopId}, ${ctx.user.id}, ${operation("expense", fileHash, item.sourceId)}, ${item.category}, ${item.amount}, ${item.note || null}, ${item.spentAt})`);
       expenseCount++;
     }
     const imported = { products: productCount, customers: customerCount, suppliers: supplierCount, sales: saleCount, saleItems: saleItemCount, purchases: purchaseCount, purchaseItems: purchaseItemCount, expenses: expenseCount };
-    queries.unshift(sql3`INSERT INTO data_imports (shop_id, fingerprint, file_name, summary, imported_by) VALUES (${input.shopId}, ${fileHash}, ${input.fileName}, ${JSON.stringify(imported)}::jsonb, ${ctx.user.id})`);
-    await sql3.transaction(queries);
+    queries.unshift(sql4`INSERT INTO data_imports (shop_id, fingerprint, file_name, summary, imported_by) VALUES (${input.shopId}, ${fileHash}, ${input.fileName}, ${JSON.stringify(imported)}::jsonb, ${ctx.user.id})`);
+    await sql4.transaction(queries);
     return { replayed: false, imported, skipped: conflicts.length, conflicts };
   })
 });
@@ -2461,7 +2520,7 @@ var supportRouter = router({
 
 // server/routers/profile.ts
 import { TRPCError as TRPCError10 } from "@trpc/server";
-import { eq as eq11 } from "drizzle-orm";
+import { eq as eq11, sql as sql3 } from "drizzle-orm";
 import { z as z10 } from "zod";
 
 // server/lib/shopConfiguration.ts
@@ -2517,15 +2576,17 @@ var profileRouter = router({
   settings: protectedProcedure.input(profileInput).query(async ({ ctx, input }) => {
     const membership = await assertShopAccess(ctx.user.id, input.shopId);
     const db = getDb();
-    const [user] = await db.select({ name: users.name, email: users.email, phone: users.phone }).from(users).where(eq11(users.id, ctx.user.id)).limit(1);
-    const [shop] = await db.select({
-      id: shops.id,
-      name: shops.name,
-      logoUrl: shops.logoUrl,
-      country: shops.country,
-      currency: shops.currency,
-      updatedAt: shops.updatedAt
-    }).from(shops).where(eq11(shops.id, input.shopId)).limit(1);
+    const hasPhone = await hasOptionalColumn("users", "phone");
+    const [user] = hasPhone ? await db.select({
+      name: users.name,
+      email: users.email,
+      phone: users.phone
+    }).from(users).where(eq11(users.id, ctx.user.id)).limit(1) : await db.select({
+      name: users.name,
+      email: users.email,
+      phone: sql3`NULL`
+    }).from(users).where(eq11(users.id, ctx.user.id)).limit(1);
+    const shop = await getShopById(input.shopId);
     if (!user || !shop)
       throw new TRPCError10({
         code: "NOT_FOUND",
@@ -2543,12 +2604,11 @@ var profileRouter = router({
   ).mutation(async ({ ctx, input }) => {
     const membership = await assertShopAccess(ctx.user.id, input.shopId);
     const db = getDb();
-    const [shop] = await db.select({
-      name: shops.name,
-      logoUrl: shops.logoUrl,
-      currency: shops.currency,
-      country: shops.country
-    }).from(shops).where(eq11(shops.id, input.shopId)).limit(1);
+    const [shop, hasPhone, hasLogo] = await Promise.all([
+      getShopById(input.shopId),
+      hasOptionalColumn("users", "phone"),
+      hasOptionalColumn("shops", "logo_url")
+    ]);
     if (!shop)
       throw new TRPCError10({
         code: "NOT_FOUND",
@@ -2569,10 +2629,15 @@ var profileRouter = router({
           message: "La devise de r\xE9f\xE9rence ne peut plus \xEAtre modifi\xE9e apr\xE8s une vente ou une d\xE9pense. Ajoutez plut\xF4t une devise dans \xAB Devises & taux \xBB."
         });
     }
-    const sql3 = getSql();
+    const sql4 = getSql();
     const statements = [];
     let nextLogoUrl = shop.logoUrl;
     if (input.logoDataUrl !== void 0) {
+      if (!hasLogo)
+        throw new TRPCError10({
+          code: "CONFLICT",
+          message: "Le logo sera disponible d\xE8s que la migration de votre boutique aura \xE9t\xE9 appliqu\xE9e."
+        });
       if (input.logoDataUrl === null) {
         nextLogoUrl = null;
       } else {
@@ -2585,30 +2650,36 @@ var profileRouter = router({
         nextLogoUrl = stored.url;
       }
       statements.push(
-        sql3`UPDATE shops SET logo_url = ${nextLogoUrl}, updated_at = NOW() WHERE id = ${input.shopId}`
+        sql4`UPDATE shops SET logo_url = ${nextLogoUrl}, updated_at = NOW() WHERE id = ${input.shopId}`
       );
     }
-    if (input.phone !== void 0)
+    if (input.phone !== void 0) {
+      if (!hasPhone)
+        throw new TRPCError10({
+          code: "CONFLICT",
+          message: "Le t\xE9l\xE9phone sera disponible d\xE8s que la migration de votre boutique aura \xE9t\xE9 appliqu\xE9e."
+        });
       statements.push(
-        sql3`UPDATE users SET phone = ${input.phone}, updated_at = NOW() WHERE id = ${ctx.user.id}`
+        sql4`UPDATE users SET phone = ${input.phone}, updated_at = NOW() WHERE id = ${ctx.user.id}`
       );
+    }
     if (input.name)
       statements.push(
-        sql3`UPDATE shops SET name = ${input.name}, updated_at = NOW() WHERE id = ${input.shopId}`
+        sql4`UPDATE shops SET name = ${input.name}, updated_at = NOW() WHERE id = ${input.shopId}`
       );
     if (input.country) {
       statements.push(
-        sql3`UPDATE shops SET country = ${input.country}, currency = ${nextCurrency}, updated_at = NOW() WHERE id = ${input.shopId}`
+        sql4`UPDATE shops SET country = ${input.country}, currency = ${nextCurrency}, updated_at = NOW() WHERE id = ${input.shopId}`
       );
       statements.push(
-        sql3`INSERT INTO shop_currencies (shop_id, currency, label, is_active) VALUES (${input.shopId}, ${nextCurrency}, 'Devise de référence', true) ON CONFLICT (shop_id, currency) DO UPDATE SET is_active = true, label = 'Devise de référence', updated_at = NOW()`
+        sql4`INSERT INTO shop_currencies (shop_id, currency, label, is_active) VALUES (${input.shopId}, ${nextCurrency}, 'Devise de référence', true) ON CONFLICT (shop_id, currency) DO UPDATE SET is_active = true, label = 'Devise de référence', updated_at = NOW()`
       );
       if (shop.currency !== nextCurrency)
         statements.push(
-          sql3`UPDATE shop_currencies SET is_active = true, label = 'Devise de transaction', updated_at = NOW() WHERE shop_id = ${input.shopId} AND currency = ${shop.currency}`
+          sql4`UPDATE shop_currencies SET is_active = true, label = 'Devise de transaction', updated_at = NOW() WHERE shop_id = ${input.shopId} AND currency = ${shop.currency}`
         );
     }
-    if (statements.length) await sql3.transaction(statements);
+    if (statements.length) await sql4.transaction(statements);
     return {
       name: input.name ?? shop.name,
       logoUrl: nextLogoUrl,
@@ -2641,13 +2712,13 @@ var appRouter = router({
       })
     ).mutation(async ({ ctx, input }) => {
       const shopId = crypto.randomUUID();
-      const sql3 = getSql();
-      await sql3.transaction([
-        sql3`INSERT INTO shops (id, name, slug, currency, country, created_by) VALUES (${shopId}, ${input.name}, ${makeShopSlug(input.name)}, ${input.currency}, ${input.country.toUpperCase()}, ${ctx.user.id})`,
-        sql3`INSERT INTO shop_members (shop_id, user_id, role) VALUES (${shopId}, ${ctx.user.id}, 'owner')`,
-        sql3`INSERT INTO shop_currencies (shop_id, currency, label, is_active) VALUES (${shopId}, ${input.currency}, 'Devise de référence', true)`
+      const sql4 = getSql();
+      await sql4.transaction([
+        sql4`INSERT INTO shops (id, name, slug, currency, country, created_by) VALUES (${shopId}, ${input.name}, ${makeShopSlug(input.name)}, ${input.currency}, ${input.country.toUpperCase()}, ${ctx.user.id})`,
+        sql4`INSERT INTO shop_members (shop_id, user_id, role) VALUES (${shopId}, ${ctx.user.id}, 'owner')`,
+        sql4`INSERT INTO shop_currencies (shop_id, currency, label, is_active) VALUES (${shopId}, ${input.currency}, 'Devise de référence', true)`
       ]);
-      return (await getDb().select().from(shops).where(eq12(shops.id, shopId)).limit(1))[0];
+      return getShopById(shopId);
     }),
     memberRole: protectedProcedure.input(z11.object({ shopId: z11.string().uuid() })).query(({ ctx, input }) => assertShopAccess(ctx.user.id, input.shopId)),
     members: protectedProcedure.input(z11.object({ shopId: z11.string().uuid() })).query(async ({ ctx, input }) => {

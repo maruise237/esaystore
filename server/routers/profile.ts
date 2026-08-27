@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
   expenses,
@@ -8,7 +8,7 @@ import {
   shops,
   users,
 } from "../../drizzle/schema";
-import { getDb, getSql } from "../db";
+import { getDb, getShopById, getSql, hasOptionalColumn } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
 import { assertShopAccess } from "./helpers";
 import {
@@ -54,23 +54,27 @@ export const profileRouter = router({
     .query(async ({ ctx, input }) => {
       const membership = await assertShopAccess(ctx.user.id, input.shopId);
       const db = getDb();
-      const [user] = await db
-        .select({ name: users.name, email: users.email, phone: users.phone })
-        .from(users)
-        .where(eq(users.id, ctx.user.id))
-        .limit(1);
-      const [shop] = await db
-        .select({
-          id: shops.id,
-          name: shops.name,
-          logoUrl: shops.logoUrl,
-          country: shops.country,
-          currency: shops.currency,
-          updatedAt: shops.updatedAt,
-        })
-        .from(shops)
-        .where(eq(shops.id, input.shopId))
-        .limit(1);
+      const hasPhone = await hasOptionalColumn("users", "phone");
+      const [user] = hasPhone
+        ? await db
+            .select({
+              name: users.name,
+              email: users.email,
+              phone: users.phone,
+            })
+            .from(users)
+            .where(eq(users.id, ctx.user.id))
+            .limit(1)
+        : await db
+            .select({
+              name: users.name,
+              email: users.email,
+              phone: sql<string | null>`NULL`,
+            })
+            .from(users)
+            .where(eq(users.id, ctx.user.id))
+            .limit(1);
+      const shop = await getShopById(input.shopId);
       if (!user || !shop)
         throw new TRPCError({
           code: "NOT_FOUND",
@@ -95,16 +99,11 @@ export const profileRouter = router({
     .mutation(async ({ ctx, input }) => {
       const membership = await assertShopAccess(ctx.user.id, input.shopId);
       const db = getDb();
-      const [shop] = await db
-        .select({
-          name: shops.name,
-          logoUrl: shops.logoUrl,
-          currency: shops.currency,
-          country: shops.country,
-        })
-        .from(shops)
-        .where(eq(shops.id, input.shopId))
-        .limit(1);
+      const [shop, hasPhone, hasLogo] = await Promise.all([
+        getShopById(input.shopId),
+        hasOptionalColumn("users", "phone"),
+        hasOptionalColumn("shops", "logo_url"),
+      ]);
       if (!shop)
         throw new TRPCError({
           code: "NOT_FOUND",
@@ -146,6 +145,12 @@ export const profileRouter = router({
       const statements = [];
       let nextLogoUrl = shop.logoUrl;
       if (input.logoDataUrl !== undefined) {
+        if (!hasLogo)
+          throw new TRPCError({
+            code: "CONFLICT",
+            message:
+              "Le logo sera disponible dès que la migration de votre boutique aura été appliquée.",
+          });
         if (input.logoDataUrl === null) {
           nextLogoUrl = null;
         } else {
@@ -161,10 +166,17 @@ export const profileRouter = router({
           sql`UPDATE shops SET logo_url = ${nextLogoUrl}, updated_at = NOW() WHERE id = ${input.shopId}`
         );
       }
-      if (input.phone !== undefined)
+      if (input.phone !== undefined) {
+        if (!hasPhone)
+          throw new TRPCError({
+            code: "CONFLICT",
+            message:
+              "Le téléphone sera disponible dès que la migration de votre boutique aura été appliquée.",
+          });
         statements.push(
           sql`UPDATE users SET phone = ${input.phone}, updated_at = NOW() WHERE id = ${ctx.user.id}`
         );
+      }
       if (input.name)
         statements.push(
           sql`UPDATE shops SET name = ${input.name}, updated_at = NOW() WHERE id = ${input.shopId}`
