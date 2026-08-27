@@ -330,3 +330,7 @@
 - [x] Tester, prévisualiser, publier et synchroniser les améliorations du parcours d’inscription sur GitHub `main`.
 - [x] Remplacer les drapeaux emoji du sélecteur de pays par un rendu graphique fiable sur les navigateurs et appareils ciblés.
 - [x] Tester, prévisualiser, publier et synchroniser le correctif de drapeaux sur GitHub `main`.
+- [x] Auditer les réglages de profil, les contrats utilisateur-boutique et l’affichage actuel du mot de passe.
+- [x] Définir les niveaux de force du mot de passe et les règles de synchronisation sûre entre pays et devise de la boutique.
+- [x] Ajouter la jauge de force, l’édition du téléphone et du pays depuis le profil, et la mise à jour de la devise associée.
+- [x] Tester les autorisations, les règles pays-devise, l’accessibilité et publier les nouveaux réglages sur GitHub `main`.

@@ -1,0 +1,48 @@
+import { TRPCError } from "@trpc/server";
+import { eq } from "drizzle-orm";
+import { z } from "zod";
+import { expenses, sales, shopCurrencies, shops, users } from "../../drizzle/schema";
+import { getDb, getSql } from "../db";
+import { protectedProcedure, router } from "../_core/trpc";
+import { assertShopAccess } from "./helpers";
+import { configurableCountries, currencyForCountry } from "../lib/shopConfiguration";
+
+const profileInput = z.object({ shopId: z.string().uuid() });
+const countryCode = z.enum(configurableCountries);
+const phone = z.string().regex(/^\+[1-9]\d{5,14}$/).nullable();
+
+export const profileRouter = router({
+  settings: protectedProcedure.input(profileInput).query(async ({ ctx, input }) => {
+    const membership = await assertShopAccess(ctx.user.id, input.shopId);
+    const db = getDb();
+    const [user] = await db.select({ name: users.name, email: users.email, phone: users.phone }).from(users).where(eq(users.id, ctx.user.id)).limit(1);
+    const [shop] = await db.select({ id: shops.id, name: shops.name, country: shops.country, currency: shops.currency }).from(shops).where(eq(shops.id, input.shopId)).limit(1);
+    if (!user || !shop) throw new TRPCError({ code: "NOT_FOUND", message: "Profil introuvable." });
+    return { user, shop, canEditShopSettings: membership.role === "owner" };
+  }),
+  update: protectedProcedure.input(profileInput.extend({ phone: phone.optional(), country: countryCode.optional() })).mutation(async ({ ctx, input }) => {
+    const membership = await assertShopAccess(ctx.user.id, input.shopId);
+    const db = getDb();
+    const [shop] = await db.select({ currency: shops.currency, country: shops.country }).from(shops).where(eq(shops.id, input.shopId)).limit(1);
+    if (!shop) throw new TRPCError({ code: "NOT_FOUND", message: "Boutique introuvable." });
+    if (input.country && membership.role !== "owner") throw new TRPCError({ code: "FORBIDDEN", message: "Seul le propriétaire peut modifier le pays et la devise de référence." });
+
+    const nextCurrency = input.country ? currencyForCountry(input.country) : shop.currency;
+    if (input.country && nextCurrency !== shop.currency) {
+      const [sale] = await db.select({ id: sales.id }).from(sales).where(eq(sales.shopId, input.shopId)).limit(1);
+      const [expense] = await db.select({ id: expenses.id }).from(expenses).where(eq(expenses.shopId, input.shopId)).limit(1);
+      if (sale || expense) throw new TRPCError({ code: "CONFLICT", message: "La devise de référence ne peut plus être modifiée après une vente ou une dépense. Ajoutez plutôt une devise dans « Devises & taux »." });
+    }
+
+    const sql = getSql();
+    const statements = [];
+    if (input.phone !== undefined) statements.push(sql`UPDATE users SET phone = ${input.phone}, updated_at = NOW() WHERE id = ${ctx.user.id}`);
+    if (input.country) {
+      statements.push(sql`UPDATE shops SET country = ${input.country}, currency = ${nextCurrency}, updated_at = NOW() WHERE id = ${input.shopId}`);
+      statements.push(sql`INSERT INTO shop_currencies (shop_id, currency, label, is_active) VALUES (${input.shopId}, ${nextCurrency}, 'Devise de référence', true) ON CONFLICT (shop_id, currency) DO UPDATE SET is_active = true, label = 'Devise de référence', updated_at = NOW()`);
+      if (shop.currency !== nextCurrency) statements.push(sql`UPDATE shop_currencies SET is_active = true, label = 'Devise de transaction', updated_at = NOW() WHERE shop_id = ${input.shopId} AND currency = ${shop.currency}`);
+    }
+    if (statements.length) await sql.transaction(statements);
+    return { phone: input.phone, country: input.country ?? shop.country, currency: nextCurrency };
+  }),
+});

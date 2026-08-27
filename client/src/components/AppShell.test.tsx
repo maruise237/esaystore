@@ -156,6 +156,7 @@ describe("barre latérale desktop", () => {
       "Clôture",
       "Importer / exporter",
       "Devises & taux",
+      "Profil",
       "Équipe",
       "Synchronisation",
       "Support",

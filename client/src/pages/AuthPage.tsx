@@ -1,15 +1,14 @@
 import React, { useEffect, useId, useState } from "react";
-import { ArrowRight, Check, CheckCircle2, ChevronsUpDown, Eye, EyeOff, Loader2, LockKeyhole, ShoppingBag, WifiOff } from "lucide-react";
-import { BF, BJ, CF, CG, CI, CM, GA, GN, GQ, ML, NE, NG, SN, TD, TG } from "country-flag-icons/react/3x2";
+import { ArrowRight, Check, CheckCircle2, Eye, EyeOff, Loader2, LockKeyhole, ShoppingBag, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/BrandMark";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import { neonAuthClient } from "@/lib/neonAuth";
-import { countryPreferences, defaultCountryPreference, detectCountryPreference, formatPhoneNumber, getCountryPreference, isCompletePhoneNumber, normalizePhoneNumber, type CountryDetectionSource } from "@/lib/countryPreferences";
-
-const countryFlags = { BEN: BJ, BFA: BF, CAF: CF, CIV: CI, CMR: CM, COG: CG, GAB: GA, GIN: GN, GNQ: GQ, MLI: ML, NGA: NG, NER: NE, SEN: SN, TCD: TD, TGO: TG } as const;
+import { defaultCountryPreference, detectCountryPreference, formatPhoneNumber, getCountryPreference, isCompletePhoneNumber, normalizePhoneNumber, type CountryDetectionSource } from "@/lib/countryPreferences";
+import { CountryPicker } from "@/components/CountryPicker";
+import { getPasswordStrength } from "@/lib/passwordStrength";
 
 export default function AuthPage() {
   const [mode, setMode] = useState<"login" | "register">(() =>
@@ -25,8 +24,6 @@ export default function AuthPage() {
   const passwordHintId = useId();
   const [registerForm, setRegisterForm] = useState({ email: "", password: "", shopName: "", phone: "", currency: defaultCountryPreference.currency, country: defaultCountryPreference.country });
   const [countryDetectionSource, setCountryDetectionSource] = useState<CountryDetectionSource | null>(null);
-  const [countryPickerOpen, setCountryPickerOpen] = useState(false);
-  const [countrySearch, setCountrySearch] = useState("");
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const register = trpc.auth.register.useMutation({ onSuccess: () => window.location.reload(), onError: (cause) => setError(cause.message) });
   const login = trpc.auth.login.useMutation({ onSuccess: () => window.location.reload(), onError: (cause) => setError(cause.message) });
@@ -36,15 +33,6 @@ export default function AuthPage() {
   const emailIsValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registerForm.email);
   const passwordIsValid = registerForm.password.length >= 10;
   const phoneIsValid = Boolean(registerForm.phone) && isCompletePhoneNumber(registerForm.phone, registerForm.country);
-  const matchingCountries = countryPreferences.filter(preference => `${preference.label} ${preference.shortCode} ${preference.dialCode} ${preference.currency} ${preference.currencyLabel}`.toLocaleLowerCase("fr").includes(countrySearch.toLocaleLowerCase("fr").trim()));
-
-  const selectCountry = (country: string) => {
-    const preference = getCountryPreference(country);
-    setRegisterForm(current => ({ ...current, country: preference.country, currency: preference.currency, phone: formatPhoneNumber(current.phone, preference.country) }));
-    setCountryDetectionSource(null);
-    setCountrySearch("");
-    setCountryPickerOpen(false);
-  };
 
   useEffect(() => {
     const locale = navigator.languages?.[0] ?? navigator.language;
@@ -174,7 +162,7 @@ export default function AuthPage() {
               <Field label="Nom de la boutique" inputId="register-shop"><Input id="register-shop" required autoComplete="organization" value={registerForm.shopName} onChange={(event) => setRegisterForm({ ...registerForm, shopName: event.target.value })} placeholder="Épicerie du marché" /></Field>
               <Field label="E-mail" inputId="register-email"><ValidatedInput id="register-email" required autoComplete="email" type="email" value={registerForm.email} onChange={(event) => setRegisterForm({ ...registerForm, email: event.target.value })} placeholder="vous@boutique.com" isValid={emailIsValid} successLabel="E-mail valide" /></Field>
               <Field label="Mot de passe" inputId="register-password"><PasswordInput id="register-password" value={registerForm.password} onChange={(value) => setRegisterForm({ ...registerForm, password: value })} visible={showPassword} onVisibilityChange={setShowPassword} autoComplete="new-password" ariaDescribedBy={passwordHintId} isValid={passwordIsValid} /><p id={passwordHintId} className="text-xs leading-relaxed text-[#697466]">10 caractères minimum. Vous pourrez l’utiliser sur tous vos appareils.</p></Field>
-              <Field label="Pays, indicatif et devise" inputId="register-country"><div className="relative"><Button id="register-country" type="button" variant="outline" role="combobox" aria-controls="country-options" aria-expanded={countryPickerOpen} aria-describedby="register-country-hint" onClick={() => setCountryPickerOpen(open => !open)} className="h-11 w-full justify-between border-input bg-background px-3 font-normal text-[#27332d] hover:bg-[#f2f4eb] focus-visible:border-[#5e7b52] focus-visible:ring-[#5e7b52]/30"><span className="flex min-w-0 items-center gap-2 truncate"><CountryFlag country={selectedCountry.country} /><span className="truncate">{selectedCountry.label} ({selectedCountry.shortCode}) · {selectedCountry.dialCode} · {selectedCountry.currencyLabel}</span></span><ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-[#5f695c]" aria-hidden="true" /></Button>{countryPickerOpen && <div className="absolute z-30 mt-2 w-full rounded-xl border border-[#d8ddd2] bg-[#fdfcf7] p-2 shadow-[0_16px_36px_rgba(30,41,36,0.16)]"><Input autoFocus type="search" value={countrySearch} onChange={event => setCountrySearch(event.target.value)} placeholder="Rechercher un pays, un code ou une devise…" aria-label="Rechercher un pays" className="mb-2 h-10 bg-white" /><div id="country-options" role="listbox" aria-label="Pays pris en charge" className="max-h-52 overflow-y-auto pr-1">{matchingCountries.length ? matchingCountries.map(preference => <button key={preference.country} type="button" role="option" aria-selected={preference.country === registerForm.country} onClick={() => selectCountry(preference.country)} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2 text-left text-sm text-[#27332d] transition-colors hover:bg-[#eef3df] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e7b52]" ><CountryFlag country={preference.country} /><span className="min-w-0 flex-1 truncate">{preference.label} ({preference.shortCode}) · {preference.dialCode}</span>{preference.country === registerForm.country && <Check className="h-4 w-4 shrink-0 text-[#567b4f]" aria-hidden="true" />}</button>) : <p className="px-2 py-4 text-center text-sm text-[#697466]" role="status">Aucun pays correspondant.</p>}</div></div>}</div><p id="register-country-hint" className="text-xs leading-relaxed text-[#697466]">{countryDetectionSource ? "Pays proposé à partir des réglages de votre appareil. Vous pouvez le modifier." : `${selectedCountry.currencyLabel} est utilisé comme devise de référence. Vous pouvez choisir un autre pays.`}</p></Field>
+              <Field label="Pays, indicatif et devise" inputId="register-country"><CountryPicker id="register-country" country={registerForm.country} onChange={preference => { setRegisterForm(current => ({ ...current, country: preference.country, currency: preference.currency, phone: formatPhoneNumber(current.phone, preference.country) })); setCountryDetectionSource(null); }} ariaDescribedBy="register-country-hint" /><p id="register-country-hint" className="text-xs leading-relaxed text-[#697466]">{countryDetectionSource ? "Pays proposé à partir des réglages de votre appareil. Vous pouvez le modifier." : `${selectedCountry.currencyLabel} est utilisé comme devise de référence. Vous pouvez choisir un autre pays.`}</p></Field>
               <Field label="Numéro de téléphone (facultatif)" inputId="register-phone"><ValidatedInput id="register-phone" autoComplete="tel-national" inputMode="tel" type="tel" value={registerForm.phone} onChange={(event) => setRegisterForm({ ...registerForm, phone: formatPhoneNumber(event.target.value, registerForm.country) })} placeholder={`${selectedCountry.dialCode} 6 99 78 99 99`} isValid={phoneIsValid} successLabel="Numéro prêt" />{registerForm.phone && !phoneIsValid && <p className="text-xs leading-relaxed text-[#a05842]">Ajoutez encore quelques chiffres ou effacez ce champ.</p>}<p className="text-xs leading-relaxed text-[#697466]">L’indicatif {selectedCountry.dialCode} est appliqué selon le pays choisi.</p></Field>
               <Button disabled={pending} type="submit" className="mt-3 h-11 w-full bg-[#26352d] text-[#f5f7e8] shadow-[0_10px_22px_rgba(30,41,36,0.18)] hover:bg-[#1b2721]" aria-live="polite">{pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Création en cours…</> : <><ArrowRight className="mr-2 h-4 w-4" />Créer ma boutique</>}</Button>
             </form>
@@ -193,15 +181,16 @@ export default function AuthPage() {
 
 function Field({ label, inputId, children }: { label: string; inputId: string; children: React.ReactNode }) { return <div className="grid gap-2"><Label htmlFor={inputId} className="text-xs font-bold uppercase tracking-[0.12em] text-[#5f695c]">{label}</Label>{children}</div>; }
 
-function CountryFlag({ country }: { country: string }) {
-  const Flag = countryFlags[country as keyof typeof countryFlags] ?? CM;
-  return <Flag aria-hidden="true" className="h-4 w-6 shrink-0 rounded-[2px] object-cover shadow-sm" />;
-}
-
 function ValidatedInput({ isValid, successLabel, className, ...props }: React.ComponentProps<typeof Input> & { isValid: boolean; successLabel: string }) {
   return <div className="relative"><Input {...props} className={`${className ?? ""} ${isValid ? "border-[#74a05d] pr-11" : ""}`} />{isValid && <><CheckCircle2 className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#567b4f]" aria-hidden="true" /><span className="sr-only" role="status">{successLabel}</span></>}</div>;
 }
 
 function PasswordInput({ id, value, onChange, visible, onVisibilityChange, autoComplete, ariaDescribedBy, isValid }: { id: string; value: string; onChange: (value: string) => void; visible: boolean; onVisibilityChange: (visible: boolean) => void; autoComplete: string; ariaDescribedBy?: string; isValid?: boolean }) {
-  return <div className="relative"><Input id={id} required autoComplete={autoComplete} type={visible ? "text" : "password"} value={value} onChange={(event) => onChange(event.target.value)} placeholder={autoComplete === "new-password" ? "10 caractères minimum" : "Votre mot de passe"} aria-describedby={ariaDescribedBy} className={`${isValid ? "border-[#74a05d] pr-20" : "pr-12"}`} />{isValid && <><CheckCircle2 className="absolute right-11 top-1/2 h-5 w-5 -translate-y-1/2 text-[#567b4f]" aria-hidden="true" /><span className="sr-only" role="status">Mot de passe valide</span></>}<button type="button" onClick={() => onVisibilityChange(!visible)} className="absolute inset-y-0 right-0 grid w-11 place-items-center rounded-r-md text-[#596456] hover:bg-[#eef0e7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e7b52]" aria-label={visible ? "Masquer le mot de passe" : "Afficher le mot de passe"}>{visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div>;
+  const strength = autoComplete === "new-password" ? getPasswordStrength(value) : null;
+  return <div className="grid gap-2"><div className="relative"><Input id={id} required autoComplete={autoComplete} type={visible ? "text" : "password"} value={value} onChange={(event) => onChange(event.target.value)} placeholder={autoComplete === "new-password" ? "10 caractères minimum" : "Votre mot de passe"} aria-describedby={ariaDescribedBy} className={`${isValid ? "border-[#74a05d] pr-20" : "pr-12"}`} />{isValid && <><CheckCircle2 className="absolute right-11 top-1/2 h-5 w-5 -translate-y-1/2 text-[#567b4f]" aria-hidden="true" /><span className="sr-only" role="status">Mot de passe valide</span></>}<button type="button" onClick={() => onVisibilityChange(!visible)} className="absolute inset-y-0 right-0 grid w-11 place-items-center rounded-r-md text-[#596456] hover:bg-[#eef0e7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e7b52]" aria-label={visible ? "Masquer le mot de passe" : "Afficher le mot de passe"}>{visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div>{value && strength && <PasswordStrengthMeter strength={strength} />}</div>;
+}
+
+function PasswordStrengthMeter({ strength }: { strength: ReturnType<typeof getPasswordStrength> }) {
+  const colors = ["bg-[#d7b2a8]", "bg-[#d79871]", "bg-[#d4bb6b]", "bg-[#74a05d]"];
+  return <div className="grid gap-1" aria-live="polite"><div className="flex gap-1" role="progressbar" aria-label="Force du mot de passe" aria-valuemin={0} aria-valuemax={4} aria-valuenow={strength.score} aria-valuetext={strength.label}>{[1, 2, 3, 4].map(step => <span key={step} className={`h-1.5 flex-1 rounded-full ${step <= strength.score ? colors[strength.score - 1] : "bg-[#e4e1d7]"}`} />)}</div><p className="text-xs font-medium text-[#697466]">Force du mot de passe : {strength.label}</p></div>;
 }

@@ -9,8 +9,8 @@ import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 
 // server/routers.ts
-import { eq as eq11 } from "drizzle-orm";
-import { z as z10 } from "zod";
+import { eq as eq12 } from "drizzle-orm";
+import { z as z11 } from "zod";
 
 // drizzle/schema.ts
 var schema_exports = {};
@@ -2442,6 +2442,72 @@ var supportRouter = router({
   })
 });
 
+// server/routers/profile.ts
+import { TRPCError as TRPCError10 } from "@trpc/server";
+import { eq as eq11 } from "drizzle-orm";
+import { z as z10 } from "zod";
+
+// server/lib/shopConfiguration.ts
+var configurableCountries = ["BEN", "BFA", "CAF", "CIV", "CMR", "COG", "GAB", "GIN", "GNQ", "MLI", "NGA", "NER", "SEN", "TCD", "TGO"];
+var currencyByCountry = {
+  BEN: "XOF",
+  BFA: "XOF",
+  CAF: "XAF",
+  CIV: "XOF",
+  CMR: "XAF",
+  COG: "XAF",
+  GAB: "XAF",
+  GIN: "XOF",
+  GNQ: "XAF",
+  MLI: "XOF",
+  NGA: "NGN",
+  NER: "XOF",
+  SEN: "XOF",
+  TCD: "XAF",
+  TGO: "XOF"
+};
+function currencyForCountry(country) {
+  return currencyByCountry[country];
+}
+
+// server/routers/profile.ts
+var profileInput = z10.object({ shopId: z10.string().uuid() });
+var countryCode = z10.enum(configurableCountries);
+var phone = z10.string().regex(/^\+[1-9]\d{5,14}$/).nullable();
+var profileRouter = router({
+  settings: protectedProcedure.input(profileInput).query(async ({ ctx, input }) => {
+    const membership = await assertShopAccess(ctx.user.id, input.shopId);
+    const db = getDb();
+    const [user] = await db.select({ name: users.name, email: users.email, phone: users.phone }).from(users).where(eq11(users.id, ctx.user.id)).limit(1);
+    const [shop] = await db.select({ id: shops.id, name: shops.name, country: shops.country, currency: shops.currency }).from(shops).where(eq11(shops.id, input.shopId)).limit(1);
+    if (!user || !shop) throw new TRPCError10({ code: "NOT_FOUND", message: "Profil introuvable." });
+    return { user, shop, canEditShopSettings: membership.role === "owner" };
+  }),
+  update: protectedProcedure.input(profileInput.extend({ phone: phone.optional(), country: countryCode.optional() })).mutation(async ({ ctx, input }) => {
+    const membership = await assertShopAccess(ctx.user.id, input.shopId);
+    const db = getDb();
+    const [shop] = await db.select({ currency: shops.currency, country: shops.country }).from(shops).where(eq11(shops.id, input.shopId)).limit(1);
+    if (!shop) throw new TRPCError10({ code: "NOT_FOUND", message: "Boutique introuvable." });
+    if (input.country && membership.role !== "owner") throw new TRPCError10({ code: "FORBIDDEN", message: "Seul le propri\xE9taire peut modifier le pays et la devise de r\xE9f\xE9rence." });
+    const nextCurrency = input.country ? currencyForCountry(input.country) : shop.currency;
+    if (input.country && nextCurrency !== shop.currency) {
+      const [sale] = await db.select({ id: sales.id }).from(sales).where(eq11(sales.shopId, input.shopId)).limit(1);
+      const [expense] = await db.select({ id: expenses.id }).from(expenses).where(eq11(expenses.shopId, input.shopId)).limit(1);
+      if (sale || expense) throw new TRPCError10({ code: "CONFLICT", message: "La devise de r\xE9f\xE9rence ne peut plus \xEAtre modifi\xE9e apr\xE8s une vente ou une d\xE9pense. Ajoutez plut\xF4t une devise dans \xAB Devises & taux \xBB." });
+    }
+    const sql3 = getSql();
+    const statements = [];
+    if (input.phone !== void 0) statements.push(sql3`UPDATE users SET phone = ${input.phone}, updated_at = NOW() WHERE id = ${ctx.user.id}`);
+    if (input.country) {
+      statements.push(sql3`UPDATE shops SET country = ${input.country}, currency = ${nextCurrency}, updated_at = NOW() WHERE id = ${input.shopId}`);
+      statements.push(sql3`INSERT INTO shop_currencies (shop_id, currency, label, is_active) VALUES (${input.shopId}, ${nextCurrency}, 'Devise de référence', true) ON CONFLICT (shop_id, currency) DO UPDATE SET is_active = true, label = 'Devise de référence', updated_at = NOW()`);
+      if (shop.currency !== nextCurrency) statements.push(sql3`UPDATE shop_currencies SET is_active = true, label = 'Devise de transaction', updated_at = NOW() WHERE shop_id = ${input.shopId} AND currency = ${shop.currency}`);
+    }
+    if (statements.length) await sql3.transaction(statements);
+    return { phone: input.phone, country: input.country ?? shop.country, currency: nextCurrency };
+  })
+});
+
 // server/routers.ts
 var appRouter = router({
   auth: authRouter,
@@ -2453,9 +2519,10 @@ var appRouter = router({
   currencies: currenciesRouter,
   admin: adminRouter,
   support: supportRouter,
+  profile: profileRouter,
   shops: router({
     list: protectedProcedure.query(({ ctx }) => listUserShops(ctx.user.id)),
-    create: protectedProcedure.input(z10.object({ name: z10.string().trim().min(2).max(180), currency: z10.enum(["XAF", "XOF", "NGN"]).default("XAF"), country: z10.string().trim().length(3).default("CMR"), phone: z10.string().regex(/^\+[1-9]\d{5,14}$/).optional() })).mutation(async ({ ctx, input }) => {
+    create: protectedProcedure.input(z11.object({ name: z11.string().trim().min(2).max(180), currency: z11.enum(["XAF", "XOF", "NGN"]).default("XAF"), country: z11.string().trim().length(3).default("CMR"), phone: z11.string().regex(/^\+[1-9]\d{5,14}$/).optional() })).mutation(async ({ ctx, input }) => {
       const shopId = crypto.randomUUID();
       const sql3 = getSql();
       await sql3.transaction([
@@ -2464,14 +2531,14 @@ var appRouter = router({
         sql3`INSERT INTO shop_currencies (shop_id, currency, label, is_active) VALUES (${shopId}, ${input.currency}, 'Devise de référence', true)`,
         sql3`UPDATE users SET phone = ${input.phone ?? null}, updated_at = NOW() WHERE id = ${ctx.user.id}`
       ]);
-      return (await getDb().select().from(shops).where(eq11(shops.id, shopId)).limit(1))[0];
+      return (await getDb().select().from(shops).where(eq12(shops.id, shopId)).limit(1))[0];
     }),
-    memberRole: protectedProcedure.input(z10.object({ shopId: z10.string().uuid() })).query(({ ctx, input }) => assertShopAccess(ctx.user.id, input.shopId)),
-    members: protectedProcedure.input(z10.object({ shopId: z10.string().uuid() })).query(async ({ ctx, input }) => {
+    memberRole: protectedProcedure.input(z11.object({ shopId: z11.string().uuid() })).query(({ ctx, input }) => assertShopAccess(ctx.user.id, input.shopId)),
+    members: protectedProcedure.input(z11.object({ shopId: z11.string().uuid() })).query(async ({ ctx, input }) => {
       await assertShopAccess(ctx.user.id, input.shopId, ["owner", "manager"]);
-      return getDb().select({ id: users.id, name: users.name, email: users.email, role: shopMembers.role }).from(shopMembers).innerJoin(users, eq11(shopMembers.userId, users.id)).where(eq11(shopMembers.shopId, input.shopId));
+      return getDb().select({ id: users.id, name: users.name, email: users.email, role: shopMembers.role }).from(shopMembers).innerJoin(users, eq12(shopMembers.userId, users.id)).where(eq12(shopMembers.shopId, input.shopId));
     }),
-    addMember: protectedProcedure.input(z10.object({ shopId: z10.string().uuid(), email: z10.string().email(), role: z10.enum(["manager", "seller"]) })).mutation(async ({ ctx, input }) => {
+    addMember: protectedProcedure.input(z11.object({ shopId: z11.string().uuid(), email: z11.string().email(), role: z11.enum(["manager", "seller"]) })).mutation(async ({ ctx, input }) => {
       await assertShopAccess(ctx.user.id, input.shopId, ["owner"]);
       const member = await getUserByEmail(input.email);
       if (!member) throw new Error("Ce collaborateur doit cr\xE9er son compte EASYSTOR avant d\u2019\xEAtre ajout\xE9.");
@@ -2483,7 +2550,7 @@ var appRouter = router({
 
 // server/neonAuth.ts
 import { createRemoteJWKSet, jwtVerify as jwtVerify2 } from "jose";
-import { eq as eq12 } from "drizzle-orm";
+import { eq as eq13 } from "drizzle-orm";
 function neonAuthBaseUrl() {
   const value = process.env.NEON_AUTH_BASE_URL?.trim();
   if (!value) throw new Error("NEON_AUTH_BASE_URL is required");
@@ -2521,9 +2588,9 @@ async function resolveNeonIdentity(claims) {
   const email = claims.email?.trim().toLowerCase();
   if (!isVerifiedNeonIdentity(claims) || !externalUserId || !email) return null;
   const db = getDb();
-  const [identity] = await db.select().from(neonAuthIdentities).where(eq12(neonAuthIdentities.externalUserId, externalUserId)).limit(1);
+  const [identity] = await db.select().from(neonAuthIdentities).where(eq13(neonAuthIdentities.externalUserId, externalUserId)).limit(1);
   if (identity) {
-    await db.update(neonAuthIdentities).set({ lastSeenAt: /* @__PURE__ */ new Date() }).where(eq12(neonAuthIdentities.externalUserId, externalUserId));
+    await db.update(neonAuthIdentities).set({ lastSeenAt: /* @__PURE__ */ new Date() }).where(eq13(neonAuthIdentities.externalUserId, externalUserId));
     const user2 = await getUserById(identity.userId);
     return user2?.isActive ? user2 : null;
   }
@@ -2540,7 +2607,7 @@ async function resolveNeonIdentity(claims) {
   }
   if (!user?.isActive) return null;
   await db.insert(neonAuthIdentities).values({ externalUserId, userId: user.id, email }).onConflictDoNothing({ target: neonAuthIdentities.externalUserId });
-  await db.update(users).set({ lastSignedIn: /* @__PURE__ */ new Date(), updatedAt: /* @__PURE__ */ new Date() }).where(eq12(users.id, user.id));
+  await db.update(users).set({ lastSignedIn: /* @__PURE__ */ new Date(), updatedAt: /* @__PURE__ */ new Date() }).where(eq13(users.id, user.id));
   return user;
 }
 

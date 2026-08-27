@@ -1,0 +1,56 @@
+import React, { useEffect, useState } from "react";
+import { CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { CountryPicker } from "@/components/CountryPicker";
+import { formatPhoneNumber, getCountryPreference, isCompletePhoneNumber, normalizePhoneNumber } from "@/lib/countryPreferences";
+import { trpc } from "@/lib/trpc";
+
+export default function ProfilePanel({ shopId }: { shopId: string }) {
+  const utils = trpc.useUtils();
+  const settings = trpc.profile.settings.useQuery({ shopId });
+  const [phone, setPhone] = useState("");
+  const [country, setCountry] = useState("CMR");
+  const [notice, setNotice] = useState<string | null>(null);
+  const update = trpc.profile.update.useMutation({
+    onSuccess: async () => {
+      await Promise.all([
+        utils.profile.settings.invalidate({ shopId }),
+        utils.shops.list.invalidate(),
+        utils.currencies.settings.invalidate({ shopId }),
+      ]);
+      setNotice("Profil enregistré. La devise de référence est à jour.");
+    },
+    onError: error => setNotice(error.message),
+  });
+
+  useEffect(() => {
+    if (!settings.data) return;
+    setCountry(settings.data.shop.country);
+    setPhone(formatPhoneNumber(settings.data.user.phone ?? "", settings.data.shop.country));
+  }, [settings.data]);
+
+  if (settings.isLoading) return <div className="rounded-2xl border border-[#e4e1d7] bg-white p-6 text-sm text-[#687267]">Chargement de vos réglages…</div>;
+  if (!settings.data) return <div className="rounded-2xl border border-[#e8c0b6] bg-[#fff3ef] p-6 text-sm text-[#8d4a39]">Les réglages de profil ne peuvent pas être chargés pour le moment.</div>;
+
+  const currentCountry = getCountryPreference(country);
+  const phoneValid = !phone || isCompletePhoneNumber(phone, country);
+  const canEditShop = settings.data.canEditShopSettings;
+  const countryChanged = country !== settings.data.shop.country;
+  const phoneChanged = normalizePhoneNumber(phone, country) !== (settings.data.user.phone ?? undefined);
+  const canSave = phoneValid && (phoneChanged || (canEditShop && countryChanged));
+
+  const save = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setNotice(null);
+    await update.mutateAsync({
+      shopId,
+      phone: normalizePhoneNumber(phone, country) ?? null,
+      ...(canEditShop && countryChanged ? { country: country as "BEN" | "BFA" | "CAF" | "CIV" | "CMR" | "COG" | "GAB" | "GIN" | "GNQ" | "MLI" | "NGA" | "NER" | "SEN" | "TCD" | "TGO" } : {}),
+    });
+  };
+
+  return <div className="grid max-w-3xl gap-5"><Card className="border-[#e4e1d7] bg-white"><CardContent className="p-5 sm:p-7"><div className="flex gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#eaf0df] text-[#3d5839]"><ShieldCheck className="h-5 w-5" /></span><div><h2 className="font-serif text-2xl tracking-tight">Vos coordonnées</h2><p className="mt-1 text-sm leading-relaxed text-[#697466]">Votre numéro est facultatif. Il reste associé à votre compte, pas aux ventes de la boutique.</p></div></div><form className="mt-6 grid gap-5" onSubmit={save}><div className="grid gap-2"><Label htmlFor="profile-email" className="text-xs font-bold uppercase tracking-[0.12em] text-[#5f695c]">E-mail du compte</Label><Input id="profile-email" readOnly value={settings.data.user.email ?? ""} className="bg-[#f7f6f1] text-[#697466]" /></div><div className="grid gap-2"><Label htmlFor="profile-phone" className="text-xs font-bold uppercase tracking-[0.12em] text-[#5f695c]">Numéro de téléphone (facultatif)</Label><div className="relative"><Input id="profile-phone" autoComplete="tel-national" inputMode="tel" value={phone} onChange={event => setPhone(formatPhoneNumber(event.target.value, country))} placeholder={`${currentCountry.dialCode} 6 99 78 99 99`} className={phone && phoneValid ? "border-[#74a05d] pr-11" : ""} />{phone && phoneValid && <CheckCircle2 className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#567b4f]" aria-hidden="true" />}</div>{phone && !phoneValid ? <p className="text-xs text-[#a05842]">Ajoutez encore quelques chiffres ou effacez ce champ.</p> : <p className="text-xs text-[#697466]">L’indicatif s’ajuste à votre pays.</p>}</div><div className="grid gap-2"><Label htmlFor="profile-country" className="text-xs font-bold uppercase tracking-[0.12em] text-[#5f695c]">Pays, indicatif et devise</Label>{canEditShop ? <CountryPicker id="profile-country" country={country} onChange={preference => { setCountry(preference.country); setPhone(current => formatPhoneNumber(current, preference.country)); }} ariaDescribedBy="profile-country-hint" /> : <div id="profile-country" className="flex min-h-11 items-center rounded-md border border-[#e4e1d7] bg-[#f7f6f1] px-3 text-sm text-[#697466]">{currentCountry.label} ({currentCountry.shortCode}) · {currentCountry.currencyLabel}</div>}<p id="profile-country-hint" className="text-xs leading-relaxed text-[#697466]">{canEditShop ? `Le pays sélectionné associe automatiquement ${currentCountry.currencyLabel} comme devise de référence.` : "Seul le propriétaire de la boutique peut modifier le pays et la devise de référence."}</p></div>{notice && <p className={notice.startsWith("Profil") ? "rounded-xl bg-[#eff6e7] px-3 py-2 text-sm text-[#3d5839]" : "rounded-xl bg-[#fff3ef] px-3 py-2 text-sm text-[#8d4a39]"} role="status">{notice}</p>}<Button type="submit" disabled={!canSave || update.isPending} className="h-11 w-full bg-[#26352d] text-[#f5f7e8] hover:bg-[#1b2721] sm:w-auto sm:px-6">{update.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Enregistrement…</> : "Enregistrer les réglages"}</Button></form></CardContent></Card></div>;
+}

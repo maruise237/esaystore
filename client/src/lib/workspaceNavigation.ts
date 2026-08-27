@@ -10,6 +10,7 @@ export const workspaceSections = [
   "closing",
   "migration",
   "currencies",
+  "profile",
   "team",
   "sync",
   "support",

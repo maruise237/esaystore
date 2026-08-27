@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { getSql } from "../db";
 import { commerceRouter } from "./commerce";
 import { insightsRouter } from "./insights";
+import { profileRouter } from "./profile";
 
 const sql = getSql();
 let userId = "";
@@ -20,6 +21,14 @@ function caller() {
 
 function insightsCaller() {
   return insightsRouter.createCaller({
+    user: { id: userId, email: `test-${userId}@example.invalid`, name: "Integration Test", passwordHash: "not-used", role: "user", isActive: true, createdAt: new Date(), updatedAt: new Date(), lastSignedIn: new Date() },
+    req: {} as never,
+    res: {} as never,
+  });
+}
+
+function profileCaller() {
+  return profileRouter.createCaller({
     user: { id: userId, email: `test-${userId}@example.invalid`, name: "Integration Test", passwordHash: "not-used", role: "user", isActive: true, createdAt: new Date(), updatedAt: new Date(), lastSignedIn: new Date() },
     req: {} as never,
     res: {} as never,
@@ -52,6 +61,23 @@ afterEach(async () => {
 });
 
 describe("commerce transaction with Neon", () => {
+  it("met à jour le téléphone et synchronise la devise du pays avant toute activité", async () => {
+    await profileCaller().update({ shopId, phone: "+221771234567", country: "SEN" });
+    const user = await sql`SELECT phone FROM users WHERE id = ${userId}`;
+    const shop = await sql`SELECT country, currency FROM shops WHERE id = ${shopId}`;
+    const currencies = await sql`SELECT currency, is_active FROM shop_currencies WHERE shop_id = ${shopId}`;
+    expect(user[0]?.phone).toBe("+221771234567");
+    expect(shop[0]).toMatchObject({ country: "SEN", currency: "XOF" });
+    expect(currencies).toEqual(expect.arrayContaining([expect.objectContaining({ currency: "XOF", is_active: true })]));
+  });
+
+  it("refuse de changer la devise de référence après la première vente", async () => {
+    await caller().sales.checkout({ shopId, operationId: crypto.randomUUID(), discountAmount: 0, payment: { cash: 1_000, mobileMoney: 0 }, items: [{ productId, quantity: 1 }] });
+    await expect(profileCaller().update({ shopId, country: "NGA" })).rejects.toMatchObject<Partial<TRPCError>>({ code: "CONFLICT" });
+    const shop = await sql`SELECT country, currency FROM shops WHERE id = ${shopId}`;
+    expect(shop[0]).toMatchObject({ country: "CMR", currency: "XAF" });
+  });
+
   it("decrements stock and writes a receivable for a credit sale", async () => {
     const result = await caller().sales.checkout({ shopId, customerId, operationId: crypto.randomUUID(), discountAmount: 0, payment: { cash: 300, mobileMoney: 0 }, items: [{ productId, quantity: 1 }] });
     expect(result.creditAmount).toBe(700);

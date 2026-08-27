@@ -12,6 +12,7 @@ import {
   PanelLeftOpen,
   CircleHelp,
   Settings2,
+  UserRound,
   ShoppingBag,
   WalletCards,
 } from "lucide-react";
@@ -54,6 +55,7 @@ const navigation: Array<{
   { id: "closing", label: "Clôture", icon: WalletCards, group: "Suivre" },
   { id: "migration", label: "Importer / exporter", icon: FileSpreadsheet, group: "Réglages" },
   { id: "currencies", label: "Devises & taux", icon: ArrowRightLeft, group: "Réglages" },
+  { id: "profile", label: "Profil", icon: UserRound, group: "Réglages" },
   { id: "team", label: "Équipe", icon: Settings2, group: "Réglages" },
   { id: "sync", label: "Synchronisation", icon: CreditCard, group: "Réglages" },
   { id: "support", label: "Support", icon: CircleHelp, group: "Réglages" },

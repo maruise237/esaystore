@@ -60,6 +60,7 @@ describe("parcours d’authentification", () => {
     fireEvent.change(screen.getByLabelText("Numéro de téléphone (facultatif)"), { target: { value: "8031234567" } });
     expect(screen.getByText("E-mail valide")).toBeTruthy();
     expect(screen.getByText("Mot de passe valide")).toBeTruthy();
+    expect(screen.getByText(/Force du mot de passe :/)).toBeTruthy();
     expect(screen.getByText("Numéro prêt")).toBeTruthy();
     expect((screen.getByLabelText("Numéro de téléphone (facultatif)") as HTMLInputElement).value).toBe("+234 803 123 456 7");
     expect(

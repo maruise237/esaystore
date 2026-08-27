@@ -10,6 +10,7 @@ describe("navigation de l’espace marchand", () => {
 
   it("restaure une section connue depuis l’URL et revient au pilotage sinon", () => {
     expect(readWorkspaceSection("#pos")).toBe("pos");
+    expect(readWorkspaceSection("#profile")).toBe("profile");
     expect(readWorkspaceSection("#section-inconnue")).toBe("dashboard");
   });
 

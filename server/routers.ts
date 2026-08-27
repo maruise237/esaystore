@@ -14,6 +14,7 @@ import { migrationRouter } from "./routers/migration";
 import { currenciesRouter } from "./routers/currencies";
 import { adminRouter } from "./routers/admin";
 import { supportRouter } from "./routers/support";
+import { profileRouter } from "./routers/profile";
 
 export const appRouter = router({
   auth: authRouter,
@@ -25,6 +26,7 @@ export const appRouter = router({
   currencies: currenciesRouter,
   admin: adminRouter,
   support: supportRouter,
+  profile: profileRouter,
   shops: router({
     list: protectedProcedure.query(({ ctx }) => listUserShops(ctx.user.id)),
     create: protectedProcedure.input(z.object({ name: z.string().trim().min(2).max(180), currency: z.enum(["XAF", "XOF", "NGN"]).default("XAF"), country: z.string().trim().length(3).default("CMR"), phone: z.string().regex(/^\+[1-9]\d{5,14}$/).optional() })).mutation(async ({ ctx, input }) => {

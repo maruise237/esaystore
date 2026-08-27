@@ -58,6 +58,7 @@ import ClosingPanel from "./ClosingPanel";
 import MigrationPanel from "./MigrationPanel";
 import CatalogPanel from "./CatalogPanel";
 import CurrencyPanel from "./CurrencyPanel";
+import ProfilePanel from "./ProfilePanel";
 import BarcodeScannerDialog from "@/components/BarcodeScannerDialog";
 import UnknownBarcodeQueue from "@/components/UnknownBarcodeQueue";
 import SaleReceiptDialog from "@/components/SaleReceiptDialog";
@@ -145,6 +146,11 @@ const sectionTitles: Record<
     title: "Devises & taux",
     description:
       "Activez les monnaies utilisées dans votre zone et conservez un taux daté avec chaque vente.",
+  },
+  profile: {
+    kicker: "Mon compte",
+    title: "Profil & boutique",
+    description: "Gardez votre numéro, votre pays et la devise de référence de votre boutique à jour.",
   },
   team: {
     kicker: "Administration",
@@ -324,6 +330,7 @@ export default function Workspace() {
         {active === "currencies" && (
           <CurrencyPanel shopId={activeShop.shop.id} />
         )}
+        {active === "profile" && <ProfilePanel shopId={activeShop.shop.id} />}
         {active === "team" && <TeamPanel shopId={activeShop.shop.id} />}
         {active === "sync" && <SyncPanel />}
         {active === "support" && (
