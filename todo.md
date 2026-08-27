@@ -320,3 +320,7 @@
 - [x] Restaurer la landing evergreen validée avant la refonte bleue et annuler les métadonnées associées.
 - [x] Ajuster uniquement la promesse de reprise des données dans une section adaptée, sans modifier le hero evergreen ni la structure de la landing.
 - [x] Mettre à jour les tests, prévisualiser et publier la correction evergreen sur GitHub `main`.
+- [x] Auditer les écrans d’inscription et d’onboarding, ainsi que les champs boutique et devise déjà disponibles.
+- [x] Définir une détection locale non intrusive du pays et une liste pays, indicatif, drapeau et devise modifiable.
+- [x] Ajouter le sélecteur de pays et le préremplissage de devise dans le parcours d’inscription simplifié.
+- [x] Réduire les champs et les libellés du parcours commerçant, puis tester les règles, l’accessibilité et le responsive avant publication.

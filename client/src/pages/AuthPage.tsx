@@ -1,4 +1,4 @@
-import React, { useId, useState } from "react";
+import React, { useEffect, useId, useState } from "react";
 import { ArrowRight, Check, Eye, EyeOff, Loader2, LockKeyhole, ShoppingBag, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/BrandMark";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import { neonAuthClient } from "@/lib/neonAuth";
+import { countryPreferences, defaultCountryPreference, detectCountryPreference, getCountryPreference, type CountryDetectionSource } from "@/lib/countryPreferences";
 
 export default function AuthPage() {
   const [mode, setMode] = useState<"login" | "register">(() =>
@@ -19,19 +20,30 @@ export default function AuthPage() {
   const [verificationCode, setVerificationCode] = useState("");
   const [awaitingEmailVerification, setAwaitingEmailVerification] = useState(false);
   const passwordHintId = useId();
-  const [registerForm, setRegisterForm] = useState({ name: "", email: "", password: "", shopName: "", currency: "XAF" as "XAF" | "XOF" | "NGN", country: "CMR" });
+  const [registerForm, setRegisterForm] = useState({ email: "", password: "", shopName: "", currency: defaultCountryPreference.currency, country: defaultCountryPreference.country });
+  const [countryDetectionSource, setCountryDetectionSource] = useState<CountryDetectionSource | null>(null);
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const register = trpc.auth.register.useMutation({ onSuccess: () => window.location.reload(), onError: (cause) => setError(cause.message) });
   const login = trpc.auth.login.useMutation({ onSuccess: () => window.location.reload(), onError: (cause) => setError(cause.message) });
   const createShop = trpc.shops.create.useMutation();
   const pending = register.isPending || login.isPending || createShop.isPending || neonPending;
 
+  useEffect(() => {
+    const locale = navigator.languages?.[0] ?? navigator.language;
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const detected = detectCountryPreference(locale, timeZone);
+    if (!detected) return;
+
+    setRegisterForm(current => ({ ...current, country: detected.preference.country, currency: detected.preference.currency }));
+    setCountryDetectionSource(detected.source);
+  }, []);
+
   const registerWithNeon = async () => {
     setError(null);
     setNeonPending(true);
     try {
       const result = await neonAuthClient.signUp.email({
-        name: registerForm.name,
+        name: registerForm.shopName,
         email: registerForm.email,
         password: registerForm.password,
       });
@@ -127,7 +139,7 @@ export default function AuthPage() {
       <section className="flex items-center justify-center p-6 sm:p-10">
         <div className="w-full max-w-md">
           <div className="mb-10 flex items-center gap-3 lg:hidden"><div className="grid h-10 w-10 place-items-center rounded-2xl bg-[#1e2924] text-[#d1e980]"><BrandMark className="h-5 w-5" /></div><span className="font-serif text-2xl">EASYSTOR</span></div>
-          <div className="mb-8"><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#718165]">Espace marchand</p><h2 className="mt-3 font-serif text-4xl tracking-tight">{mode === "register" ? "Ouvrez votre boutique" : "Bon retour"}</h2><p className="mt-3 text-sm leading-relaxed text-[#77776c]">{mode === "register" ? "Créez votre espace, ajoutez un article, puis réalisez votre première vente." : "Connectez-vous pour reprendre la gestion de votre activité."}</p>{mode === "register" && <ol className="mt-5 flex flex-wrap gap-x-4 gap-y-2 border-l border-[#c4da72] pl-3 text-xs font-medium text-[#536153]"><li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-[#567b4f]" />1. Boutique</li><li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-[#567b4f]" />2. Produit</li><li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-[#567b4f]" />3. Vente</li></ol>}</div>
+          <div className="mb-8"><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#718165]">Espace marchand</p><h2 className="mt-3 font-serif text-4xl tracking-tight">{mode === "register" ? "Ouvrez votre boutique" : "Bon retour"}</h2><p className="mt-3 text-sm leading-relaxed text-[#77776c]">{mode === "register" ? "Quelques informations suffisent pour ouvrir votre espace. Vous ajouterez votre premier article juste après." : "Connectez-vous pour reprendre la gestion de votre activité."}</p>{mode === "register" && <p className="mt-4 text-xs font-semibold leading-relaxed text-[#536153]">Aucun paiement requis. Le pays et la devise sont proposés puis restent modifiables.</p>}</div>
           <div className="mb-7 grid grid-cols-2 rounded-xl bg-[#eceae2] p-1" role="tablist" aria-label="Accès à EASYSTOR"><button type="button" role="tab" aria-selected={mode === "register"} onClick={() => { setMode("register"); setError(null); setShowPassword(false); }} className={`rounded-lg py-2 text-sm font-semibold transition ${mode === "register" ? "bg-white text-[#27332d] shadow-sm" : "text-[#77776c]"}`}>Créer un compte</button><button type="button" role="tab" aria-selected={mode === "login"} onClick={() => { setMode("login"); setError(null); setShowPassword(false); }} className={`rounded-lg py-2 text-sm font-semibold transition ${mode === "login" ? "bg-white text-[#27332d] shadow-sm" : "text-[#77776c]"}`}>Se connecter</button></div>
           {error && <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{error}</div>}
           {awaitingEmailVerification ? (
@@ -139,11 +151,10 @@ export default function AuthPage() {
             </form>
           ) : mode === "register" ? (
             <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); void registerWithNeon(); }}>
-              <Field label="Votre nom" inputId="register-name"><Input id="register-name" required autoComplete="name" value={registerForm.name} onChange={(event) => setRegisterForm({ ...registerForm, name: event.target.value })} placeholder="Jules Kamta" /></Field>
               <Field label="Nom de la boutique" inputId="register-shop"><Input id="register-shop" required autoComplete="organization" value={registerForm.shopName} onChange={(event) => setRegisterForm({ ...registerForm, shopName: event.target.value })} placeholder="Épicerie du marché" /></Field>
               <Field label="E-mail" inputId="register-email"><Input id="register-email" required autoComplete="email" type="email" value={registerForm.email} onChange={(event) => setRegisterForm({ ...registerForm, email: event.target.value })} placeholder="vous@boutique.com" /></Field>
               <Field label="Mot de passe" inputId="register-password"><PasswordInput id="register-password" value={registerForm.password} onChange={(value) => setRegisterForm({ ...registerForm, password: value })} visible={showPassword} onVisibilityChange={setShowPassword} autoComplete="new-password" ariaDescribedBy={passwordHintId} /><p id={passwordHintId} className="text-xs leading-relaxed text-[#697466]">10 caractères minimum. Vous pourrez l’utiliser sur tous vos appareils.</p></Field>
-              <div className="grid grid-cols-2 gap-4"><Field label="Devise" inputId="register-currency"><select id="register-currency" value={registerForm.currency} onChange={(event) => setRegisterForm({ ...registerForm, currency: event.target.value as "XAF" | "XOF" | "NGN" })} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="XAF">XAF</option><option value="XOF">XOF</option><option value="NGN">NGN</option></select></Field><Field label="Pays (code ISO)" inputId="register-country"><Input id="register-country" required autoComplete="country" maxLength={3} value={registerForm.country} onChange={(event) => setRegisterForm({ ...registerForm, country: event.target.value.toUpperCase() })} /></Field></div>
+              <Field label="Pays, indicatif et devise" inputId="register-country"><select id="register-country" required autoComplete="country" value={registerForm.country} onChange={(event) => { const preference = getCountryPreference(event.target.value); setRegisterForm({ ...registerForm, country: preference.country, currency: preference.currency }); setCountryDetectionSource(null); }} aria-describedby="register-country-hint" className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm text-[#27332d] outline-none transition-colors focus-visible:border-[#5e7b52] focus-visible:ring-2 focus-visible:ring-[#5e7b52]/30">{countryPreferences.map(preference => <option key={preference.country} value={preference.country}>{preference.flag} {preference.label} ({preference.shortCode}) · {preference.dialCode} · {preference.currencyLabel}</option>)}</select><p id="register-country-hint" className="text-xs leading-relaxed text-[#697466]">{countryDetectionSource ? "Pays proposé à partir des réglages de votre appareil. Vous pouvez le modifier." : `${getCountryPreference(registerForm.country).currencyLabel} est utilisé comme devise de référence. Vous pouvez choisir un autre pays.`}</p></Field>
               <Button disabled={pending} type="submit" className="mt-3 h-11 w-full bg-[#26352d] text-[#f5f7e8] shadow-[0_10px_22px_rgba(30,41,36,0.18)] hover:bg-[#1b2721]" aria-live="polite">{pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Création en cours…</> : <><ArrowRight className="mr-2 h-4 w-4" />Créer ma boutique</>}</Button>
             </form>
           ) : (

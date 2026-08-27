@@ -33,10 +33,16 @@ describe("parcours d’authentification", () => {
     window.history.replaceState({}, "", "/");
   });
 
-  it("explique les étapes initiales, rend le mot de passe visible à la demande et garde une structure accessible", async () => {
+  it("allège l’inscription, propose le pays et la devise, rend le mot de passe visible et garde une structure accessible", async () => {
     render(<AuthPage />);
-    expect(screen.getByText("1. Boutique")).toBeTruthy();
-    expect(screen.getByText("2. Produit")).toBeTruthy();
+    expect(screen.getByText(/Quelques informations suffisent pour ouvrir votre espace/i)).toBeTruthy();
+    expect(screen.getByText(/Aucun paiement requis\. Le pays et la devise sont proposés puis restent modifiables/i)).toBeTruthy();
+    const country = screen.getByLabelText("Pays, indicatif et devise") as HTMLSelectElement;
+    expect(country.value).toBe("CMR");
+    expect(screen.getByRole("option", { name: /Cameroun \(CM\).*\+237.*Franc CFA \(XAF\)/i })).toBeTruthy();
+    fireEvent.change(country, { target: { value: "NGA" } });
+    expect(country.value).toBe("NGA");
+    expect(screen.getByText(/Naira nigérian \(NGN\) est utilisé comme devise de référence/i)).toBeTruthy();
     expect(
       screen.getByText(
         "Chaque vente garde son reçu, son stock et son paiement alignés."
@@ -74,7 +80,6 @@ describe("parcours d’authentification", () => {
   it("demande le code envoyé par Neon Auth lorsque l’e-mail doit être vérifié", async () => {
     signUpEmail.mockResolvedValue({ data: { user: { emailVerified: false } } });
     render(<AuthPage />);
-    fireEvent.change(screen.getByLabelText("Votre nom"), { target: { value: "Jules Kamta" } });
     fireEvent.change(screen.getByLabelText("Nom de la boutique"), { target: { value: "Épicerie du marché" } });
     fireEvent.change(screen.getByLabelText("E-mail"), { target: { value: "jules@example.test" } });
     fireEvent.change(screen.getByLabelText("Mot de passe"), { target: { value: "motdepasse-solide" } });
