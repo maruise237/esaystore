@@ -27,13 +27,14 @@ export const appRouter = router({
   support: supportRouter,
   shops: router({
     list: protectedProcedure.query(({ ctx }) => listUserShops(ctx.user.id)),
-    create: protectedProcedure.input(z.object({ name: z.string().trim().min(2).max(180), currency: z.enum(["XAF", "XOF", "NGN"]).default("XAF"), country: z.string().trim().length(3).default("CMR") })).mutation(async ({ ctx, input }) => {
+    create: protectedProcedure.input(z.object({ name: z.string().trim().min(2).max(180), currency: z.enum(["XAF", "XOF", "NGN"]).default("XAF"), country: z.string().trim().length(3).default("CMR"), phone: z.string().regex(/^\+[1-9]\d{5,14}$/).optional() })).mutation(async ({ ctx, input }) => {
       const shopId = crypto.randomUUID();
       const sql = getSql();
       await sql.transaction([
         sql`INSERT INTO shops (id, name, slug, currency, country, created_by) VALUES (${shopId}, ${input.name}, ${makeShopSlug(input.name)}, ${input.currency}, ${input.country.toUpperCase()}, ${ctx.user.id})`,
         sql`INSERT INTO shop_members (shop_id, user_id, role) VALUES (${shopId}, ${ctx.user.id}, 'owner')`,
         sql`INSERT INTO shop_currencies (shop_id, currency, label, is_active) VALUES (${shopId}, ${input.currency}, 'Devise de référence', true)`,
+        sql`UPDATE users SET phone = ${input.phone ?? null}, updated_at = NOW() WHERE id = ${ctx.user.id}`,
       ]);
       return (await getDb().select().from(shops).where(eq(shops.id, shopId)).limit(1))[0];
     }),

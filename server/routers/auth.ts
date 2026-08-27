@@ -15,6 +15,7 @@ const registerInput = z.object({
   shopName: z.string().trim().min(2).max(180),
   currency: z.enum(["XAF", "XOF", "NGN"]).default("XAF"),
   country: z.string().trim().length(3).default("CMR"),
+  phone: z.string().regex(/^\+[1-9]\d{5,14}$/).optional(),
 });
 
 export const authRouter = router({
@@ -34,7 +35,7 @@ export const authRouter = router({
     const sql = getSql();
 
     await sql.transaction([
-      sql`INSERT INTO users (id, name, email, password_hash, login_method) VALUES (${userId}, ${input.name}, ${email}, ${passwordHash}, 'password')`,
+      sql`INSERT INTO users (id, name, email, phone, password_hash, login_method) VALUES (${userId}, ${input.name}, ${email}, ${input.phone ?? null}, ${passwordHash}, 'password')`,
       sql`INSERT INTO shops (id, name, slug, currency, country, created_by) VALUES (${shopId}, ${input.shopName}, ${shopSlug}, ${input.currency}, ${input.country.toUpperCase()}, ${userId})`,
       sql`INSERT INTO shop_members (shop_id, user_id, role) VALUES (${shopId}, ${userId}, 'owner')`,
     ]);

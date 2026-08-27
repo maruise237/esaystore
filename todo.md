@@ -324,3 +324,9 @@
 - [x] Définir une détection locale non intrusive du pays et une liste pays, indicatif, drapeau et devise modifiable.
 - [x] Ajouter le sélecteur de pays et le préremplissage de devise dans le parcours d’inscription simplifié.
 - [x] Réduire les champs et les libellés du parcours commerçant, puis tester les règles, l’accessibilité et le responsive avant publication.
+- [x] Auditer les composants de pays, les règles du formulaire et les contraintes de stockage du téléphone facultatif.
+- [x] Définir un format local de téléphone, des retours de validation et une recherche de pays accessibles.
+- [x] Ajouter le téléphone facultatif avec indicatif, les validations e-mail/mot de passe et la recherche dans le sélecteur de pays.
+- [x] Tester, prévisualiser, publier et synchroniser les améliorations du parcours d’inscription sur GitHub `main`.
+- [x] Remplacer les drapeaux emoji du sélecteur de pays par un rendu graphique fiable sur les navigateurs et appareils ciblés.
+- [x] Tester, prévisualiser, publier et synchroniser le correctif de drapeaux sur GitHub `main`.

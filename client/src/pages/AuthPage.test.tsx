@@ -7,6 +7,15 @@ import AuthPage from "./AuthPage";
 
 const { signUpEmail } = vi.hoisted(() => ({ signUpEmail: vi.fn() }));
 
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+vi.stubGlobal("ResizeObserver", ResizeObserverMock);
+Element.prototype.scrollIntoView = vi.fn();
+
 vi.mock("@/lib/trpc", () => ({
   trpc: {
     auth: {
@@ -33,16 +42,26 @@ describe("parcours d’authentification", () => {
     window.history.replaceState({}, "", "/");
   });
 
-  it("allège l’inscription, propose le pays et la devise, rend le mot de passe visible et garde une structure accessible", async () => {
+  it("allège l’inscription, recherche le pays, valide les informations prêtes et garde une structure accessible", async () => {
     render(<AuthPage />);
     expect(screen.getByText(/Quelques informations suffisent pour ouvrir votre espace/i)).toBeTruthy();
     expect(screen.getByText(/Aucun paiement requis\. Le pays et la devise sont proposés puis restent modifiables/i)).toBeTruthy();
-    const country = screen.getByLabelText("Pays, indicatif et devise") as HTMLSelectElement;
-    expect(country.value).toBe("CMR");
-    expect(screen.getByRole("option", { name: /Cameroun \(CM\).*\+237.*Franc CFA \(XAF\)/i })).toBeTruthy();
-    fireEvent.change(country, { target: { value: "NGA" } });
-    expect(country.value).toBe("NGA");
+    const country = screen.getByRole("combobox", { name: "Pays, indicatif et devise" });
+    expect(country.textContent).toMatch(/Cameroun \(CM\).*\+237/i);
+    expect(country.querySelector("svg")).toBeTruthy();
+    fireEvent.click(country);
+    const search = screen.getByPlaceholderText("Rechercher un pays, un code ou une devise…");
+    fireEvent.change(search, { target: { value: "Nigéria" } });
+    fireEvent.click(screen.getByText(/Nigéria \(NG\).*\+234/i));
+    expect(screen.getByRole("combobox", { name: "Pays, indicatif et devise" }).textContent).toMatch(/Nigéria \(NG\).*\+234/i);
     expect(screen.getByText(/Naira nigérian \(NGN\) est utilisé comme devise de référence/i)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("E-mail"), { target: { value: "jules@example.test" } });
+    fireEvent.change(screen.getByLabelText("Mot de passe"), { target: { value: "motdepasse-solide" } });
+    fireEvent.change(screen.getByLabelText("Numéro de téléphone (facultatif)"), { target: { value: "8031234567" } });
+    expect(screen.getByText("E-mail valide")).toBeTruthy();
+    expect(screen.getByText("Mot de passe valide")).toBeTruthy();
+    expect(screen.getByText("Numéro prêt")).toBeTruthy();
+    expect((screen.getByLabelText("Numéro de téléphone (facultatif)") as HTMLInputElement).value).toBe("+234 803 123 456 7");
     expect(
       screen.getByText(
         "Chaque vente garde son reçu, son stock et son paiement alignés."

@@ -64,3 +64,28 @@ export function detectCountryPreference(locale?: string, timeZone?: string): { p
   const timezonePreference = country ? getCountryPreference(country) : undefined;
   return timezonePreference ? { preference: timezonePreference, source: "timezone" } : null;
 }
+
+function localPhoneDigits(value: string, preference: CountryPreference) {
+  const dialDigits = preference.dialCode.replace(/\D/g, "");
+  let digits = value.replace(/\D/g, "");
+  if (digits.startsWith(`00${dialDigits}`)) digits = digits.slice(dialDigits.length + 2);
+  else if (digits.startsWith(dialDigits)) digits = digits.slice(dialDigits.length);
+  return digits.slice(0, Math.max(0, 15 - dialDigits.length));
+}
+
+export function formatPhoneNumber(value: string, country: string) {
+  const preference = getCountryPreference(country);
+  const local = localPhoneDigits(value, preference);
+  if (!local) return "";
+  return `${preference.dialCode} ${local.match(/.{1,3}/g)?.join(" ") ?? local}`;
+}
+
+export function normalizePhoneNumber(value: string, country: string) {
+  const preference = getCountryPreference(country);
+  const local = localPhoneDigits(value, preference);
+  return local ? `${preference.dialCode}${local}` : undefined;
+}
+
+export function isCompletePhoneNumber(value: string, country: string) {
+  return (normalizePhoneNumber(value, country)?.length ?? 0) >= 8;
+}

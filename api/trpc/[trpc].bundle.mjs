@@ -124,6 +124,7 @@ var users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
   openId: varchar("open_id", { length: 128 }).unique(),
   email: varchar("email", { length: 320 }).unique(),
+  phone: varchar("phone", { length: 48 }),
   name: varchar("name", { length: 160 }),
   passwordHash: text("password_hash"),
   loginMethod: varchar("login_method", { length: 64 }).default("password").notNull(),
@@ -859,7 +860,8 @@ var registerInput = z.object({
   password: z.string().min(10).max(160),
   shopName: z.string().trim().min(2).max(180),
   currency: z.enum(["XAF", "XOF", "NGN"]).default("XAF"),
-  country: z.string().trim().length(3).default("CMR")
+  country: z.string().trim().length(3).default("CMR"),
+  phone: z.string().regex(/^\+[1-9]\d{5,14}$/).optional()
 });
 var authRouter = router({
   me: publicProcedure.query(({ ctx }) => ctx.user),
@@ -875,7 +877,7 @@ var authRouter = router({
     const shopSlug = makeShopSlug(input.shopName);
     const sql3 = getSql();
     await sql3.transaction([
-      sql3`INSERT INTO users (id, name, email, password_hash, login_method) VALUES (${userId}, ${input.name}, ${email}, ${passwordHash}, 'password')`,
+      sql3`INSERT INTO users (id, name, email, phone, password_hash, login_method) VALUES (${userId}, ${input.name}, ${email}, ${input.phone ?? null}, ${passwordHash}, 'password')`,
       sql3`INSERT INTO shops (id, name, slug, currency, country, created_by) VALUES (${shopId}, ${input.shopName}, ${shopSlug}, ${input.currency}, ${input.country.toUpperCase()}, ${userId})`,
       sql3`INSERT INTO shop_members (shop_id, user_id, role) VALUES (${shopId}, ${userId}, 'owner')`
     ]);
@@ -2453,13 +2455,14 @@ var appRouter = router({
   support: supportRouter,
   shops: router({
     list: protectedProcedure.query(({ ctx }) => listUserShops(ctx.user.id)),
-    create: protectedProcedure.input(z10.object({ name: z10.string().trim().min(2).max(180), currency: z10.enum(["XAF", "XOF", "NGN"]).default("XAF"), country: z10.string().trim().length(3).default("CMR") })).mutation(async ({ ctx, input }) => {
+    create: protectedProcedure.input(z10.object({ name: z10.string().trim().min(2).max(180), currency: z10.enum(["XAF", "XOF", "NGN"]).default("XAF"), country: z10.string().trim().length(3).default("CMR"), phone: z10.string().regex(/^\+[1-9]\d{5,14}$/).optional() })).mutation(async ({ ctx, input }) => {
       const shopId = crypto.randomUUID();
       const sql3 = getSql();
       await sql3.transaction([
         sql3`INSERT INTO shops (id, name, slug, currency, country, created_by) VALUES (${shopId}, ${input.name}, ${makeShopSlug(input.name)}, ${input.currency}, ${input.country.toUpperCase()}, ${ctx.user.id})`,
         sql3`INSERT INTO shop_members (shop_id, user_id, role) VALUES (${shopId}, ${ctx.user.id}, 'owner')`,
-        sql3`INSERT INTO shop_currencies (shop_id, currency, label, is_active) VALUES (${shopId}, ${input.currency}, 'Devise de référence', true)`
+        sql3`INSERT INTO shop_currencies (shop_id, currency, label, is_active) VALUES (${shopId}, ${input.currency}, 'Devise de référence', true)`,
+        sql3`UPDATE users SET phone = ${input.phone ?? null}, updated_at = NOW() WHERE id = ${ctx.user.id}`
       ]);
       return (await getDb().select().from(shops).where(eq11(shops.id, shopId)).limit(1))[0];
     }),
