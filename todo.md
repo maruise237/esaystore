@@ -344,6 +344,6 @@
 - [x] Intégrer le logo de boutique et une mise en page de reçu améliorée dans les futurs documents de vente.
 - [x] Tester les contrôles de fichiers, les aperçus, les documents et l’accessibilité, puis publier sur GitHub `main`.
 - [x] Diagnostiquer et corriger l’erreur de schéma empêchant la connexion lorsqu’une requête lit la colonne utilisateur `phone`.
-- [ ] Vérifier sur une session réelle que la connexion et l’accès à la boutique sont rétablis avant la publication finale.
+- [x] Vérifier sur une session réelle que la connexion et l’accès à la boutique sont rétablis avant la publication finale.
 - [x] Corriger la requête de liste des boutiques afin qu’une colonne `shops.logo_url` absente ne bloque pas la connexion sur le déploiement Vercel existant.
 - [x] Retirer le numéro de téléphone du formulaire d’inscription et conserver sa mise à jour facultative uniquement dans Profil & boutique.
