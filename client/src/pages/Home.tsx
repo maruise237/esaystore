@@ -262,10 +262,10 @@ export default function Home() {
               <FileSpreadsheet className="size-7 text-[#46684a]" aria-hidden="true" />
               <h2 className="mt-5 font-serif text-4xl leading-[1.02] tracking-[-0.025em] text-[#243029] sm:text-5xl">Vos tableaux ne restent pas derrière.</h2>
               <p className="mt-6 max-w-[56ch] text-lg leading-relaxed text-[#536153]">
-                Vous gérez déjà votre activité sur Excel ou Google Sheets&nbsp;? Importez votre fichier CSV ou XLSX. EASYSTOR vous aide à classer vos produits, ventes et données historiques avant de les ajouter à votre espace.
+                Votre activité est déjà dans vos tableaux Excel ou Google Sheets. Importez votre fichier CSV ou XLSX&nbsp;: EASYSTOR reprend vos produits, clients, fournisseurs, ventes, achats et historiques sans vous demander de tout recommencer.
               </p>
               <p className="mt-5 max-w-[56ch] leading-relaxed text-[#536153]">
-                Vous gardez aussi la possibilité d’exporter l’ensemble de votre activité dans un fichier unique, compatible avec Google Sheets. Vos données restent à vous.
+                Vous vérifiez ce qui a été reconnu avant l’ajout. Vous pouvez ensuite exporter l’ensemble de votre activité dans un fichier unique, compatible avec Google Sheets. Vos données restent à vous.
               </p>
               <a className="mt-7 inline-flex min-h-11 items-center gap-2 rounded-md text-sm font-bold text-[#304631] underline-offset-4 hover:underline focus-visible:outline-none" href="/auth?mode=register">
                 Importer mon activité <ArrowRight className="size-4" aria-hidden="true" />

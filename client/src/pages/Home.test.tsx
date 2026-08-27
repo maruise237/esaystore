@@ -18,6 +18,9 @@ describe("landing EASYSTOR", () => {
     expect(screen.getAllByText("Aperçu illustratif de l’interface.").length).toBeGreaterThan(2);
     expect(screen.getByRole("heading", { name: "Vos tableaux ne restent pas derrière." })).toBeTruthy();
     expect(screen.getAllByText(/Excel ou Google Sheets/i).length).toBeGreaterThan(1);
+    expect(screen.getByText(/Votre activité est déjà dans vos tableaux/i)).toBeTruthy();
+    expect(screen.getByText(/sans vous demander de tout recommencer/i)).toBeTruthy();
+    expect(screen.getByText(/Vous vérifiez ce qui a été reconnu avant l’ajout/i)).toBeTruthy();
     expect(screen.getByRole("link", { name: "Importer mon activité" }).getAttribute("href")).toBe("/auth?mode=register");
     expect(screen.getAllByRole("link", { name: /Guide migration|Lire le guide gratuit de migration/ }).every(link => link.getAttribute("href") === "/guides/migrer-excel-google-sheets")).toBe(true);
     expect(screen.getAllByRole("link", { name: /Guides pratiques|Migration et travail hors connexion/ }).every(link => link.getAttribute("href") === "/guides")).toBe(true);

@@ -317,3 +317,6 @@
 - [x] Ajouter des agrégations sécurisées par boutique pour l’évolution journalière, hebdomadaire, les comparaisons et l’historique d’activité.
 - [x] Construire une vue Rapports claire avec période, évolution, indicateurs et historique accessible sur mobile.
 - [x] Tester les calculs, l’isolation des boutiques, l’accessibilité et publier les rapports journaliers et hebdomadaires sur GitHub `main`.
+- [x] Restaurer la landing evergreen validée avant la refonte bleue et annuler les métadonnées associées.
+- [x] Ajuster uniquement la promesse de reprise des données dans une section adaptée, sans modifier le hero evergreen ni la structure de la landing.
+- [x] Mettre à jour les tests, prévisualiser et publier la correction evergreen sur GitHub `main`.
