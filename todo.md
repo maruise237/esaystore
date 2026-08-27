@@ -334,3 +334,7 @@
 - [x] Définir les niveaux de force du mot de passe et les règles de synchronisation sûre entre pays et devise de la boutique.
 - [x] Ajouter la jauge de force, l’édition du téléphone et du pays depuis le profil, et la mise à jour de la devise associée.
 - [x] Tester les autorisations, les règles pays-devise, l’accessibilité et publier les nouveaux réglages sur GitHub `main`.
+- [x] Auditer le panneau Profil et le contrat boutique avant d’ajouter l’édition du nom et l’horodatage.
+- [x] Définir les règles d’autorisation, de validation et de retour visuel pour la modification du nom de boutique.
+- [x] Ajouter l’édition du nom, la date de dernière mise à jour et une confirmation verte de sauvegarde.
+- [x] Tester, prévisualiser, publier et synchroniser les réglages de profil enrichis sur GitHub `main`.

@@ -10,7 +10,7 @@ const { mutateAsync, invalidate, settingsData } = vi.hoisted(() => ({
   invalidate: vi.fn(),
   settingsData: {
     user: { email: "aline@boutique.test", phone: "+237699789999" },
-    shop: { id: "shop-1", name: "Boutique test", country: "CMR", currency: "XAF" },
+    shop: { id: "shop-1", name: "Boutique test", country: "CMR", currency: "XAF", updatedAt: new Date("2026-08-27T10:30:00.000Z") },
     canEditShopSettings: true,
   },
 }));
@@ -20,7 +20,7 @@ vi.mock("@/lib/trpc", () => ({
     useUtils: () => ({ profile: { settings: { invalidate } }, shops: { list: { invalidate } }, currencies: { settings: { invalidate } } }),
     profile: {
       settings: { useQuery: () => ({ data: settingsData, isLoading: false }) },
-      update: { useMutation: () => ({ isPending: false, mutateAsync }) },
+      update: { useMutation: (options: { onSuccess?: () => Promise<void> }) => ({ isPending: false, mutateAsync: async (input: unknown) => { mutateAsync(input); await options.onSuccess?.(); } }) },
     },
   },
 }));
@@ -37,6 +37,16 @@ describe("réglages de profil", () => {
     fireEvent.change(screen.getByLabelText("Numéro de téléphone \(facultatif\)"), { target: { value: "8031234567" } });
     fireEvent.submit(screen.getByRole("button", { name: "Enregistrer les réglages" }).closest("form")!);
     expect(mutateAsync).toHaveBeenCalledWith({ shopId: "7d2e8dcf-3502-484f-85c1-a4b252930ca1", phone: "+2348031234567", country: "NGA" });
+  });
+
+  it("enregistre le nom de boutique et confirme explicitement le succès", async () => {
+    render(<main><ProfilePanel shopId="7d2e8dcf-3502-484f-85c1-a4b252930ca1" /></main>);
+    const name = await screen.findByLabelText("Nom de la boutique");
+    expect(screen.getByText(/Dernière mise à jour :/)).toBeTruthy();
+    fireEvent.change(name, { target: { value: "Épicerie Aline" } });
+    fireEvent.submit(screen.getByRole("button", { name: "Enregistrer les réglages" }).closest("form")!);
+    expect(mutateAsync).toHaveBeenCalledWith({ shopId: "7d2e8dcf-3502-484f-85c1-a4b252930ca1", phone: "+237699789999", name: "Épicerie Aline" });
+    expect((await screen.findByRole("status")).textContent).toContain("Modifications enregistrées avec succès.");
   });
 
   it("conserve une structure accessible", async () => {

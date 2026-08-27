@@ -62,12 +62,12 @@ afterEach(async () => {
 
 describe("commerce transaction with Neon", () => {
   it("met à jour le téléphone et synchronise la devise du pays avant toute activité", async () => {
-    await profileCaller().update({ shopId, phone: "+221771234567", country: "SEN" });
+    await profileCaller().update({ shopId, phone: "+221771234567", country: "SEN", name: "Nouvelle boutique" });
     const user = await sql`SELECT phone FROM users WHERE id = ${userId}`;
-    const shop = await sql`SELECT country, currency FROM shops WHERE id = ${shopId}`;
+    const shop = await sql`SELECT name, country, currency FROM shops WHERE id = ${shopId}`;
     const currencies = await sql`SELECT currency, is_active FROM shop_currencies WHERE shop_id = ${shopId}`;
     expect(user[0]?.phone).toBe("+221771234567");
-    expect(shop[0]).toMatchObject({ country: "SEN", currency: "XOF" });
+    expect(shop[0]).toMatchObject({ name: "Nouvelle boutique", country: "SEN", currency: "XOF" });
     expect(currencies).toEqual(expect.arrayContaining([expect.objectContaining({ currency: "XOF", is_active: true })]));
   });
 

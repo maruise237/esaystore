@@ -16,16 +16,16 @@ export const profileRouter = router({
     const membership = await assertShopAccess(ctx.user.id, input.shopId);
     const db = getDb();
     const [user] = await db.select({ name: users.name, email: users.email, phone: users.phone }).from(users).where(eq(users.id, ctx.user.id)).limit(1);
-    const [shop] = await db.select({ id: shops.id, name: shops.name, country: shops.country, currency: shops.currency }).from(shops).where(eq(shops.id, input.shopId)).limit(1);
+    const [shop] = await db.select({ id: shops.id, name: shops.name, country: shops.country, currency: shops.currency, updatedAt: shops.updatedAt }).from(shops).where(eq(shops.id, input.shopId)).limit(1);
     if (!user || !shop) throw new TRPCError({ code: "NOT_FOUND", message: "Profil introuvable." });
     return { user, shop, canEditShopSettings: membership.role === "owner" };
   }),
-  update: protectedProcedure.input(profileInput.extend({ phone: phone.optional(), country: countryCode.optional() })).mutation(async ({ ctx, input }) => {
+  update: protectedProcedure.input(profileInput.extend({ phone: phone.optional(), country: countryCode.optional(), name: z.string().trim().min(2, "Le nom de la boutique doit contenir au moins 2 caractères.").max(120).optional() })).mutation(async ({ ctx, input }) => {
     const membership = await assertShopAccess(ctx.user.id, input.shopId);
     const db = getDb();
-    const [shop] = await db.select({ currency: shops.currency, country: shops.country }).from(shops).where(eq(shops.id, input.shopId)).limit(1);
+    const [shop] = await db.select({ name: shops.name, currency: shops.currency, country: shops.country }).from(shops).where(eq(shops.id, input.shopId)).limit(1);
     if (!shop) throw new TRPCError({ code: "NOT_FOUND", message: "Boutique introuvable." });
-    if (input.country && membership.role !== "owner") throw new TRPCError({ code: "FORBIDDEN", message: "Seul le propriétaire peut modifier le pays et la devise de référence." });
+    if ((input.country || input.name) && membership.role !== "owner") throw new TRPCError({ code: "FORBIDDEN", message: "Seul le propriétaire peut modifier le nom, le pays et la devise de référence." });
 
     const nextCurrency = input.country ? currencyForCountry(input.country) : shop.currency;
     if (input.country && nextCurrency !== shop.currency) {
@@ -37,12 +37,13 @@ export const profileRouter = router({
     const sql = getSql();
     const statements = [];
     if (input.phone !== undefined) statements.push(sql`UPDATE users SET phone = ${input.phone}, updated_at = NOW() WHERE id = ${ctx.user.id}`);
+    if (input.name) statements.push(sql`UPDATE shops SET name = ${input.name}, updated_at = NOW() WHERE id = ${input.shopId}`);
     if (input.country) {
       statements.push(sql`UPDATE shops SET country = ${input.country}, currency = ${nextCurrency}, updated_at = NOW() WHERE id = ${input.shopId}`);
       statements.push(sql`INSERT INTO shop_currencies (shop_id, currency, label, is_active) VALUES (${input.shopId}, ${nextCurrency}, 'Devise de référence', true) ON CONFLICT (shop_id, currency) DO UPDATE SET is_active = true, label = 'Devise de référence', updated_at = NOW()`);
       if (shop.currency !== nextCurrency) statements.push(sql`UPDATE shop_currencies SET is_active = true, label = 'Devise de transaction', updated_at = NOW() WHERE shop_id = ${input.shopId} AND currency = ${shop.currency}`);
     }
     if (statements.length) await sql.transaction(statements);
-    return { phone: input.phone, country: input.country ?? shop.country, currency: nextCurrency };
+    return { name: input.name ?? shop.name, phone: input.phone, country: input.country ?? shop.country, currency: nextCurrency };
   }),
 });
