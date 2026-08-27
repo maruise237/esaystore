@@ -317,7 +317,3 @@
 - [x] Ajouter des agrégations sécurisées par boutique pour l’évolution journalière, hebdomadaire, les comparaisons et l’historique d’activité.
 - [x] Construire une vue Rapports claire avec période, évolution, indicateurs et historique accessible sur mobile.
 - [x] Tester les calculs, l’isolation des boutiques, l’accessibilité et publier les rapports journaliers et hebdomadaires sur GitHub `main`.
-- [x] Analyser les directives de landing fournies et identifier les écarts de clarté, conversion et finition avec l’existant.
-- [x] Recomposer la proposition de valeur, les preuves produit et les appels à l’action de la landing sans promesse non vérifiable.
-- [x] Appliquer les améliorations de hiérarchie, d’interface, de responsive et de micro-interactions retenues.
-- [x] Tester, prévisualiser, publier et synchroniser la landing améliorée sur GitHub `main`.
