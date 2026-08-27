@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { CountryPicker } from "@/components/CountryPicker";
 import {
   formatPhoneNumber,
@@ -25,6 +26,8 @@ export default function ProfilePanel({ shopId }: { shopId: string }) {
   const settings = trpc.profile.settings.useQuery({ shopId });
   const [shopName, setShopName] = useState("");
   const [phone, setPhone] = useState("");
+  const [shopAddress, setShopAddress] = useState("");
+  const [shopContactPhone, setShopContactPhone] = useState("");
   const [country, setCountry] = useState("CMR");
   const [logoDraft, setLogoDraft] = useState<string | null | undefined>(
     undefined
@@ -53,6 +56,13 @@ export default function ProfilePanel({ shopId }: { shopId: string }) {
     if (!settings.data) return;
     setShopName(settings.data.shop.name);
     setCountry(settings.data.shop.country);
+    setShopAddress(settings.data.shop.address ?? "");
+    setShopContactPhone(
+      formatPhoneNumber(
+        settings.data.shop.contactPhone ?? "",
+        settings.data.shop.country
+      )
+    );
     setPhone(
       formatPhoneNumber(
         settings.data.user.phone ?? "",
@@ -79,6 +89,11 @@ export default function ProfilePanel({ shopId }: { shopId: string }) {
   const phoneValid = !phone || isCompletePhoneNumber(phone, country);
   const canEditShop = settings.data.canEditShopSettings;
   const shopNameChanged = shopName.trim() !== settings.data.shop.name;
+  const shopAddressChanged =
+    shopAddress.trim() !== (settings.data.shop.address ?? "");
+  const shopContactPhoneChanged =
+    normalizePhoneNumber(shopContactPhone, country) !==
+    (settings.data.shop.contactPhone ?? undefined);
   const countryChanged = country !== settings.data.shop.country;
   const phoneChanged =
     normalizePhoneNumber(phone, country) !==
@@ -86,10 +101,18 @@ export default function ProfilePanel({ shopId }: { shopId: string }) {
   const savedLogoUrl = settings.data.shop.logoUrl ?? null;
   const logoPreview = logoDraft === undefined ? savedLogoUrl : logoDraft;
   const logoChanged = logoDraft !== undefined && logoDraft !== savedLogoUrl;
+  const shopContactPhoneValid =
+    !shopContactPhone || isCompletePhoneNumber(shopContactPhone, country);
   const canSave =
     phoneValid &&
+    shopContactPhoneValid &&
     (phoneChanged ||
-      (canEditShop && (countryChanged || shopNameChanged || logoChanged)));
+      (canEditShop &&
+        (countryChanged ||
+          shopNameChanged ||
+          shopAddressChanged ||
+          shopContactPhoneChanged ||
+          logoChanged)));
 
   const chooseLogo = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -122,8 +145,19 @@ export default function ProfilePanel({ shopId }: { shopId: string }) {
     setNotice(null);
     await update.mutateAsync({
       shopId,
-      phone: normalizePhoneNumber(phone, country) ?? null,
+      ...(phoneChanged
+        ? { phone: normalizePhoneNumber(phone, country) ?? null }
+        : {}),
       ...(canEditShop && shopNameChanged ? { name: shopName.trim() } : {}),
+      ...(canEditShop && shopAddressChanged
+        ? { address: shopAddress.trim() || null }
+        : {}),
+      ...(canEditShop && shopContactPhoneChanged
+        ? {
+            contactPhone:
+              normalizePhoneNumber(shopContactPhone, country) ?? null,
+          }
+        : {}),
       ...(canEditShop && countryChanged
         ? {
             country: country as
@@ -196,6 +230,87 @@ export default function ProfilePanel({ shopId }: { shopId: string }) {
                     Ce nom apparaît dans votre espace marchand et sur les reçus.
                   </p>
                 </div>
+                <section className="grid gap-4 rounded-2xl border border-[#e4e1d7] bg-[#faf9f5] p-4">
+                  <div>
+                    <h3 className="text-sm font-semibold text-[#29372e]">
+                      Coordonnées sur les reçus
+                    </h3>
+                    <p className="mt-1 text-xs leading-relaxed text-[#697466]">
+                      Ajoutez les coordonnées à communiquer à vos clients. Elles
+                      figureront sur les prochains reçus générés.
+                    </p>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label
+                      htmlFor="profile-shop-address"
+                      className="text-xs font-bold uppercase tracking-[0.12em] text-[#5f695c]"
+                    >
+                      Adresse de la boutique
+                    </Label>
+                    <Textarea
+                      id="profile-shop-address"
+                      value={shopAddress}
+                      onChange={event => setShopAddress(event.target.value)}
+                      maxLength={280}
+                      rows={2}
+                      placeholder="Ex. Marché central, face à la pharmacie"
+                      aria-describedby="profile-shop-address-hint"
+                      className="resize-y bg-white"
+                    />
+                    <p
+                      id="profile-shop-address-hint"
+                      className="text-xs text-[#697466]"
+                    >
+                      Facultatif, 280 caractères maximum.
+                    </p>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label
+                      htmlFor="profile-shop-contact-phone"
+                      className="text-xs font-bold uppercase tracking-[0.12em] text-[#5f695c]"
+                    >
+                      Téléphone de la boutique
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="profile-shop-contact-phone"
+                        autoComplete="tel"
+                        inputMode="tel"
+                        value={shopContactPhone}
+                        onChange={event =>
+                          setShopContactPhone(
+                            formatPhoneNumber(event.target.value, country)
+                          )
+                        }
+                        placeholder={`${currentCountry.dialCode} 6 99 78 99 99`}
+                        aria-describedby="profile-shop-contact-phone-hint"
+                        className={
+                          shopContactPhone && shopContactPhoneValid
+                            ? "border-[#74a05d] pr-11"
+                            : "bg-white"
+                        }
+                      />
+                      {shopContactPhone && shopContactPhoneValid && (
+                        <CheckCircle2
+                          className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#567b4f]"
+                          aria-hidden="true"
+                        />
+                      )}
+                    </div>
+                    <p
+                      id="profile-shop-contact-phone-hint"
+                      className={
+                        shopContactPhone && !shopContactPhoneValid
+                          ? "text-xs text-[#a05842]"
+                          : "text-xs text-[#697466]"
+                      }
+                    >
+                      {shopContactPhone && !shopContactPhoneValid
+                        ? "Ajoutez encore quelques chiffres ou effacez ce champ."
+                        : "Facultatif. Ce numéro est visible sur vos reçus, pas votre numéro personnel."}
+                    </p>
+                  </div>
+                </section>
                 <section className="grid gap-3 rounded-2xl border border-[#e4e1d7] bg-[#faf9f5] p-4 sm:grid-cols-[5.25rem_1fr]">
                   <div className="grid aspect-square w-[5.25rem] place-items-center overflow-hidden rounded-xl border border-[#dedbd2] bg-white text-[#60715f] shadow-[0_8px_18px_rgba(37,50,42,0.08)]">
                     {logoPreview ? (
@@ -285,7 +400,7 @@ export default function ProfilePanel({ shopId }: { shopId: string }) {
                 htmlFor="profile-phone"
                 className="text-xs font-bold uppercase tracking-[0.12em] text-[#5f695c]"
               >
-                Numéro de téléphone (facultatif)
+                Téléphone personnel (facultatif)
               </Label>
               <div className="relative">
                 <Input
@@ -314,7 +429,8 @@ export default function ProfilePanel({ shopId }: { shopId: string }) {
                 </p>
               ) : (
                 <p className="text-xs text-[#697466]">
-                  L’indicatif s’ajuste à votre pays.
+                  Ce numéro reste lié à votre compte et n’apparaît pas sur les
+                  reçus.
                 </p>
               )}
             </div>

@@ -93,30 +93,39 @@ export const profileRouter = router({
           .min(2, "Le nom de la boutique doit contenir au moins 2 caractères.")
           .max(120)
           .optional(),
+        address: z.string().trim().max(280).nullable().optional(),
+        contactPhone: phone.optional(),
         logoDataUrl: logoDataUrl.optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const membership = await assertShopAccess(ctx.user.id, input.shopId);
       const db = getDb();
-      const [shop, hasPhone, hasLogo] = await Promise.all([
-        getShopById(input.shopId),
-        hasOptionalColumn("users", "phone"),
-        hasOptionalColumn("shops", "logo_url"),
-      ]);
+      const [shop, hasPhone, hasLogo, hasAddress, hasContactPhone] =
+        await Promise.all([
+          getShopById(input.shopId),
+          hasOptionalColumn("users", "phone"),
+          hasOptionalColumn("shops", "logo_url"),
+          hasOptionalColumn("shops", "address"),
+          hasOptionalColumn("shops", "contact_phone"),
+        ]);
       if (!shop)
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Boutique introuvable.",
         });
       if (
-        (input.country || input.name || input.logoDataUrl !== undefined) &&
+        (input.country ||
+          input.name ||
+          input.address !== undefined ||
+          input.contactPhone !== undefined ||
+          input.logoDataUrl !== undefined) &&
         membership.role !== "owner"
       )
         throw new TRPCError({
           code: "FORBIDDEN",
           message:
-            "Seul le propriétaire peut modifier le nom, le logo, le pays et la devise de référence.",
+            "Seul le propriétaire peut modifier le nom, les coordonnées, le logo, le pays et la devise de référence.",
         });
 
       const nextCurrency = input.country
@@ -166,6 +175,28 @@ export const profileRouter = router({
           sql`UPDATE shops SET logo_url = ${nextLogoUrl}, updated_at = NOW() WHERE id = ${input.shopId}`
         );
       }
+      if (input.address !== undefined) {
+        if (!hasAddress)
+          throw new TRPCError({
+            code: "CONFLICT",
+            message:
+              "L’adresse de boutique sera disponible dès que la migration aura été appliquée.",
+          });
+        statements.push(
+          sql`UPDATE shops SET address = ${input.address}, updated_at = NOW() WHERE id = ${input.shopId}`
+        );
+      }
+      if (input.contactPhone !== undefined) {
+        if (!hasContactPhone)
+          throw new TRPCError({
+            code: "CONFLICT",
+            message:
+              "Le contact de boutique sera disponible dès que la migration aura été appliquée.",
+          });
+        statements.push(
+          sql`UPDATE shops SET contact_phone = ${input.contactPhone}, updated_at = NOW() WHERE id = ${input.shopId}`
+        );
+      }
       if (input.phone !== undefined) {
         if (!hasPhone)
           throw new TRPCError({
@@ -197,6 +228,8 @@ export const profileRouter = router({
       return {
         name: input.name ?? shop.name,
         logoUrl: nextLogoUrl,
+        address: input.address ?? shop.address,
+        contactPhone: input.contactPhone ?? shop.contactPhone,
         phone: input.phone,
         country: input.country ?? shop.country,
         currency: nextCurrency,

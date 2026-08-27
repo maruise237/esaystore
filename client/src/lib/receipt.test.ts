@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   buildReceiptHtml,
   createReceiptPdf,
+  isReceiptPaid,
   receiptPdfFileName,
 } from "./receipt";
 
@@ -13,6 +14,8 @@ describe("reçu de vente", () => {
       shopName: "Boutique <verte>",
       logoUrl:
         "/manus-storage/shops/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee/branding/logo_a1b2c3d4.png",
+      shopAddress: "Marché &lt; central",
+      shopContactPhone: "+237 699 12 34 56",
       saleNumber: "V-001",
       currency: "XAF",
       soldAt: new Date("2026-08-24T10:00:00Z"),
@@ -31,6 +34,37 @@ describe("reçu de vente", () => {
     expect(html).toContain("Reçu V-001");
     expect(html).toContain("REÇU DE VENTE");
     expect(html).toContain("brand-logo");
+    expect(html).toContain("Marché &amp;lt; central");
+    expect(html).toContain("+237 699 12 34 56");
+    expect(html).toContain('class="paid-stamp">PAYÉ</span>');
+  });
+
+  it("n’appose le cachet Payé que sur une vente sans solde à crédit", () => {
+    const paid = {
+      shopName: "Boutique",
+      saleNumber: "V-PAID",
+      currency: "XAF",
+      soldAt: new Date("2026-08-24T10:00:00Z"),
+      lines: [],
+      subtotal: 500,
+      discount: 0,
+      total: 500,
+      cash: 500,
+      mobileMoney: 0,
+      credit: 0,
+    };
+    const onCredit = {
+      ...paid,
+      saleNumber: "V-CREDIT",
+      cash: 300,
+      credit: 200,
+    };
+    expect(isReceiptPaid(paid)).toBe(true);
+    expect(buildReceiptHtml(paid)).toContain('class="paid-stamp">PAYÉ</span>');
+    expect(isReceiptPaid(onCredit)).toBe(false);
+    expect(buildReceiptHtml(onCredit)).not.toContain(
+      'class="paid-stamp">PAYÉ</span>'
+    );
   });
 
   it("does not inject an arbitrary remote image as a shop logo", () => {
@@ -96,14 +130,12 @@ it("embeds a safely stored shop logo in the generated PDF when it is available",
     ),
     character => character.charCodeAt(0)
   );
-  const fetchMock = vi
-    .fn()
-    .mockResolvedValue(
-      new Response(pngBytes, {
-        status: 200,
-        headers: { "content-type": "image/png" },
-      })
-    );
+  const fetchMock = vi.fn().mockResolvedValue(
+    new Response(pngBytes, {
+      status: 200,
+      headers: { "content-type": "image/png" },
+    })
+  );
   vi.stubGlobal("fetch", fetchMock);
 
   const pdf = await createReceiptPdf({

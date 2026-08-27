@@ -347,3 +347,8 @@
 - [x] Vérifier sur une session réelle que la connexion et l’accès à la boutique sont rétablis avant la publication finale.
 - [x] Corriger la requête de liste des boutiques afin qu’une colonne `shops.logo_url` absente ne bloque pas la connexion sur le déploiement Vercel existant.
 - [x] Retirer le numéro de téléphone du formulaire d’inscription et conserver sa mise à jour facultative uniquement dans Profil & boutique.
+- [x] Auditer les données boutique et le statut de règlement disponibles pour les reçus générés.
+- [x] Ajouter une adresse et un contact de boutique éditables et strictement réservés au propriétaire.
+- [x] Transmettre et afficher les coordonnées de boutique dans les reçus PDF, imprimés et partageables.
+- [x] Ajouter un cachet « Payé » uniquement sur les reçus de ventes entièrement réglées.
+- [x] Tester les coordonnées, les règles de règlement, les rendus et publier sur GitHub `main`.

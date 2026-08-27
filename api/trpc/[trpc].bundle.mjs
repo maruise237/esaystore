@@ -161,6 +161,8 @@ var shops = pgTable("shops", {
   name: varchar("name", { length: 180 }).notNull(),
   slug: varchar("slug", { length: 180 }).notNull().unique(),
   logoUrl: varchar("logo_url", { length: 1024 }),
+  address: varchar("address", { length: 280 }),
+  contactPhone: varchar("contact_phone", { length: 48 }),
   currency: varchar("currency", { length: 8 }).default("XAF").notNull(),
   country: varchar("country", { length: 3 }).default("CMR").notNull(),
   isActive: boolean("is_active").default(true).notNull(),
@@ -701,11 +703,16 @@ function hasOptionalColumn(tableName, columnName) {
 }
 async function getShopById(shopId) {
   const db = getDb();
-  if (await hasOptionalColumn("shops", "logo_url")) {
+  const supportsOptionalDetails = await Promise.all([
+    hasOptionalColumn("shops", "logo_url"),
+    hasOptionalColumn("shops", "address"),
+    hasOptionalColumn("shops", "contact_phone")
+  ]);
+  if (supportsOptionalDetails.every(Boolean)) {
     return (await db.select().from(shops).where(eq(shops.id, shopId)).limit(1))[0];
   }
   const row = (await db.select(shopFieldsWithoutLogo).from(shops).where(eq(shops.id, shopId)).limit(1))[0];
-  return row ? { ...row, logoUrl: null } : void 0;
+  return row ? { ...row, logoUrl: null, address: null, contactPhone: null } : void 0;
 }
 async function getUserById(id) {
   const rows = await getDb().select(authenticatedUserFields).from(users).where(eq(users.id, id)).limit(1);
@@ -717,12 +724,22 @@ async function getUserByEmail(email) {
 }
 async function listUserShops(userId) {
   const db = getDb();
-  if (await hasOptionalColumn("shops", "logo_url")) {
+  const supportsOptionalDetails = await Promise.all([
+    hasOptionalColumn("shops", "logo_url"),
+    hasOptionalColumn("shops", "address"),
+    hasOptionalColumn("shops", "contact_phone")
+  ]);
+  if (supportsOptionalDetails.every(Boolean)) {
     return db.select({ shop: shops, role: shopMembers.role }).from(shopMembers).innerJoin(shops, eq(shopMembers.shopId, shops.id)).where(eq(shopMembers.userId, userId));
   }
   const rows = await db.select({ shop: shopFieldsWithoutLogo, role: shopMembers.role }).from(shopMembers).innerJoin(shops, eq(shopMembers.shopId, shops.id)).where(eq(shopMembers.userId, userId));
   return rows.map((row) => ({
-    shop: { ...row.shop, logoUrl: null },
+    shop: {
+      ...row.shop,
+      logoUrl: null,
+      address: null,
+      contactPhone: null
+    },
     role: row.role
   }));
 }
@@ -2599,25 +2616,29 @@ var profileRouter = router({
       phone: phone.optional(),
       country: countryCode.optional(),
       name: z10.string().trim().min(2, "Le nom de la boutique doit contenir au moins 2 caract\xE8res.").max(120).optional(),
+      address: z10.string().trim().max(280).nullable().optional(),
+      contactPhone: phone.optional(),
       logoDataUrl: logoDataUrl.optional()
     })
   ).mutation(async ({ ctx, input }) => {
     const membership = await assertShopAccess(ctx.user.id, input.shopId);
     const db = getDb();
-    const [shop, hasPhone, hasLogo] = await Promise.all([
+    const [shop, hasPhone, hasLogo, hasAddress, hasContactPhone] = await Promise.all([
       getShopById(input.shopId),
       hasOptionalColumn("users", "phone"),
-      hasOptionalColumn("shops", "logo_url")
+      hasOptionalColumn("shops", "logo_url"),
+      hasOptionalColumn("shops", "address"),
+      hasOptionalColumn("shops", "contact_phone")
     ]);
     if (!shop)
       throw new TRPCError10({
         code: "NOT_FOUND",
         message: "Boutique introuvable."
       });
-    if ((input.country || input.name || input.logoDataUrl !== void 0) && membership.role !== "owner")
+    if ((input.country || input.name || input.address !== void 0 || input.contactPhone !== void 0 || input.logoDataUrl !== void 0) && membership.role !== "owner")
       throw new TRPCError10({
         code: "FORBIDDEN",
-        message: "Seul le propri\xE9taire peut modifier le nom, le logo, le pays et la devise de r\xE9f\xE9rence."
+        message: "Seul le propri\xE9taire peut modifier le nom, les coordonn\xE9es, le logo, le pays et la devise de r\xE9f\xE9rence."
       });
     const nextCurrency = input.country ? currencyForCountry(input.country) : shop.currency;
     if (input.country && nextCurrency !== shop.currency) {
@@ -2653,6 +2674,26 @@ var profileRouter = router({
         sql4`UPDATE shops SET logo_url = ${nextLogoUrl}, updated_at = NOW() WHERE id = ${input.shopId}`
       );
     }
+    if (input.address !== void 0) {
+      if (!hasAddress)
+        throw new TRPCError10({
+          code: "CONFLICT",
+          message: "L\u2019adresse de boutique sera disponible d\xE8s que la migration aura \xE9t\xE9 appliqu\xE9e."
+        });
+      statements.push(
+        sql4`UPDATE shops SET address = ${input.address}, updated_at = NOW() WHERE id = ${input.shopId}`
+      );
+    }
+    if (input.contactPhone !== void 0) {
+      if (!hasContactPhone)
+        throw new TRPCError10({
+          code: "CONFLICT",
+          message: "Le contact de boutique sera disponible d\xE8s que la migration aura \xE9t\xE9 appliqu\xE9e."
+        });
+      statements.push(
+        sql4`UPDATE shops SET contact_phone = ${input.contactPhone}, updated_at = NOW() WHERE id = ${input.shopId}`
+      );
+    }
     if (input.phone !== void 0) {
       if (!hasPhone)
         throw new TRPCError10({
@@ -2683,6 +2724,8 @@ var profileRouter = router({
     return {
       name: input.name ?? shop.name,
       logoUrl: nextLogoUrl,
+      address: input.address ?? shop.address,
+      contactPhone: input.contactPhone ?? shop.contactPhone,
       phone: input.phone,
       country: input.country ?? shop.country,
       currency: nextCurrency

@@ -86,7 +86,7 @@ export async function rawRows<T extends Record<string, unknown>>(
 
 export function hasOptionalColumn(
   tableName: "shops" | "users",
-  columnName: "logo_url" | "phone"
+  columnName: "logo_url" | "address" | "contact_phone" | "phone"
 ) {
   const key = `${tableName}.${columnName}`;
   const cached = optionalColumnAvailability.get(key);
@@ -104,7 +104,12 @@ export async function getShopById(
   shopId: string
 ): Promise<CompatibleShop | undefined> {
   const db = getDb();
-  if (await hasOptionalColumn("shops", "logo_url")) {
+  const supportsOptionalDetails = await Promise.all([
+    hasOptionalColumn("shops", "logo_url"),
+    hasOptionalColumn("shops", "address"),
+    hasOptionalColumn("shops", "contact_phone"),
+  ]);
+  if (supportsOptionalDetails.every(Boolean)) {
     return (
       await db.select().from(shops).where(eq(shops.id, shopId)).limit(1)
     )[0];
@@ -116,7 +121,9 @@ export async function getShopById(
       .where(eq(shops.id, shopId))
       .limit(1)
   )[0];
-  return row ? { ...row, logoUrl: null } : undefined;
+  return row
+    ? { ...row, logoUrl: null, address: null, contactPhone: null }
+    : undefined;
 }
 
 export async function upsertUser(user: InsertUser): Promise<void> {
@@ -165,7 +172,12 @@ export async function getUserByEmail(email: string) {
 
 export async function listUserShops(userId: string) {
   const db = getDb();
-  if (await hasOptionalColumn("shops", "logo_url")) {
+  const supportsOptionalDetails = await Promise.all([
+    hasOptionalColumn("shops", "logo_url"),
+    hasOptionalColumn("shops", "address"),
+    hasOptionalColumn("shops", "contact_phone"),
+  ]);
+  if (supportsOptionalDetails.every(Boolean)) {
     return db
       .select({ shop: shops, role: shopMembers.role })
       .from(shopMembers)
@@ -178,7 +190,12 @@ export async function listUserShops(userId: string) {
     .innerJoin(shops, eq(shopMembers.shopId, shops.id))
     .where(eq(shopMembers.userId, userId));
   return rows.map(row => ({
-    shop: { ...row.shop, logoUrl: null },
+    shop: {
+      ...row.shop,
+      logoUrl: null,
+      address: null,
+      contactPhone: null,
+    },
     role: row.role,
   }));
 }

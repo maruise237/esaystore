@@ -280,6 +280,8 @@ export default function Workspace() {
             currency={activeShop.shop.currency}
             shopName={activeShop.shop.name}
             shopLogoUrl={activeShop.shop.logoUrl}
+            shopAddress={activeShop.shop.address}
+            shopContactPhone={activeShop.shop.contactPhone}
           />
         )}
         {active === "products" && (
@@ -774,11 +776,15 @@ function Pos({
   currency,
   shopName,
   shopLogoUrl,
+  shopAddress,
+  shopContactPhone,
 }: {
   shopId: string;
   currency: string;
   shopName: string;
   shopLogoUrl?: string | null;
+  shopAddress?: string | null;
+  shopContactPhone?: string | null;
 }) {
   const products = trpc.catalog.products.list.useQuery({ shopId });
   const variants = trpc.catalog.variants.list.useQuery({ shopId });
@@ -806,7 +812,7 @@ function Pos({
   const cartAnchor = useRef<HTMLDivElement>(null);
   const checkout = trpc.commerce.sales.checkout.useMutation({
     onSuccess: sale => {
-      openReceipt(sale.saleNumber);
+      openReceipt(sale.saleNumber, false, sale.creditAmount === 0);
       setCart([]);
       setCustomerId("");
       setCash("");
@@ -995,10 +1001,16 @@ function Pos({
     if (!code) return;
     if (handleBarcode(code, "manual")) setManualBarcode("");
   };
-  const openReceipt = (saleNumber: string, pendingSync = false) =>
+  const openReceipt = (
+    saleNumber: string,
+    pendingSync = false,
+    isPaid = credit === 0
+  ) =>
     setReceipt({
       shopName,
       logoUrl: shopLogoUrl,
+      shopAddress,
+      shopContactPhone,
       saleNumber,
       currency: paymentCurrency,
       soldAt: new Date(),
@@ -1015,6 +1027,7 @@ function Pos({
       cash: Number(cash) || 0,
       mobileMoney: Number(mobileMoney) || 0,
       credit: credit / (exchangeRate || 1),
+      isPaid,
       pendingSync,
     });
   const submitSale = async () => {

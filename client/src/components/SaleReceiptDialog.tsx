@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Download, Printer, Share2 } from "lucide-react";
+import { BadgeCheck, Download, Printer, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,6 +11,7 @@ import {
 import {
   buildReceiptHtml,
   createReceiptPdf,
+  isReceiptPaid,
   shareReceiptPdf,
   type SaleReceipt,
 } from "@/lib/receipt";
@@ -108,6 +109,12 @@ export default function SaleReceiptDialog({
                 <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#d8ef73]">
                   Reçu de vente
                 </p>
+                {isReceiptPaid(receipt) && (
+                  <span className="mt-2 inline-flex items-center gap-1 rounded-full border border-[#d8ef73] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#d8ef73]">
+                    <BadgeCheck className="h-3 w-3" aria-hidden="true" />
+                    Payé
+                  </span>
+                )}
               </div>
             </div>
             <div className="p-4">
@@ -125,6 +132,14 @@ export default function SaleReceiptDialog({
                   <p className="mt-1 text-xs text-[#72766e]">
                     Client : {receipt.customerName}
                   </p>
+                )}
+                {(receipt.shopAddress || receipt.shopContactPhone) && (
+                  <div className="mt-3 border-l border-[#9aac95] pl-3 text-xs leading-relaxed text-[#627060]">
+                    {receipt.shopAddress && <p>{receipt.shopAddress}</p>}
+                    {receipt.shopContactPhone && (
+                      <p>{receipt.shopContactPhone}</p>
+                    )}
+                  </div>
                 )}
               </div>
               <div className="space-y-2 py-3">

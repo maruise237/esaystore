@@ -14,6 +14,8 @@ const { mutateAsync, invalidate, settingsData } = vi.hoisted(() => ({
       id: "shop-1",
       name: "Boutique test",
       logoUrl: null,
+      address: null,
+      contactPhone: null,
       country: "CMR",
       currency: "XAF",
       updatedAt: new Date("2026-08-27T10:30:00.000Z"),
@@ -65,7 +67,7 @@ describe("réglages de profil", () => {
     });
     fireEvent.click(screen.getByText(/Nigéria \(NG\).*\+234/i));
     fireEvent.change(
-      screen.getByLabelText("Numéro de téléphone \(facultatif\)"),
+      screen.getByLabelText("Téléphone personnel \(facultatif\)"),
       { target: { value: "8031234567" } }
     );
     fireEvent.submit(
@@ -96,12 +98,35 @@ describe("réglages de profil", () => {
     );
     expect(mutateAsync).toHaveBeenCalledWith({
       shopId: "7d2e8dcf-3502-484f-85c1-a4b252930ca1",
-      phone: "+237699789999",
       name: "Épicerie Aline",
     });
     expect((await screen.findByRole("status")).textContent).toContain(
       "Modifications enregistrées avec succès."
     );
+  });
+
+  it("enregistre les coordonnées de boutique qui figureront sur les reçus", async () => {
+    render(
+      <main>
+        <ProfilePanel shopId="7d2e8dcf-3502-484f-85c1-a4b252930ca1" />
+      </main>
+    );
+    fireEvent.change(await screen.findByLabelText("Adresse de la boutique"), {
+      target: { value: "Marché central, face à la pharmacie" },
+    });
+    fireEvent.change(screen.getByLabelText("Téléphone de la boutique"), {
+      target: { value: "699123456" },
+    });
+    fireEvent.submit(
+      screen
+        .getByRole("button", { name: "Enregistrer les réglages" })
+        .closest("form")!
+    );
+    expect(mutateAsync).toHaveBeenCalledWith({
+      shopId: "7d2e8dcf-3502-484f-85c1-a4b252930ca1",
+      address: "Marché central, face à la pharmacie",
+      contactPhone: "+237699123456",
+    });
   });
 
   it("prévisualise immédiatement un logo valide et l’enregistre avec les réglages", async () => {
