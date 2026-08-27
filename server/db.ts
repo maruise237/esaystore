@@ -4,6 +4,34 @@ import { drizzle } from "drizzle-orm/neon-http";
 import * as schema from "../drizzle/schema";
 import { type InsertUser, shopMembers, shops, users } from "../drizzle/schema";
 
+export const authenticatedUserFields = {
+  id: users.id,
+  openId: users.openId,
+  email: users.email,
+  name: users.name,
+  passwordHash: users.passwordHash,
+  loginMethod: users.loginMethod,
+  role: users.role,
+  isActive: users.isActive,
+  createdAt: users.createdAt,
+  updatedAt: users.updatedAt,
+  lastSignedIn: users.lastSignedIn,
+};
+
+export type AuthenticatedUser = {
+  id: string;
+  openId: string | null;
+  email: string | null;
+  name: string | null;
+  passwordHash: string | null;
+  loginMethod: string;
+  role: "user" | "admin";
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  lastSignedIn: Date;
+};
+
 type AppDb = ReturnType<typeof createDb>;
 
 let cachedDb: AppDb | null = null;
@@ -29,38 +57,56 @@ export function getSql() {
   return cachedSql;
 }
 
-export async function rawRows<T extends Record<string, unknown>>(query: string, params: unknown[] = []) {
-  const response = await getSql().query(query, params) as unknown;
+export async function rawRows<T extends Record<string, unknown>>(
+  query: string,
+  params: unknown[] = []
+) {
+  const response = (await getSql().query(query, params)) as unknown;
   if (Array.isArray(response)) return response as T[];
-  return ((response as { rows?: T[] }).rows ?? []);
+  return (response as { rows?: T[] }).rows ?? [];
 }
 
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) throw new Error("User openId is required for OAuth upsert");
-  await getDb().insert(users).values(user).onConflictDoUpdate({
-    target: users.openId,
-    set: {
-      name: user.name,
-      email: user.email,
-      loginMethod: user.loginMethod,
-      lastSignedIn: new Date(),
-      updatedAt: new Date(),
-    },
-  });
+  await getDb()
+    .insert(users)
+    .values(user)
+    .onConflictDoUpdate({
+      target: users.openId,
+      set: {
+        name: user.name,
+        email: user.email,
+        loginMethod: user.loginMethod,
+        lastSignedIn: new Date(),
+        updatedAt: new Date(),
+      },
+    });
 }
 
 export async function getUserByOpenId(openId: string) {
-  const rows = await getDb().select().from(users).where(eq(users.openId, openId)).limit(1);
+  const rows = await getDb()
+    .select()
+    .from(users)
+    .where(eq(users.openId, openId))
+    .limit(1);
   return rows[0];
 }
 
 export async function getUserById(id: string) {
-  const rows = await getDb().select().from(users).where(eq(users.id, id)).limit(1);
+  const rows = await getDb()
+    .select(authenticatedUserFields)
+    .from(users)
+    .where(eq(users.id, id))
+    .limit(1);
   return rows[0];
 }
 
 export async function getUserByEmail(email: string) {
-  const [user] = await getDb().select().from(users).where(eq(users.email, email.toLowerCase())).limit(1);
+  const [user] = await getDb()
+    .select(authenticatedUserFields)
+    .from(users)
+    .where(eq(users.email, email.toLowerCase()))
+    .limit(1);
   return user;
 }
 

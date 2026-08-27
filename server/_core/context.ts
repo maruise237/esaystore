@@ -1,15 +1,17 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
-import type { User } from "../../drizzle/schema";
+import type { AuthenticatedUser } from "../db";
 import { getAuthenticatedUser } from "../auth";
 import { getNeonAuthenticatedUser } from "../neonAuth";
 
 export type TrpcContext = {
   req: CreateExpressContextOptions["req"];
   res: CreateExpressContextOptions["res"];
-  user: User | null;
+  user: AuthenticatedUser | null;
 };
 
-export async function createContext(opts: CreateExpressContextOptions): Promise<TrpcContext> {
+export async function createContext(
+  opts: CreateExpressContextOptions
+): Promise<TrpcContext> {
   const neonUser = await getNeonAuthenticatedUser(opts.req);
   if (neonUser) return { req: opts.req, res: opts.res, user: neonUser };
 

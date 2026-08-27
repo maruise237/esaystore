@@ -338,3 +338,11 @@
 - [x] Définir les règles d’autorisation, de validation et de retour visuel pour la modification du nom de boutique.
 - [x] Ajouter l’édition du nom, la date de dernière mise à jour et une confirmation verte de sauvegarde.
 - [x] Tester, prévisualiser, publier et synchroniser les réglages de profil enrichis sur GitHub `main`.
+- [x] Auditer les capacités de stockage existantes, les champs boutique et la génération de reçus et documents de vente.
+- [x] Définir le format, les limites et la conservation sûre du logo, ainsi que la direction de marque des documents générés.
+- [x] Ajouter le téléversement du logo, son aperçu instantané et sa sauvegarde depuis les paramètres de boutique.
+- [x] Intégrer le logo de boutique et une mise en page de reçu améliorée dans les futurs documents de vente.
+- [x] Tester les contrôles de fichiers, les aperçus, les documents et l’accessibilité, puis publier sur GitHub `main`.
+- [x] Diagnostiquer et corriger l’erreur de schéma empêchant la connexion lorsqu’une requête lit la colonne utilisateur `phone`.
+- [ ] Vérifier sur une session réelle que la connexion et l’accès à la boutique sont rétablis avant la publication finale.
+- [x] Retirer le numéro de téléphone du formulaire d’inscription et conserver sa mise à jour facultative uniquement dans Profil & boutique.

@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ArrowDown,
   BarChart3,
@@ -150,7 +156,8 @@ const sectionTitles: Record<
   profile: {
     kicker: "Mon compte",
     title: "Profil & boutique",
-    description: "Gardez votre numéro, votre pays et la devise de référence de votre boutique à jour.",
+    description:
+      "Gardez votre numéro, votre pays et la devise de référence de votre boutique à jour.",
   },
   team: {
     kicker: "Administration",
@@ -209,7 +216,9 @@ export default function Workspace() {
   }, [shopId, shopsQuery.data]);
 
   if (loading || (user && shopsQuery.isLoading))
-    return <LoadingBlock label="Ouverture de votre espace marchand…" fullScreen />;
+    return (
+      <LoadingBlock label="Ouverture de votre espace marchand…" fullScreen />
+    );
   if (!user) return <AuthPage />;
   const activeShop =
     shopsQuery.data?.find(entry => entry.shop.id === shopId) ??
@@ -218,9 +227,9 @@ export default function Workspace() {
   const meta = sectionTitles[active];
 
   return (
-      <AppShell
-        active={active}
-        onNavigate={navigate}
+    <AppShell
+      active={active}
+      onNavigate={navigate}
       shopName={activeShop.shop.name}
       currency={activeShop.shop.currency}
       userName={user.name || user.email || "Utilisateur"}
@@ -270,6 +279,7 @@ export default function Workspace() {
             shopId={activeShop.shop.id}
             currency={activeShop.shop.currency}
             shopName={activeShop.shop.name}
+            shopLogoUrl={activeShop.shop.logoUrl}
           />
         )}
         {active === "products" && (
@@ -472,44 +482,50 @@ function Dashboard({
               >
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={data?.trend ?? []}>
-                  <defs>
-                    <linearGradient
-                      id="sales-gradient"
-                      x1="0"
-                      x2="0"
-                      y1="0"
-                      y2="1"
-                    >
-                      <stop
-                        offset="0%"
-                        stopColor="#8faa74"
-                        stopOpacity={0.35}
-                      />
-                      <stop offset="100%" stopColor="#8faa74" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis
-                    dataKey="label"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: "#8c8d83", fontSize: 11 }}
-                  />
-                  <YAxis hide />
-                  <Tooltip
-                    formatter={value => currencyFormat(Number(value), currency)}
-                    contentStyle={{
-                      borderRadius: 14,
-                      border: "1px solid #e5e2d8",
-                      fontSize: 12,
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#54734e"
-                    strokeWidth={2.5}
-                    fill="url(#sales-gradient)"
-                  />
+                    <defs>
+                      <linearGradient
+                        id="sales-gradient"
+                        x1="0"
+                        x2="0"
+                        y1="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#8faa74"
+                          stopOpacity={0.35}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#8faa74"
+                          stopOpacity={0}
+                        />
+                      </linearGradient>
+                    </defs>
+                    <XAxis
+                      dataKey="label"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: "#8c8d83", fontSize: 11 }}
+                    />
+                    <YAxis hide />
+                    <Tooltip
+                      formatter={value =>
+                        currencyFormat(Number(value), currency)
+                      }
+                      contentStyle={{
+                        borderRadius: 14,
+                        border: "1px solid #e5e2d8",
+                        fontSize: 12,
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#54734e"
+                      strokeWidth={2.5}
+                      fill="url(#sales-gradient)"
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -531,7 +547,10 @@ function Dashboard({
                   </summary>
                   <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
                     {data.trend.map(item => (
-                      <li key={item.label} className="flex justify-between gap-3">
+                      <li
+                        key={item.label}
+                        className="flex justify-between gap-3"
+                      >
                         <span>{item.label}</span>
                         <span className="font-semibold">
                           {currencyFormat(item.value, currency)}
@@ -754,10 +773,12 @@ function Pos({
   shopId,
   currency,
   shopName,
+  shopLogoUrl,
 }: {
   shopId: string;
   currency: string;
   shopName: string;
+  shopLogoUrl?: string | null;
 }) {
   const products = trpc.catalog.products.list.useQuery({ shopId });
   const variants = trpc.catalog.variants.list.useQuery({ shopId });
@@ -977,6 +998,7 @@ function Pos({
   const openReceipt = (saleNumber: string, pendingSync = false) =>
     setReceipt({
       shopName,
+      logoUrl: shopLogoUrl,
       saleNumber,
       currency: paymentCurrency,
       soldAt: new Date(),
@@ -1071,7 +1093,8 @@ function Pos({
             <div>
               <p className="font-serif text-xl">Catalogue disponible</p>
               <p className="mt-1 text-xs text-[#85877f]">
-                Touchez un article, scannez ou saisissez son code-barres. Sur ordinateur, F2 ouvre le scanner.
+                Touchez un article, scannez ou saisissez son code-barres. Sur
+                ordinateur, F2 ouvre le scanner.
               </p>
             </div>
             <PosCatalogSearch
@@ -1881,7 +1904,13 @@ function Sales({ shopId, currency }: { shopId: string; currency: string }) {
   );
 }
 
-export function Reports({ shopId, currency }: { shopId: string; currency: string }) {
+export function Reports({
+  shopId,
+  currency,
+}: {
+  shopId: string;
+  currency: string;
+}) {
   const toInputDate = (value: Date) => value.toISOString().slice(0, 10);
   const weekStart = () => {
     const value = new Date();
@@ -1891,19 +1920,47 @@ export function Reports({ shopId, currency }: { shopId: string; currency: string
   const [from, setFrom] = useState(weekStart);
   const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
   const [granularity, setGranularity] = useState<"day" | "week">("day");
-  const reportInput = useMemo(() => ({ shopId, from: new Date(`${from}T00:00:00`), to: new Date(`${to}T23:59:59`), granularity }), [shopId, from, to, granularity]);
+  const reportInput = useMemo(
+    () => ({
+      shopId,
+      from: new Date(`${from}T00:00:00`),
+      to: new Date(`${to}T23:59:59`),
+      granularity,
+    }),
+    [shopId, from, to, granularity]
+  );
   const report = trpc.insights.report.useQuery(reportInput);
   const data = report.data;
   const applyPreset = (kind: "today" | "week" | "month") => {
     const end = new Date();
     if (kind === "today") {
-      const date = toInputDate(end); setFrom(date); setTo(date); setGranularity("day"); return;
+      const date = toInputDate(end);
+      setFrom(date);
+      setTo(date);
+      setGranularity("day");
+      return;
     }
-    if (kind === "week") { setFrom(weekStart()); setTo(toInputDate(end)); setGranularity("day"); return; }
-    const start = new Date(); start.setDate(start.getDate() - 27); setFrom(toInputDate(start)); setTo(toInputDate(end)); setGranularity("week");
+    if (kind === "week") {
+      setFrom(weekStart());
+      setTo(toInputDate(end));
+      setGranularity("day");
+      return;
+    }
+    const start = new Date();
+    start.setDate(start.getDate() - 27);
+    setFrom(toInputDate(start));
+    setTo(toInputDate(end));
+    setGranularity("week");
   };
-  if (report.isLoading) return <LoadingBlock label="Préparation de vos indicateurs…" />;
-  if (report.isError) return <RecoveryBlock message="Les rapports n’ont pas pu être chargés." onRetry={() => report.refetch()} />;
+  if (report.isLoading)
+    return <LoadingBlock label="Préparation de vos indicateurs…" />;
+  if (report.isError)
+    return (
+      <RecoveryBlock
+        message="Les rapports n’ont pas pu être chargés."
+        onRetry={() => report.refetch()}
+      />
+    );
   return (
     <div className="space-y-6">
       <Card className="border-0 bg-[#edf1e3] shadow-[0_12px_30px_rgba(43,47,38,0.04)]">
@@ -1911,28 +1968,78 @@ export function Reports({ shopId, currency }: { shopId: string; currency: string
           <div>
             <p className="font-serif text-xl">Pilotez selon votre besoin</p>
             <p className="mt-1 text-xs text-[#85877f]">
-              Consultez une journée, une semaine ou l’évolution des dernières semaines.
+              Consultez une journée, une semaine ou l’évolution des dernières
+              semaines.
             </p>
           </div>
           <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-            <div className="flex flex-wrap gap-2" aria-label="Raccourcis de période">
-              <Button type="button" size="sm" variant="outline" onClick={() => applyPreset("today")}>Aujourd’hui</Button>
-              <Button type="button" size="sm" variant="outline" onClick={() => applyPreset("week")}>Cette semaine</Button>
-              <Button type="button" size="sm" variant="outline" onClick={() => applyPreset("month")}>4 semaines</Button>
+            <div
+              className="flex flex-wrap gap-2"
+              aria-label="Raccourcis de période"
+            >
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => applyPreset("today")}
+              >
+                Aujourd’hui
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => applyPreset("week")}
+              >
+                Cette semaine
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => applyPreset("month")}
+              >
+                4 semaines
+              </Button>
             </div>
             <div className="flex flex-wrap gap-3">
               <label className="grid min-w-[8.5rem] flex-1 gap-1 text-xs font-semibold text-[#687267]">
                 Du
-                <Input type="date" value={from} onChange={event => setFrom(event.target.value)} />
+                <Input
+                  type="date"
+                  value={from}
+                  onChange={event => setFrom(event.target.value)}
+                />
               </label>
               <label className="grid min-w-[8.5rem] flex-1 gap-1 text-xs font-semibold text-[#687267]">
                 Au
-                <Input type="date" value={to} onChange={event => setTo(event.target.value)} />
+                <Input
+                  type="date"
+                  value={to}
+                  onChange={event => setTo(event.target.value)}
+                />
               </label>
               <fieldset className="grid gap-1">
-                <legend className="text-xs font-semibold text-[#687267]">Vue historique</legend>
+                <legend className="text-xs font-semibold text-[#687267]">
+                  Vue historique
+                </legend>
                 <div className="flex rounded-xl border border-[#d7ddca] bg-white p-1">
-                  {(["day", "week"] as const).map(value => <Button key={value} type="button" size="sm" variant={granularity === value ? "default" : "ghost"} className={cn("h-8 px-3", granularity === value && "bg-[#405a3e] hover:bg-[#405a3e]")} onClick={() => setGranularity(value)}>{value === "day" ? "Jour" : "Semaine"}</Button>)}
+                  {(["day", "week"] as const).map(value => (
+                    <Button
+                      key={value}
+                      type="button"
+                      size="sm"
+                      variant={granularity === value ? "default" : "ghost"}
+                      className={cn(
+                        "h-8 px-3",
+                        granularity === value &&
+                          "bg-[#405a3e] hover:bg-[#405a3e]"
+                      )}
+                      onClick={() => setGranularity(value)}
+                    >
+                      {value === "day" ? "Jour" : "Semaine"}
+                    </Button>
+                  ))}
                 </div>
               </fieldset>
             </div>
@@ -1940,46 +2047,273 @@ export function Reports({ shopId, currency }: { shopId: string; currency: string
         </CardContent>
       </Card>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <ReportMetric label="Chiffre d’affaires" value={currencyFormat(data?.turnover ?? 0, currency)} detail={`${data?.saleCount ?? 0} vente${(data?.saleCount ?? 0) > 1 ? "s" : ""} enregistrée${(data?.saleCount ?? 0) > 1 ? "s" : ""}`} change={data?.changes.turnover ?? null} />
-        <ReportMetric label="Résultat d’activité" value={currencyFormat(data?.operatingResult ?? 0, currency)} detail="Marge brute moins dépenses" change={data?.changes.operatingResult ?? null} />
-        <ReportMetric label="Dépenses" value={currencyFormat(data?.expenses ?? 0, currency)} detail={`${data?.expenseCount ?? 0} sortie${(data?.expenseCount ?? 0) > 1 ? "s" : ""} enregistrée${(data?.expenseCount ?? 0) > 1 ? "s" : ""}`} change={data?.changes.expenses ?? null} inverseTone />
-        <ReportMetric label="Ticket moyen" value={currencyFormat(data?.averageTicket ?? 0, currency)} detail={`${currencyFormat(data?.creditAmount ?? 0, currency)} de créances créées`} />
+        <ReportMetric
+          label="Chiffre d’affaires"
+          value={currencyFormat(data?.turnover ?? 0, currency)}
+          detail={`${data?.saleCount ?? 0} vente${(data?.saleCount ?? 0) > 1 ? "s" : ""} enregistrée${(data?.saleCount ?? 0) > 1 ? "s" : ""}`}
+          change={data?.changes.turnover ?? null}
+        />
+        <ReportMetric
+          label="Résultat d’activité"
+          value={currencyFormat(data?.operatingResult ?? 0, currency)}
+          detail="Marge brute moins dépenses"
+          change={data?.changes.operatingResult ?? null}
+        />
+        <ReportMetric
+          label="Dépenses"
+          value={currencyFormat(data?.expenses ?? 0, currency)}
+          detail={`${data?.expenseCount ?? 0} sortie${(data?.expenseCount ?? 0) > 1 ? "s" : ""} enregistrée${(data?.expenseCount ?? 0) > 1 ? "s" : ""}`}
+          change={data?.changes.expenses ?? null}
+          inverseTone
+        />
+        <ReportMetric
+          label="Ticket moyen"
+          value={currencyFormat(data?.averageTicket ?? 0, currency)}
+          detail={`${currencyFormat(data?.creditAmount ?? 0, currency)} de créances créées`}
+        />
       </div>
       <Card className="border-0 bg-white shadow-[0_12px_30px_rgba(43,47,38,0.05)]">
         <CardContent className="p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
-            <div><p className="font-serif text-xl">Évolution de l’activité</p><p className="mt-1 text-xs text-[#85877f]">Ventes et dépenses par {granularity === "day" ? "jour" : "semaine"}.</p></div>
-            <div className="flex gap-3 text-xs font-semibold text-[#687267]"><span className="flex items-center gap-1.5"><i className="size-2 rounded-full bg-[#54734e]" />Ventes</span><span className="flex items-center gap-1.5"><i className="size-2 rounded-full bg-[#c4873c]" />Dépenses</span></div>
+            <div>
+              <p className="font-serif text-xl">Évolution de l’activité</p>
+              <p className="mt-1 text-xs text-[#85877f]">
+                Ventes et dépenses par{" "}
+                {granularity === "day" ? "jour" : "semaine"}.
+              </p>
+            </div>
+            <div className="flex gap-3 text-xs font-semibold text-[#687267]">
+              <span className="flex items-center gap-1.5">
+                <i className="size-2 rounded-full bg-[#54734e]" />
+                Ventes
+              </span>
+              <span className="flex items-center gap-1.5">
+                <i className="size-2 rounded-full bg-[#c4873c]" />
+                Dépenses
+              </span>
+            </div>
           </div>
           <figure className="mt-5">
-            <div className="h-64" role="img" aria-label={`Évolution des ventes et dépenses par ${granularity === "day" ? "jour" : "semaine"}. Consultez le résumé et le détail sous le graphique.`}>
-              <ResponsiveContainer width="100%" height="100%"><AreaChart data={data?.timeline ?? []}><defs><linearGradient id="report-sales-gradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#8faa74" stopOpacity={0.38} /><stop offset="100%" stopColor="#8faa74" stopOpacity={0} /></linearGradient><linearGradient id="report-expenses-gradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#d9a65c" stopOpacity={0.24} /><stop offset="100%" stopColor="#d9a65c" stopOpacity={0} /></linearGradient></defs><XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: "#8c8d83", fontSize: 11 }} /><YAxis hide /><Tooltip formatter={(value, name) => [currencyFormat(Number(value), currency), name === "turnover" ? "Ventes" : "Dépenses"]} contentStyle={{ borderRadius: 14, border: "1px solid #e5e2d8", fontSize: 12 }} /><Area type="monotone" dataKey="turnover" stroke="#54734e" strokeWidth={2.5} fill="url(#report-sales-gradient)" /><Area type="monotone" dataKey="expenses" stroke="#c4873c" strokeWidth={2} fill="url(#report-expenses-gradient)" /></AreaChart></ResponsiveContainer>
+            <div
+              className="h-64"
+              role="img"
+              aria-label={`Évolution des ventes et dépenses par ${granularity === "day" ? "jour" : "semaine"}. Consultez le résumé et le détail sous le graphique.`}
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data?.timeline ?? []}>
+                  <defs>
+                    <linearGradient
+                      id="report-sales-gradient"
+                      x1="0"
+                      x2="0"
+                      y1="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="0%"
+                        stopColor="#8faa74"
+                        stopOpacity={0.38}
+                      />
+                      <stop offset="100%" stopColor="#8faa74" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient
+                      id="report-expenses-gradient"
+                      x1="0"
+                      x2="0"
+                      y1="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="0%"
+                        stopColor="#d9a65c"
+                        stopOpacity={0.24}
+                      />
+                      <stop offset="100%" stopColor="#d9a65c" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis
+                    dataKey="label"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: "#8c8d83", fontSize: 11 }}
+                  />
+                  <YAxis hide />
+                  <Tooltip
+                    formatter={(value, name) => [
+                      currencyFormat(Number(value), currency),
+                      name === "turnover" ? "Ventes" : "Dépenses",
+                    ]}
+                    contentStyle={{
+                      borderRadius: 14,
+                      border: "1px solid #e5e2d8",
+                      fontSize: 12,
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="turnover"
+                    stroke="#54734e"
+                    strokeWidth={2.5}
+                    fill="url(#report-sales-gradient)"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="expenses"
+                    stroke="#c4873c"
+                    strokeWidth={2}
+                    fill="url(#report-expenses-gradient)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
-            <figcaption className="mt-3 rounded-xl bg-[#f7f8f3] px-3 py-2 text-xs leading-relaxed text-[#5f665d]">{currencyFormat(data?.turnover ?? 0, currency)} de ventes et {currencyFormat(data?.expenses ?? 0, currency)} de dépenses sur la période. La comparaison utilise la période précédente de même durée.</figcaption>
-            {data?.timeline.length ? <details className="mt-2 rounded-xl border border-[#e4e8de] bg-white px-3 py-2 text-xs text-[#4e5b4c]"><summary className="cursor-pointer font-semibold">Consulter le détail de l’évolution</summary><ul className="mt-2 grid gap-1.5 sm:grid-cols-2">{data.timeline.map(item => <li key={item.startAt.toISOString()} className="flex justify-between gap-3"><span>{item.label}</span><span className="text-right font-semibold tabular-nums">{currencyFormat(item.turnover, currency)} · {currencyFormat(item.expenses, currency)}</span></li>)}</ul></details> : null}
+            <figcaption className="mt-3 rounded-xl bg-[#f7f8f3] px-3 py-2 text-xs leading-relaxed text-[#5f665d]">
+              {currencyFormat(data?.turnover ?? 0, currency)} de ventes et{" "}
+              {currencyFormat(data?.expenses ?? 0, currency)} de dépenses sur la
+              période. La comparaison utilise la période précédente de même
+              durée.
+            </figcaption>
+            {data?.timeline.length ? (
+              <details className="mt-2 rounded-xl border border-[#e4e8de] bg-white px-3 py-2 text-xs text-[#4e5b4c]">
+                <summary className="cursor-pointer font-semibold">
+                  Consulter le détail de l’évolution
+                </summary>
+                <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
+                  {data.timeline.map(item => (
+                    <li
+                      key={item.startAt.toISOString()}
+                      className="flex justify-between gap-3"
+                    >
+                      <span>{item.label}</span>
+                      <span className="text-right font-semibold tabular-nums">
+                        {currencyFormat(item.turnover, currency)} ·{" "}
+                        {currencyFormat(item.expenses, currency)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            ) : null}
           </figure>
         </CardContent>
       </Card>
       <div className="grid gap-6 xl:grid-cols-2">
-        <Card className="border-0 bg-white shadow-[0_12px_30px_rgba(43,47,38,0.05)]"><CardContent className="p-6"><p className="font-serif text-xl">Produits les plus vendus</p><div className="mt-5 space-y-3">{data?.topProducts.map((item, index) => <div key={item.name} className="flex items-center justify-between rounded-xl bg-[#f7f6f1] px-4 py-3"><div className="flex min-w-0 items-center gap-3"><span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#dbe8bc] text-xs font-bold">{index + 1}</span><div className="min-w-0"><p className="truncate font-medium">{item.name}</p><p className="text-xs text-[#85877f]">{item.quantity} unité(s)</p></div></div><p className="shrink-0 font-semibold tabular-nums">{currencyFormat(item.revenue, currency)}</p></div>)}{!data?.topProducts.length && <p className="py-10 text-center text-sm text-[#85877f]">Aucune vente sur cette période.</p>}</div></CardContent></Card>
-        <Card className="border-0 bg-white shadow-[0_12px_30px_rgba(43,47,38,0.05)]"><CardContent className="p-6"><p className="font-serif text-xl">Dépenses par catégorie</p><p className="mt-1 text-xs text-[#85877f]">Repérez les postes qui pèsent le plus sur l’activité.</p><div className="mt-5 space-y-3">{data?.expenseCategories.map(item => <div key={item.category} className="flex items-center justify-between rounded-xl bg-[#fff9ef] px-4 py-3"><p className="font-medium">{item.category}</p><p className="font-semibold tabular-nums text-[#8c5c20]">{currencyFormat(item.amount, currency)}</p></div>)}{!data?.expenseCategories.length && <p className="py-10 text-center text-sm text-[#85877f]">Aucune dépense sur cette période.</p>}</div></CardContent></Card>
+        <Card className="border-0 bg-white shadow-[0_12px_30px_rgba(43,47,38,0.05)]">
+          <CardContent className="p-6">
+            <p className="font-serif text-xl">Produits les plus vendus</p>
+            <div className="mt-5 space-y-3">
+              {data?.topProducts.map((item, index) => (
+                <div
+                  key={item.name}
+                  className="flex items-center justify-between rounded-xl bg-[#f7f6f1] px-4 py-3"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#dbe8bc] text-xs font-bold">
+                      {index + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{item.name}</p>
+                      <p className="text-xs text-[#85877f]">
+                        {item.quantity} unité(s)
+                      </p>
+                    </div>
+                  </div>
+                  <p className="shrink-0 font-semibold tabular-nums">
+                    {currencyFormat(item.revenue, currency)}
+                  </p>
+                </div>
+              ))}
+              {!data?.topProducts.length && (
+                <p className="py-10 text-center text-sm text-[#85877f]">
+                  Aucune vente sur cette période.
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-0 bg-white shadow-[0_12px_30px_rgba(43,47,38,0.05)]">
+          <CardContent className="p-6">
+            <p className="font-serif text-xl">Dépenses par catégorie</p>
+            <p className="mt-1 text-xs text-[#85877f]">
+              Repérez les postes qui pèsent le plus sur l’activité.
+            </p>
+            <div className="mt-5 space-y-3">
+              {data?.expenseCategories.map(item => (
+                <div
+                  key={item.category}
+                  className="flex items-center justify-between rounded-xl bg-[#fff9ef] px-4 py-3"
+                >
+                  <p className="font-medium">{item.category}</p>
+                  <p className="font-semibold tabular-nums text-[#8c5c20]">
+                    {currencyFormat(item.amount, currency)}
+                  </p>
+                </div>
+              ))}
+              {!data?.expenseCategories.length && (
+                <p className="py-10 text-center text-sm text-[#85877f]">
+                  Aucune dépense sur cette période.
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
 }
 
-function ReportMetric({ label, value, detail, change, inverseTone = false }: { label: string; value: string; detail: string; change?: number | null; inverseTone?: boolean }) {
+function ReportMetric({
+  label,
+  value,
+  detail,
+  change,
+  inverseTone = false,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  change?: number | null;
+  inverseTone?: boolean;
+}) {
   const isPositive = (change ?? 0) > 0;
   const isNegative = (change ?? 0) < 0;
   const beneficial = inverseTone ? isNegative : isPositive;
-  const labelChange = change === null || change === undefined ? "Pas de comparaison sur la période précédente" : `${change > 0 ? "+" : ""}${change.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} % vs période précédente`;
+  const labelChange =
+    change === null || change === undefined
+      ? "Pas de comparaison sur la période précédente"
+      : `${change > 0 ? "+" : ""}${change.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} % vs période précédente`;
   return (
     <Card className="border-0 bg-white shadow-[0_12px_30px_rgba(43,47,38,0.05)]">
       <CardContent className="p-5">
         <p className="text-xs font-semibold text-[#85877f]">{label}</p>
-        <p className="mt-3 text-2xl font-semibold tracking-tight tabular-nums">{value}</p>
+        <p className="mt-3 text-2xl font-semibold tracking-tight tabular-nums">
+          {value}
+        </p>
         <p className="mt-2 text-xs text-[#72786d]">{detail}</p>
-        {change !== undefined && <p className={cn("mt-3 flex items-center gap-1.5 text-xs font-semibold", change === null ? "text-[#737b70]" : beneficial ? "text-[#3e6b42]" : isNegative || isPositive ? "text-[#a05c3f]" : "text-[#737b70]")}>{change === null ? <Minus className="size-3" /> : isPositive ? <TrendingUp className="size-3" /> : isNegative ? <ArrowDown className="size-3" /> : <Minus className="size-3" />}{labelChange}</p>}
+        {change !== undefined && (
+          <p
+            className={cn(
+              "mt-3 flex items-center gap-1.5 text-xs font-semibold",
+              change === null
+                ? "text-[#737b70]"
+                : beneficial
+                  ? "text-[#3e6b42]"
+                  : isNegative || isPositive
+                    ? "text-[#a05c3f]"
+                    : "text-[#737b70]"
+            )}
+          >
+            {change === null ? (
+              <Minus className="size-3" />
+            ) : isPositive ? (
+              <TrendingUp className="size-3" />
+            ) : isNegative ? (
+              <ArrowDown className="size-3" />
+            ) : (
+              <Minus className="size-3" />
+            )}
+            {labelChange}
+          </p>
+        )}
       </CardContent>
     </Card>
   );
@@ -2051,19 +2385,46 @@ function RecoveryBlock({
 }
 function EmptyShop() {
   const [shopName, setShopName] = useState("");
-  const createShop = trpc.shops.create.useMutation({ onSuccess: () => window.location.reload() });
+  const createShop = trpc.shops.create.useMutation({
+    onSuccess: () => window.location.reload(),
+  });
   return (
     <div className="grid min-h-screen place-items-center bg-[#f7f5ee] p-6">
       <Card className="max-w-md border-0 bg-white">
         <CardContent className="p-8 text-center">
           <p className="font-serif text-2xl">Aucune boutique configurée</p>
-          <p className="mt-3 text-sm text-[#77776c]">Créez votre première boutique pour ouvrir la caisse et le catalogue.</p>
-          <form className="mt-6 grid gap-3 text-left" onSubmit={event => { event.preventDefault(); createShop.mutate({ name: shopName, currency: "XAF", country: "CMR" }); }}>
+          <p className="mt-3 text-sm text-[#77776c]">
+            Créez votre première boutique pour ouvrir la caisse et le catalogue.
+          </p>
+          <form
+            className="mt-6 grid gap-3 text-left"
+            onSubmit={event => {
+              event.preventDefault();
+              createShop.mutate({
+                name: shopName,
+                currency: "XAF",
+                country: "CMR",
+              });
+            }}
+          >
             <Label htmlFor="first-shop-name">Nom de la boutique</Label>
-            <Input id="first-shop-name" required minLength={2} value={shopName} onChange={event => setShopName(event.target.value)} placeholder="Épicerie du marché" />
-            <Button type="submit" disabled={createShop.isPending}>{createShop.isPending ? "Création…" : "Créer ma boutique"}</Button>
+            <Input
+              id="first-shop-name"
+              required
+              minLength={2}
+              value={shopName}
+              onChange={event => setShopName(event.target.value)}
+              placeholder="Épicerie du marché"
+            />
+            <Button type="submit" disabled={createShop.isPending}>
+              {createShop.isPending ? "Création…" : "Créer ma boutique"}
+            </Button>
           </form>
-          {createShop.error && <p className="mt-3 text-sm text-red-700" role="alert">La boutique ne peut pas être créée pour le moment.</p>}
+          {createShop.error && (
+            <p className="mt-3 text-sm text-red-700" role="alert">
+              La boutique ne peut pas être créée pour le moment.
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>

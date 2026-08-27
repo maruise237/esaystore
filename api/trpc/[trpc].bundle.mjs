@@ -160,6 +160,7 @@ var shops = pgTable("shops", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: varchar("name", { length: 180 }).notNull(),
   slug: varchar("slug", { length: 180 }).notNull().unique(),
+  logoUrl: varchar("logo_url", { length: 1024 }),
   currency: varchar("currency", { length: 8 }).default("XAF").notNull(),
   country: varchar("country", { length: 3 }).default("CMR").notNull(),
   isActive: boolean("is_active").default(true).notNull(),
@@ -419,7 +420,10 @@ var purchases = pgTable(
       table.shopId,
       table.operationId
     ),
-    index("purchases_shop_purchased_at_idx").on(table.shopId, table.purchasedAt)
+    index("purchases_shop_purchased_at_idx").on(
+      table.shopId,
+      table.purchasedAt
+    )
   ]
 );
 var purchaseItems = pgTable("purchase_items", {
@@ -633,6 +637,19 @@ var syncOperations = pgTable(
 import { neon } from "@neondatabase/serverless";
 import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-http";
+var authenticatedUserFields = {
+  id: users.id,
+  openId: users.openId,
+  email: users.email,
+  name: users.name,
+  passwordHash: users.passwordHash,
+  loginMethod: users.loginMethod,
+  role: users.role,
+  isActive: users.isActive,
+  createdAt: users.createdAt,
+  updatedAt: users.updatedAt,
+  lastSignedIn: users.lastSignedIn
+};
 var cachedDb = null;
 var cachedSql = null;
 function connectionString() {
@@ -657,11 +674,11 @@ async function rawRows(query, params = []) {
   return response.rows ?? [];
 }
 async function getUserById(id) {
-  const rows = await getDb().select().from(users).where(eq(users.id, id)).limit(1);
+  const rows = await getDb().select(authenticatedUserFields).from(users).where(eq(users.id, id)).limit(1);
   return rows[0];
 }
 async function getUserByEmail(email) {
-  const [user] = await getDb().select().from(users).where(eq(users.email, email.toLowerCase())).limit(1);
+  const [user] = await getDb().select(authenticatedUserFields).from(users).where(eq(users.email, email.toLowerCase())).limit(1);
   return user;
 }
 async function listUserShops(userId) {
@@ -2474,38 +2491,131 @@ function currencyForCountry(country) {
 var profileInput = z10.object({ shopId: z10.string().uuid() });
 var countryCode = z10.enum(configurableCountries);
 var phone = z10.string().regex(/^\+[1-9]\d{5,14}$/).nullable();
+var logoDataUrl = z10.string().max(3e6).nullable();
+function decodeLogo(dataUrl) {
+  const match = dataUrl.match(
+    /^data:(image\/(?:png|jpeg|webp));base64,([a-zA-Z0-9+/=]+)$/
+  );
+  if (!match)
+    throw new TRPCError10({
+      code: "BAD_REQUEST",
+      message: "Choisissez un logo PNG, JPEG ou WebP valide."
+    });
+  const bytes = Buffer.from(match[2], "base64");
+  if (bytes.length === 0 || bytes.length > 2 * 1024 * 1024)
+    throw new TRPCError10({
+      code: "PAYLOAD_TOO_LARGE",
+      message: "Le logo doit peser au maximum 2 Mo."
+    });
+  return {
+    bytes,
+    contentType: match[1],
+    extension: match[1] === "image/jpeg" ? "jpg" : match[1].slice("image/".length)
+  };
+}
 var profileRouter = router({
   settings: protectedProcedure.input(profileInput).query(async ({ ctx, input }) => {
     const membership = await assertShopAccess(ctx.user.id, input.shopId);
     const db = getDb();
     const [user] = await db.select({ name: users.name, email: users.email, phone: users.phone }).from(users).where(eq11(users.id, ctx.user.id)).limit(1);
-    const [shop] = await db.select({ id: shops.id, name: shops.name, country: shops.country, currency: shops.currency, updatedAt: shops.updatedAt }).from(shops).where(eq11(shops.id, input.shopId)).limit(1);
-    if (!user || !shop) throw new TRPCError10({ code: "NOT_FOUND", message: "Profil introuvable." });
+    const [shop] = await db.select({
+      id: shops.id,
+      name: shops.name,
+      logoUrl: shops.logoUrl,
+      country: shops.country,
+      currency: shops.currency,
+      updatedAt: shops.updatedAt
+    }).from(shops).where(eq11(shops.id, input.shopId)).limit(1);
+    if (!user || !shop)
+      throw new TRPCError10({
+        code: "NOT_FOUND",
+        message: "Profil introuvable."
+      });
     return { user, shop, canEditShopSettings: membership.role === "owner" };
   }),
-  update: protectedProcedure.input(profileInput.extend({ phone: phone.optional(), country: countryCode.optional(), name: z10.string().trim().min(2, "Le nom de la boutique doit contenir au moins 2 caract\xE8res.").max(120).optional() })).mutation(async ({ ctx, input }) => {
+  update: protectedProcedure.input(
+    profileInput.extend({
+      phone: phone.optional(),
+      country: countryCode.optional(),
+      name: z10.string().trim().min(2, "Le nom de la boutique doit contenir au moins 2 caract\xE8res.").max(120).optional(),
+      logoDataUrl: logoDataUrl.optional()
+    })
+  ).mutation(async ({ ctx, input }) => {
     const membership = await assertShopAccess(ctx.user.id, input.shopId);
     const db = getDb();
-    const [shop] = await db.select({ name: shops.name, currency: shops.currency, country: shops.country }).from(shops).where(eq11(shops.id, input.shopId)).limit(1);
-    if (!shop) throw new TRPCError10({ code: "NOT_FOUND", message: "Boutique introuvable." });
-    if ((input.country || input.name) && membership.role !== "owner") throw new TRPCError10({ code: "FORBIDDEN", message: "Seul le propri\xE9taire peut modifier le nom, le pays et la devise de r\xE9f\xE9rence." });
+    const [shop] = await db.select({
+      name: shops.name,
+      logoUrl: shops.logoUrl,
+      currency: shops.currency,
+      country: shops.country
+    }).from(shops).where(eq11(shops.id, input.shopId)).limit(1);
+    if (!shop)
+      throw new TRPCError10({
+        code: "NOT_FOUND",
+        message: "Boutique introuvable."
+      });
+    if ((input.country || input.name || input.logoDataUrl !== void 0) && membership.role !== "owner")
+      throw new TRPCError10({
+        code: "FORBIDDEN",
+        message: "Seul le propri\xE9taire peut modifier le nom, le logo, le pays et la devise de r\xE9f\xE9rence."
+      });
     const nextCurrency = input.country ? currencyForCountry(input.country) : shop.currency;
     if (input.country && nextCurrency !== shop.currency) {
       const [sale] = await db.select({ id: sales.id }).from(sales).where(eq11(sales.shopId, input.shopId)).limit(1);
       const [expense] = await db.select({ id: expenses.id }).from(expenses).where(eq11(expenses.shopId, input.shopId)).limit(1);
-      if (sale || expense) throw new TRPCError10({ code: "CONFLICT", message: "La devise de r\xE9f\xE9rence ne peut plus \xEAtre modifi\xE9e apr\xE8s une vente ou une d\xE9pense. Ajoutez plut\xF4t une devise dans \xAB Devises & taux \xBB." });
+      if (sale || expense)
+        throw new TRPCError10({
+          code: "CONFLICT",
+          message: "La devise de r\xE9f\xE9rence ne peut plus \xEAtre modifi\xE9e apr\xE8s une vente ou une d\xE9pense. Ajoutez plut\xF4t une devise dans \xAB Devises & taux \xBB."
+        });
     }
     const sql3 = getSql();
     const statements = [];
-    if (input.phone !== void 0) statements.push(sql3`UPDATE users SET phone = ${input.phone}, updated_at = NOW() WHERE id = ${ctx.user.id}`);
-    if (input.name) statements.push(sql3`UPDATE shops SET name = ${input.name}, updated_at = NOW() WHERE id = ${input.shopId}`);
+    let nextLogoUrl = shop.logoUrl;
+    if (input.logoDataUrl !== void 0) {
+      if (input.logoDataUrl === null) {
+        nextLogoUrl = null;
+      } else {
+        const logo = decodeLogo(input.logoDataUrl);
+        const stored = await storagePut(
+          `shops/${input.shopId}/branding/logo.${logo.extension}`,
+          logo.bytes,
+          logo.contentType
+        );
+        nextLogoUrl = stored.url;
+      }
+      statements.push(
+        sql3`UPDATE shops SET logo_url = ${nextLogoUrl}, updated_at = NOW() WHERE id = ${input.shopId}`
+      );
+    }
+    if (input.phone !== void 0)
+      statements.push(
+        sql3`UPDATE users SET phone = ${input.phone}, updated_at = NOW() WHERE id = ${ctx.user.id}`
+      );
+    if (input.name)
+      statements.push(
+        sql3`UPDATE shops SET name = ${input.name}, updated_at = NOW() WHERE id = ${input.shopId}`
+      );
     if (input.country) {
-      statements.push(sql3`UPDATE shops SET country = ${input.country}, currency = ${nextCurrency}, updated_at = NOW() WHERE id = ${input.shopId}`);
-      statements.push(sql3`INSERT INTO shop_currencies (shop_id, currency, label, is_active) VALUES (${input.shopId}, ${nextCurrency}, 'Devise de référence', true) ON CONFLICT (shop_id, currency) DO UPDATE SET is_active = true, label = 'Devise de référence', updated_at = NOW()`);
-      if (shop.currency !== nextCurrency) statements.push(sql3`UPDATE shop_currencies SET is_active = true, label = 'Devise de transaction', updated_at = NOW() WHERE shop_id = ${input.shopId} AND currency = ${shop.currency}`);
+      statements.push(
+        sql3`UPDATE shops SET country = ${input.country}, currency = ${nextCurrency}, updated_at = NOW() WHERE id = ${input.shopId}`
+      );
+      statements.push(
+        sql3`INSERT INTO shop_currencies (shop_id, currency, label, is_active) VALUES (${input.shopId}, ${nextCurrency}, 'Devise de référence', true) ON CONFLICT (shop_id, currency) DO UPDATE SET is_active = true, label = 'Devise de référence', updated_at = NOW()`
+      );
+      if (shop.currency !== nextCurrency)
+        statements.push(
+          sql3`UPDATE shop_currencies SET is_active = true, label = 'Devise de transaction', updated_at = NOW() WHERE shop_id = ${input.shopId} AND currency = ${shop.currency}`
+        );
     }
     if (statements.length) await sql3.transaction(statements);
-    return { name: input.name ?? shop.name, phone: input.phone, country: input.country ?? shop.country, currency: nextCurrency };
+    return {
+      name: input.name ?? shop.name,
+      logoUrl: nextLogoUrl,
+      phone: input.phone,
+      country: input.country ?? shop.country,
+      currency: nextCurrency
+    };
   })
 });
 
@@ -2523,27 +2633,49 @@ var appRouter = router({
   profile: profileRouter,
   shops: router({
     list: protectedProcedure.query(({ ctx }) => listUserShops(ctx.user.id)),
-    create: protectedProcedure.input(z11.object({ name: z11.string().trim().min(2).max(180), currency: z11.enum(["XAF", "XOF", "NGN"]).default("XAF"), country: z11.string().trim().length(3).default("CMR"), phone: z11.string().regex(/^\+[1-9]\d{5,14}$/).optional() })).mutation(async ({ ctx, input }) => {
+    create: protectedProcedure.input(
+      z11.object({
+        name: z11.string().trim().min(2).max(180),
+        currency: z11.enum(["XAF", "XOF", "NGN"]).default("XAF"),
+        country: z11.string().trim().length(3).default("CMR")
+      })
+    ).mutation(async ({ ctx, input }) => {
       const shopId = crypto.randomUUID();
       const sql3 = getSql();
       await sql3.transaction([
         sql3`INSERT INTO shops (id, name, slug, currency, country, created_by) VALUES (${shopId}, ${input.name}, ${makeShopSlug(input.name)}, ${input.currency}, ${input.country.toUpperCase()}, ${ctx.user.id})`,
         sql3`INSERT INTO shop_members (shop_id, user_id, role) VALUES (${shopId}, ${ctx.user.id}, 'owner')`,
-        sql3`INSERT INTO shop_currencies (shop_id, currency, label, is_active) VALUES (${shopId}, ${input.currency}, 'Devise de référence', true)`,
-        sql3`UPDATE users SET phone = ${input.phone ?? null}, updated_at = NOW() WHERE id = ${ctx.user.id}`
+        sql3`INSERT INTO shop_currencies (shop_id, currency, label, is_active) VALUES (${shopId}, ${input.currency}, 'Devise de référence', true)`
       ]);
       return (await getDb().select().from(shops).where(eq12(shops.id, shopId)).limit(1))[0];
     }),
     memberRole: protectedProcedure.input(z11.object({ shopId: z11.string().uuid() })).query(({ ctx, input }) => assertShopAccess(ctx.user.id, input.shopId)),
     members: protectedProcedure.input(z11.object({ shopId: z11.string().uuid() })).query(async ({ ctx, input }) => {
       await assertShopAccess(ctx.user.id, input.shopId, ["owner", "manager"]);
-      return getDb().select({ id: users.id, name: users.name, email: users.email, role: shopMembers.role }).from(shopMembers).innerJoin(users, eq12(shopMembers.userId, users.id)).where(eq12(shopMembers.shopId, input.shopId));
+      return getDb().select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        role: shopMembers.role
+      }).from(shopMembers).innerJoin(users, eq12(shopMembers.userId, users.id)).where(eq12(shopMembers.shopId, input.shopId));
     }),
-    addMember: protectedProcedure.input(z11.object({ shopId: z11.string().uuid(), email: z11.string().email(), role: z11.enum(["manager", "seller"]) })).mutation(async ({ ctx, input }) => {
+    addMember: protectedProcedure.input(
+      z11.object({
+        shopId: z11.string().uuid(),
+        email: z11.string().email(),
+        role: z11.enum(["manager", "seller"])
+      })
+    ).mutation(async ({ ctx, input }) => {
       await assertShopAccess(ctx.user.id, input.shopId, ["owner"]);
       const member = await getUserByEmail(input.email);
-      if (!member) throw new Error("Ce collaborateur doit cr\xE9er son compte EASYSTOR avant d\u2019\xEAtre ajout\xE9.");
-      await getDb().insert(shopMembers).values({ shopId: input.shopId, userId: member.id, role: input.role }).onConflictDoUpdate({ target: [shopMembers.shopId, shopMembers.userId], set: { role: input.role } });
+      if (!member)
+        throw new Error(
+          "Ce collaborateur doit cr\xE9er son compte EASYSTOR avant d\u2019\xEAtre ajout\xE9."
+        );
+      await getDb().insert(shopMembers).values({ shopId: input.shopId, userId: member.id, role: input.role }).onConflictDoUpdate({
+        target: [shopMembers.shopId, shopMembers.userId],
+        set: { role: input.role }
+      });
       return { id: member.id, email: member.email, role: input.role };
     })
   })

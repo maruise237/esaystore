@@ -132,6 +132,7 @@ export const shops = pgTable("shops", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: varchar("name", { length: 180 }).notNull(),
   slug: varchar("slug", { length: 180 }).notNull().unique(),
+  logoUrl: varchar("logo_url", { length: 1024 }),
   currency: varchar("currency", { length: 8 }).default("XAF").notNull(),
   country: varchar("country", { length: 3 }).default("CMR").notNull(),
   isActive: boolean("is_active").default(true).notNull(),
@@ -490,7 +491,10 @@ export const purchases = pgTable(
       table.shopId,
       table.operationId
     ),
-    index("purchases_shop_purchased_at_idx").on(table.shopId, table.purchasedAt),
+    index("purchases_shop_purchased_at_idx").on(
+      table.shopId,
+      table.purchasedAt
+    ),
   ]
 );
 
