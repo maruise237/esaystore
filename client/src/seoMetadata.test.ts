@@ -8,6 +8,10 @@ const sitemap = readFileSync(new URL("../public/sitemap.xml", import.meta.url), 
 describe("fondations SEO et GEO", () => {
   it("déclare une métadonnée française, un canonical et des aperçus sociaux cohérents", () => {
     expect(indexHtml).toContain('lang="fr"');
+    expect(indexHtml).toContain('content="width=device-width, initial-scale=1.0"');
+    expect(indexHtml).not.toContain("maximum-scale=1");
+    expect(indexHtml).toContain('name="theme-color" content="#232ac3"');
+    expect(indexHtml).toContain("Reprenez vos données Excel ou Google Sheets");
     expect(indexHtml).toContain('rel="canonical" href="https://esaystor.kamtech.online/"');
     expect(indexHtml).toContain('property="og:type" content="website"');
     expect(indexHtml).toContain('name="twitter:card" content="summary"');
