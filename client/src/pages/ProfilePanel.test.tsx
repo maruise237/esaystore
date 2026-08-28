@@ -16,6 +16,7 @@ const { mutateAsync, invalidate, settingsData } = vi.hoisted(() => ({
       logoUrl: null,
       address: null,
       contactPhone: null,
+      receiptNote: null,
       country: "CMR",
       currency: "XAF",
       updatedAt: new Date("2026-08-27T10:30:00.000Z"),
@@ -126,6 +127,26 @@ describe("réglages de profil", () => {
       shopId: "7d2e8dcf-3502-484f-85c1-a4b252930ca1",
       address: "Marché central, face à la pharmacie",
       contactPhone: "+237699123456",
+    });
+  });
+
+  it("enregistre une note personnalisée pour les prochains reçus", async () => {
+    render(
+      <main>
+        <ProfilePanel shopId="7d2e8dcf-3502-484f-85c1-a4b252930ca1" />
+      </main>
+    );
+    fireEvent.change(await screen.findByLabelText("Note de bas de reçu"), {
+      target: { value: "Merci de votre fidélité." },
+    });
+    fireEvent.submit(
+      screen
+        .getByRole("button", { name: "Enregistrer les réglages" })
+        .closest("form")!
+    );
+    expect(mutateAsync).toHaveBeenCalledWith({
+      shopId: "7d2e8dcf-3502-484f-85c1-a4b252930ca1",
+      receiptNote: "Merci de votre fidélité.",
     });
   });
 

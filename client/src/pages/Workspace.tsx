@@ -282,6 +282,7 @@ export default function Workspace() {
             shopLogoUrl={activeShop.shop.logoUrl}
             shopAddress={activeShop.shop.address}
             shopContactPhone={activeShop.shop.contactPhone}
+            shopReceiptNote={activeShop.shop.receiptNote}
           />
         )}
         {active === "products" && (
@@ -778,6 +779,7 @@ function Pos({
   shopLogoUrl,
   shopAddress,
   shopContactPhone,
+  shopReceiptNote,
 }: {
   shopId: string;
   currency: string;
@@ -785,6 +787,7 @@ function Pos({
   shopLogoUrl?: string | null;
   shopAddress?: string | null;
   shopContactPhone?: string | null;
+  shopReceiptNote?: string | null;
 }) {
   const products = trpc.catalog.products.list.useQuery({ shopId });
   const variants = trpc.catalog.variants.list.useQuery({ shopId });
@@ -1011,6 +1014,7 @@ function Pos({
       logoUrl: shopLogoUrl,
       shopAddress,
       shopContactPhone,
+      shopReceiptNote,
       saleNumber,
       currency: paymentCurrency,
       soldAt: new Date(),

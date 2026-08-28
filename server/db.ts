@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-http";
 import * as schema from "../drizzle/schema";
 import { type InsertUser, shopMembers, shops, users } from "../drizzle/schema";
@@ -34,6 +34,25 @@ export const shopFieldsWithoutLogo = {
 };
 
 type CompatibleShop = typeof shops.$inferSelect;
+
+async function compatibleShopFields() {
+  const [hasLogo, hasAddress, hasContactPhone, hasReceiptNote] =
+    await Promise.all([
+      hasOptionalColumn("shops", "logo_url"),
+      hasOptionalColumn("shops", "address"),
+      hasOptionalColumn("shops", "contact_phone"),
+      hasOptionalColumn("shops", "receipt_note"),
+    ]);
+  return {
+    ...shopFieldsWithoutLogo,
+    logoUrl: hasLogo ? shops.logoUrl : sql<string | null>`NULL`,
+    address: hasAddress ? shops.address : sql<string | null>`NULL`,
+    contactPhone: hasContactPhone
+      ? shops.contactPhone
+      : sql<string | null>`NULL`,
+    receiptNote: hasReceiptNote ? shops.receiptNote : sql<string | null>`NULL`,
+  };
+}
 
 export type AuthenticatedUser = {
   id: string;
@@ -86,7 +105,12 @@ export async function rawRows<T extends Record<string, unknown>>(
 
 export function hasOptionalColumn(
   tableName: "shops" | "users",
-  columnName: "logo_url" | "address" | "contact_phone" | "phone"
+  columnName:
+    | "logo_url"
+    | "address"
+    | "contact_phone"
+    | "receipt_note"
+    | "phone"
 ) {
   const key = `${tableName}.${columnName}`;
   const cached = optionalColumnAvailability.get(key);
@@ -104,26 +128,10 @@ export async function getShopById(
   shopId: string
 ): Promise<CompatibleShop | undefined> {
   const db = getDb();
-  const supportsOptionalDetails = await Promise.all([
-    hasOptionalColumn("shops", "logo_url"),
-    hasOptionalColumn("shops", "address"),
-    hasOptionalColumn("shops", "contact_phone"),
-  ]);
-  if (supportsOptionalDetails.every(Boolean)) {
-    return (
-      await db.select().from(shops).where(eq(shops.id, shopId)).limit(1)
-    )[0];
-  }
-  const row = (
-    await db
-      .select(shopFieldsWithoutLogo)
-      .from(shops)
-      .where(eq(shops.id, shopId))
-      .limit(1)
-  )[0];
-  return row
-    ? { ...row, logoUrl: null, address: null, contactPhone: null }
-    : undefined;
+  const fields = await compatibleShopFields();
+  return (
+    await db.select(fields).from(shops).where(eq(shops.id, shopId)).limit(1)
+  )[0] as CompatibleShop | undefined;
 }
 
 export async function upsertUser(user: InsertUser): Promise<void> {
@@ -172,32 +180,12 @@ export async function getUserByEmail(email: string) {
 
 export async function listUserShops(userId: string) {
   const db = getDb();
-  const supportsOptionalDetails = await Promise.all([
-    hasOptionalColumn("shops", "logo_url"),
-    hasOptionalColumn("shops", "address"),
-    hasOptionalColumn("shops", "contact_phone"),
-  ]);
-  if (supportsOptionalDetails.every(Boolean)) {
-    return db
-      .select({ shop: shops, role: shopMembers.role })
-      .from(shopMembers)
-      .innerJoin(shops, eq(shopMembers.shopId, shops.id))
-      .where(eq(shopMembers.userId, userId));
-  }
-  const rows = await db
-    .select({ shop: shopFieldsWithoutLogo, role: shopMembers.role })
+  const fields = await compatibleShopFields();
+  return db
+    .select({ shop: fields, role: shopMembers.role })
     .from(shopMembers)
     .innerJoin(shops, eq(shopMembers.shopId, shops.id))
     .where(eq(shopMembers.userId, userId));
-  return rows.map(row => ({
-    shop: {
-      ...row.shop,
-      logoUrl: null,
-      address: null,
-      contactPhone: null,
-    },
-    role: row.role,
-  }));
 }
 
 export async function getMembership(userId: string, shopId: string) {

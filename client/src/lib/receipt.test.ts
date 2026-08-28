@@ -16,6 +16,7 @@ describe("reçu de vente", () => {
         "/manus-storage/shops/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee/branding/logo_a1b2c3d4.png",
       shopAddress: "Marché &lt; central",
       shopContactPhone: "+237 699 12 34 56",
+      shopReceiptNote: "Merci & à bientôt.",
       saleNumber: "V-001",
       currency: "XAF",
       soldAt: new Date("2026-08-24T10:00:00Z"),
@@ -36,6 +37,7 @@ describe("reçu de vente", () => {
     expect(html).toContain("brand-logo");
     expect(html).toContain("Marché &amp;lt; central");
     expect(html).toContain("+237 699 12 34 56");
+    expect(html).toContain("Merci &amp; à bientôt.");
     expect(html).toContain('class="paid-stamp">PAYÉ</span>');
   });
 

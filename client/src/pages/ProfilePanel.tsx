@@ -28,6 +28,7 @@ export default function ProfilePanel({ shopId }: { shopId: string }) {
   const [phone, setPhone] = useState("");
   const [shopAddress, setShopAddress] = useState("");
   const [shopContactPhone, setShopContactPhone] = useState("");
+  const [receiptNote, setReceiptNote] = useState("");
   const [country, setCountry] = useState("CMR");
   const [logoDraft, setLogoDraft] = useState<string | null | undefined>(
     undefined
@@ -57,6 +58,7 @@ export default function ProfilePanel({ shopId }: { shopId: string }) {
     setShopName(settings.data.shop.name);
     setCountry(settings.data.shop.country);
     setShopAddress(settings.data.shop.address ?? "");
+    setReceiptNote(settings.data.shop.receiptNote ?? "");
     setShopContactPhone(
       formatPhoneNumber(
         settings.data.shop.contactPhone ?? "",
@@ -91,6 +93,8 @@ export default function ProfilePanel({ shopId }: { shopId: string }) {
   const shopNameChanged = shopName.trim() !== settings.data.shop.name;
   const shopAddressChanged =
     shopAddress.trim() !== (settings.data.shop.address ?? "");
+  const receiptNoteChanged =
+    receiptNote.trim() !== (settings.data.shop.receiptNote ?? "");
   const shopContactPhoneChanged =
     normalizePhoneNumber(shopContactPhone, country) !==
     (settings.data.shop.contactPhone ?? undefined);
@@ -112,6 +116,7 @@ export default function ProfilePanel({ shopId }: { shopId: string }) {
           shopNameChanged ||
           shopAddressChanged ||
           shopContactPhoneChanged ||
+          receiptNoteChanged ||
           logoChanged)));
 
   const chooseLogo = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -158,6 +163,9 @@ export default function ProfilePanel({ shopId }: { shopId: string }) {
               normalizePhoneNumber(shopContactPhone, country) ?? null,
           }
         : {}),
+      ...(canEditShop && receiptNoteChanged
+        ? { receiptNote: receiptNote.trim() || null }
+        : {}),
       ...(canEditShop && countryChanged
         ? {
             country: country as
@@ -187,18 +195,18 @@ export default function ProfilePanel({ shopId }: { shopId: string }) {
     timeStyle: "short",
   }).format(new Date(settings.data.shop.updatedAt));
   return (
-    <div className="grid max-w-3xl gap-5">
+    <div className="grid max-w-4xl gap-5">
       <Card className="border-[#e4e1d7] bg-white">
-        <CardContent className="p-5 sm:p-7">
-          <div className="flex gap-3">
+        <CardContent className="p-4 sm:p-6 lg:p-8">
+          <div className="flex items-start gap-3 sm:gap-4">
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#eaf0df] text-[#3d5839]">
               <ShieldCheck className="h-5 w-5" />
             </span>
-            <div>
-              <h2 className="font-serif text-2xl tracking-tight">
+            <div className="min-w-0">
+              <h2 className="text-balance font-serif text-[clamp(1.5rem,5vw,2rem)] tracking-tight">
                 Profil & boutique
               </h2>
-              <p className="mt-1 text-sm leading-relaxed text-[#697466]">
+              <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[#697466]">
                 Gardez vos coordonnées et la configuration essentielle de votre
                 boutique à jour.
               </p>
@@ -207,10 +215,10 @@ export default function ProfilePanel({ shopId }: { shopId: string }) {
               </p>
             </div>
           </div>
-          <form className="mt-6 grid gap-5" onSubmit={save}>
+          <form className="mt-5 grid gap-6 sm:mt-7" onSubmit={save}>
             {canEditShop && (
               <>
-                <div className="grid gap-2">
+                <div className="grid max-w-2xl gap-2">
                   <Label
                     htmlFor="profile-shop-name"
                     className="text-xs font-bold uppercase tracking-[0.12em] text-[#5f695c]"
@@ -230,8 +238,8 @@ export default function ProfilePanel({ shopId }: { shopId: string }) {
                     Ce nom apparaît dans votre espace marchand et sur les reçus.
                   </p>
                 </div>
-                <section className="grid gap-4 rounded-2xl border border-[#e4e1d7] bg-[#faf9f5] p-4">
-                  <div>
+                <section className="grid gap-4 rounded-2xl border border-[#e4e1d7] bg-[#faf9f5] p-4 sm:grid-cols-2 sm:p-5">
+                  <div className="sm:col-span-2">
                     <h3 className="text-sm font-semibold text-[#29372e]">
                       Coordonnées sur les reçus
                     </h3>
@@ -240,7 +248,7 @@ export default function ProfilePanel({ shopId }: { shopId: string }) {
                       figureront sur les prochains reçus générés.
                     </p>
                   </div>
-                  <div className="grid gap-2">
+                  <div className="grid gap-2 sm:col-span-2">
                     <Label
                       htmlFor="profile-shop-address"
                       className="text-xs font-bold uppercase tracking-[0.12em] text-[#5f695c]"
@@ -310,9 +318,34 @@ export default function ProfilePanel({ shopId }: { shopId: string }) {
                         : "Facultatif. Ce numéro est visible sur vos reçus, pas votre numéro personnel."}
                     </p>
                   </div>
+                  <div className="grid gap-2 sm:col-span-2">
+                    <Label
+                      htmlFor="profile-shop-receipt-note"
+                      className="text-xs font-bold uppercase tracking-[0.12em] text-[#5f695c]"
+                    >
+                      Note de bas de reçu
+                    </Label>
+                    <Textarea
+                      id="profile-shop-receipt-note"
+                      value={receiptNote}
+                      onChange={event => setReceiptNote(event.target.value)}
+                      maxLength={220}
+                      rows={2}
+                      placeholder="Ex. Merci pour votre confiance. À bientôt !"
+                      aria-describedby="profile-shop-receipt-note-hint"
+                      className="resize-y bg-white"
+                    />
+                    <p
+                      id="profile-shop-receipt-note-hint"
+                      className="text-xs text-[#697466]"
+                    >
+                      Facultatif. Ce message remplace la formule de remerciement
+                      sur vos prochains reçus.
+                    </p>
+                  </div>
                 </section>
-                <section className="grid gap-3 rounded-2xl border border-[#e4e1d7] bg-[#faf9f5] p-4 sm:grid-cols-[5.25rem_1fr]">
-                  <div className="grid aspect-square w-[5.25rem] place-items-center overflow-hidden rounded-xl border border-[#dedbd2] bg-white text-[#60715f] shadow-[0_8px_18px_rgba(37,50,42,0.08)]">
+                <section className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3 rounded-2xl border border-[#e4e1d7] bg-[#faf9f5] p-4 sm:grid-cols-[5.25rem_minmax(0,1fr)] sm:gap-4 sm:p-5">
+                  <div className="grid aspect-square w-full place-items-center overflow-hidden rounded-xl border border-[#dedbd2] bg-white text-[#60715f] shadow-[0_8px_18px_rgba(37,50,42,0.08)]">
                     {logoPreview ? (
                       <img
                         src={logoPreview}
@@ -336,7 +369,7 @@ export default function ProfilePanel({ shopId }: { shopId: string }) {
                       accept="image/png,image/jpeg,image/webp"
                       onChange={chooseLogo}
                       aria-describedby="profile-shop-logo-hint"
-                      className="h-11 cursor-pointer bg-white text-sm file:mr-3 file:rounded-md file:border-0 file:bg-[#eaf0df] file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-[#3d5839]"
+                      className="h-11 min-w-0 max-w-full cursor-pointer overflow-hidden bg-white text-xs file:mr-2 file:max-w-32 file:rounded-md file:border-0 file:bg-[#eaf0df] file:px-2 file:py-1.5 file:text-xs file:font-semibold file:text-[#3d5839] sm:text-sm sm:file:mr-3 sm:file:max-w-none sm:file:px-3 sm:file:text-sm"
                     />
                     <p
                       id="profile-shop-logo-hint"
@@ -363,7 +396,7 @@ export default function ProfilePanel({ shopId }: { shopId: string }) {
                           setLogoError(null);
                           setNotice(null);
                         }}
-                        className="h-9 w-fit px-2 text-[#8d4a39] hover:bg-[#fff0eb] hover:text-[#7a3b2d]"
+                        className="min-h-11 w-full px-3 text-[#8d4a39] hover:bg-[#fff0eb] hover:text-[#7a3b2d] sm:h-9 sm:min-h-0 sm:w-fit sm:px-2"
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
                         Retirer le logo
@@ -450,6 +483,9 @@ export default function ProfilePanel({ shopId }: { shopId: string }) {
                     setPhone(current =>
                       formatPhoneNumber(current, preference.country)
                     );
+                    setShopContactPhone(current =>
+                      formatPhoneNumber(current, preference.country)
+                    );
                   }}
                   ariaDescribedBy="profile-country-hint"
                 />
@@ -475,8 +511,8 @@ export default function ProfilePanel({ shopId }: { shopId: string }) {
               <div
                 className={
                   notice.kind === "success"
-                    ? "flex items-center gap-2 rounded-xl border border-[#c6ddae] bg-[#eff6e7] px-3 py-2.5 text-sm font-medium text-[#3d5839]"
-                    : "rounded-xl bg-[#fff3ef] px-3 py-2 text-sm text-[#8d4a39]"
+                    ? "flex break-words items-center gap-2 rounded-xl border border-[#c6ddae] bg-[#eff6e7] px-3 py-2.5 text-sm font-medium text-[#3d5839]"
+                    : "break-words rounded-xl bg-[#fff3ef] px-3 py-2 text-sm text-[#8d4a39]"
                 }
                 role={notice.kind === "success" ? "status" : "alert"}
                 aria-live="polite"
@@ -493,7 +529,7 @@ export default function ProfilePanel({ shopId }: { shopId: string }) {
             <Button
               type="submit"
               disabled={!canSave || update.isPending}
-              className="h-11 w-full bg-[#26352d] text-[#f5f7e8] hover:bg-[#1b2721] sm:w-auto sm:px-6"
+              className="h-12 w-full bg-[#26352d] text-[#f5f7e8] hover:bg-[#1b2721] sm:h-11 sm:w-auto sm:px-6"
             >
               {update.isPending ? (
                 <>

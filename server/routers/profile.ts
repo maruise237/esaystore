@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import { randomUUID } from "crypto";
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
@@ -95,20 +96,28 @@ export const profileRouter = router({
           .optional(),
         address: z.string().trim().max(280).nullable().optional(),
         contactPhone: phone.optional(),
+        receiptNote: z.string().trim().max(220).nullable().optional(),
         logoDataUrl: logoDataUrl.optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const membership = await assertShopAccess(ctx.user.id, input.shopId);
       const db = getDb();
-      const [shop, hasPhone, hasLogo, hasAddress, hasContactPhone] =
-        await Promise.all([
-          getShopById(input.shopId),
-          hasOptionalColumn("users", "phone"),
-          hasOptionalColumn("shops", "logo_url"),
-          hasOptionalColumn("shops", "address"),
-          hasOptionalColumn("shops", "contact_phone"),
-        ]);
+      const [
+        shop,
+        hasPhone,
+        hasLogo,
+        hasAddress,
+        hasContactPhone,
+        hasReceiptNote,
+      ] = await Promise.all([
+        getShopById(input.shopId),
+        hasOptionalColumn("users", "phone"),
+        hasOptionalColumn("shops", "logo_url"),
+        hasOptionalColumn("shops", "address"),
+        hasOptionalColumn("shops", "contact_phone"),
+        hasOptionalColumn("shops", "receipt_note"),
+      ]);
       if (!shop)
         throw new TRPCError({
           code: "NOT_FOUND",
@@ -119,6 +128,7 @@ export const profileRouter = router({
           input.name ||
           input.address !== undefined ||
           input.contactPhone !== undefined ||
+          input.receiptNote !== undefined ||
           input.logoDataUrl !== undefined) &&
         membership.role !== "owner"
       )
@@ -165,7 +175,7 @@ export const profileRouter = router({
         } else {
           const logo = decodeLogo(input.logoDataUrl);
           const stored = await storagePut(
-            `shops/${input.shopId}/branding/logo.${logo.extension}`,
+            `shops/${input.shopId}/branding/logo_${randomUUID().replaceAll("-", "").slice(0, 8)}.${logo.extension}`,
             logo.bytes,
             logo.contentType
           );
@@ -195,6 +205,17 @@ export const profileRouter = router({
           });
         statements.push(
           sql`UPDATE shops SET contact_phone = ${input.contactPhone}, updated_at = NOW() WHERE id = ${input.shopId}`
+        );
+      }
+      if (input.receiptNote !== undefined) {
+        if (!hasReceiptNote)
+          throw new TRPCError({
+            code: "CONFLICT",
+            message:
+              "La note de reçu sera disponible dès que la migration aura été appliquée.",
+          });
+        statements.push(
+          sql`UPDATE shops SET receipt_note = ${input.receiptNote}, updated_at = NOW() WHERE id = ${input.shopId}`
         );
       }
       if (input.phone !== undefined) {
@@ -230,6 +251,7 @@ export const profileRouter = router({
         logoUrl: nextLogoUrl,
         address: input.address ?? shop.address,
         contactPhone: input.contactPhone ?? shop.contactPhone,
+        receiptNote: input.receiptNote ?? shop.receiptNote,
         phone: input.phone,
         country: input.country ?? shop.country,
         currency: nextCurrency,

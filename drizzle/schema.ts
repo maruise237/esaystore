@@ -135,6 +135,7 @@ export const shops = pgTable("shops", {
   logoUrl: varchar("logo_url", { length: 1024 }),
   address: varchar("address", { length: 280 }),
   contactPhone: varchar("contact_phone", { length: 48 }),
+  receiptNote: varchar("receipt_note", { length: 220 }),
   currency: varchar("currency", { length: 8 }).default("XAF").notNull(),
   country: varchar("country", { length: 3 }).default("CMR").notNull(),
   isActive: boolean("is_active").default(true).notNull(),

@@ -6,6 +6,7 @@ export type SaleReceipt = {
   logoUrl?: string | null;
   shopAddress?: string | null;
   shopContactPhone?: string | null;
+  shopReceiptNote?: string | null;
   saleNumber: string;
   currency: string;
   soldAt: Date;
@@ -42,7 +43,7 @@ const money = (value: number, currency: string) =>
   }).format(value || 0);
 
 const shopLogoUrl =
-  /^\/manus-storage\/shops\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/branding\/logo_[0-9a-f]{8}\.(?:png|jpe?g|webp)$/i;
+  /^\/manus-storage\/shops\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/branding\/logo(?:_[0-9a-f]{8})?\.(?:png|jpe?g|webp)$/i;
 
 function isShopLogoUrl(value: string | null | undefined): value is string {
   return typeof value === "string" && shopLogoUrl.test(value);
@@ -208,7 +209,12 @@ export async function createReceiptPdf(receipt: SaleReceipt) {
   y += 4;
   pdf.setFontSize(8);
   pdf.setTextColor(92, 102, 93);
-  pdf.text("Merci pour votre achat.", width / 2, y, { align: "center" });
+  pdf.text(
+    receipt.shopReceiptNote?.trim() || "Merci pour votre achat.",
+    width / 2,
+    y,
+    { align: "center", maxWidth: width - margin * 2 }
+  );
   return new Blob([pdf.output("arraybuffer")], { type: "application/pdf" });
 }
 
@@ -263,5 +269,8 @@ export function buildReceiptHtml(receipt: SaleReceipt) {
     ? '<span class="paid-stamp">PAYÉ</span>'
     : "";
 
-  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Reçu ${escapeHtml(receipt.saleNumber)}</title><style>body{font-family:Arial,sans-serif;margin:0;color:#1f2924}main{max-width:360px;margin:0 auto;padding:24px}.brand{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#26352d;color:#f5f7e8;padding:20px;border-radius:12px}.brand-identity{display:flex;min-width:0;align-items:center;gap:12px}.brand-logo{width:42px;height:42px;flex:0 0 auto;object-fit:contain;background:#fff;border-radius:8px;padding:3px}.brand h1{font-size:20px;margin:0}.brand small{display:block;margin-top:5px;color:#d8ef73;font-size:10px;font-weight:700;letter-spacing:.11em}.paid-stamp{flex:0 0 auto;border:1px solid #d8ef73;border-radius:999px;padding:4px 7px;color:#d8ef73;font-size:10px;font-weight:700;letter-spacing:.08em}p{font-size:12px;margin:6px 0;color:#526058}.number{font-size:12px;font-weight:700;margin-top:14px;color:#3d5839}.contact{margin-top:10px;border-left:1px solid #9aac95;padding-left:10px;font-size:11px;line-height:1.55;color:#526058}.notice{background:#fff4cf;color:#6b5615;padding:8px;border-radius:6px;font-size:11px}table{width:100%;border-collapse:collapse;margin:18px 0;font-size:12px}td{padding:8px 0;border-bottom:1px solid #e6e8e3}td:last-child{text-align:right;font-weight:600}.summary{font-size:12px}.summary div{display:flex;justify-content:space-between;padding:4px 0}.total{font-size:16px!important;font-weight:700;border-top:1px solid #1f2924;margin-top:6px;padding-top:8px!important;color:#1f2924}.footer{text-align:center;margin-top:24px;font-size:11px;color:#67706b}@media print{body{print-color-adjust:exact}main{padding:0}.brand{border-radius:0}}</style></head><body><main><header class="brand"><div class="brand-identity">${logo}<div><h1>${escapeHtml(receipt.shopName)}</h1><small>REÇU DE VENTE</small></div></div>${paidStamp}</header><p class="number">${escapeHtml(receipt.saleNumber)}</p><p>${receipt.soldAt.toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" })}${receipt.customerName ? ` · ${escapeHtml(receipt.customerName)}` : ""}</p>${contact ? `<div class="contact">${contact}</div>` : ""}${receipt.pendingSync ? '<p class="notice">Vente enregistrée hors ligne — numéro définitif après synchronisation.</p>' : ""}<table><tbody>${lines}</tbody></table><div class="summary"><div><span>Sous-total</span><span>${money(receipt.subtotal, receipt.currency)}</span></div>${receipt.discount > 0 ? `<div><span>Remise</span><span>− ${money(receipt.discount, receipt.currency)}</span></div>` : ""}<div class="total"><span>Total</span><span>${money(receipt.total, receipt.currency)}</span></div>${receipt.cash > 0 ? `<div><span>Espèces</span><span>${money(receipt.cash, receipt.currency)}</span></div>` : ""}${receipt.mobileMoney > 0 ? `<div><span>Mobile money</span><span>${money(receipt.mobileMoney, receipt.currency)}</span></div>` : ""}${receipt.credit > 0 ? `<div><span>À crédit</span><span>${money(receipt.credit, receipt.currency)}</span></div>` : ""}</div><p class="footer">Merci pour votre achat.</p></main></body></html>`;
+  const footer = escapeHtml(
+    receipt.shopReceiptNote?.trim() || "Merci pour votre achat."
+  );
+  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Reçu ${escapeHtml(receipt.saleNumber)}</title><style>body{font-family:Arial,sans-serif;margin:0;color:#1f2924}main{max-width:360px;margin:0 auto;padding:24px}.brand{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#26352d;color:#f5f7e8;padding:20px;border-radius:12px}.brand-identity{display:flex;min-width:0;align-items:center;gap:12px}.brand-logo{width:42px;height:42px;flex:0 0 auto;object-fit:contain;background:#fff;border-radius:8px;padding:3px}.brand h1{font-size:20px;margin:0}.brand small{display:block;margin-top:5px;color:#d8ef73;font-size:10px;font-weight:700;letter-spacing:.11em}.paid-stamp{flex:0 0 auto;border:1px solid #d8ef73;border-radius:999px;padding:4px 7px;color:#d8ef73;font-size:10px;font-weight:700;letter-spacing:.08em}p{font-size:12px;margin:6px 0;color:#526058}.number{font-size:12px;font-weight:700;margin-top:14px;color:#3d5839}.contact{margin-top:10px;border-left:1px solid #9aac95;padding-left:10px;font-size:11px;line-height:1.55;color:#526058}.notice{background:#fff4cf;color:#6b5615;padding:8px;border-radius:6px;font-size:11px}table{width:100%;border-collapse:collapse;margin:18px 0;font-size:12px}td{padding:8px 0;border-bottom:1px solid #e6e8e3}td:last-child{text-align:right;font-weight:600}.summary{font-size:12px}.summary div{display:flex;justify-content:space-between;padding:4px 0}.total{font-size:16px!important;font-weight:700;border-top:1px solid #1f2924;margin-top:6px;padding-top:8px!important;color:#1f2924}.footer{text-align:center;margin-top:24px;font-size:11px;color:#67706b}@media print{body{print-color-adjust:exact}main{padding:0}.brand{border-radius:0}}</style></head><body><main><header class="brand"><div class="brand-identity">${logo}<div><h1>${escapeHtml(receipt.shopName)}</h1><small>REÇU DE VENTE</small></div></div>${paidStamp}</header><p class="number">${escapeHtml(receipt.saleNumber)}</p><p>${receipt.soldAt.toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" })}${receipt.customerName ? ` · ${escapeHtml(receipt.customerName)}` : ""}</p>${contact ? `<div class="contact">${contact}</div>` : ""}${receipt.pendingSync ? '<p class="notice">Vente enregistrée hors ligne — numéro définitif après synchronisation.</p>' : ""}<table><tbody>${lines}</tbody></table><div class="summary"><div><span>Sous-total</span><span>${money(receipt.subtotal, receipt.currency)}</span></div>${receipt.discount > 0 ? `<div><span>Remise</span><span>− ${money(receipt.discount, receipt.currency)}</span></div>` : ""}<div class="total"><span>Total</span><span>${money(receipt.total, receipt.currency)}</span></div>${receipt.cash > 0 ? `<div><span>Espèces</span><span>${money(receipt.cash, receipt.currency)}</span></div>` : ""}${receipt.mobileMoney > 0 ? `<div><span>Mobile money</span><span>${money(receipt.mobileMoney, receipt.currency)}</span></div>` : ""}${receipt.credit > 0 ? `<div><span>À crédit</span><span>${money(receipt.credit, receipt.currency)}</span></div>` : ""}</div><p class="footer">${footer}</p></main></body></html>`;
 }

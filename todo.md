@@ -352,3 +352,8 @@
 - [x] Transmettre et afficher les coordonnées de boutique dans les reçus PDF, imprimés et partageables.
 - [x] Ajouter un cachet « Payé » uniquement sur les reçus de ventes entièrement réglées.
 - [x] Tester les coordonnées, les règles de règlement, les rendus et publier sur GitHub `main`.
+- [x] Diagnostiquer puis corriger la persistance du logo de boutique après enregistrement.
+- [x] Auditer le panneau Profil & boutique aux formats mobile et desktop pour corriger les débordements et la hiérarchie.
+- [x] Identifier et ajouter uniquement les réglages de boutique essentiels manquants dans cet onglet.
+- [x] Ajouter une note de bas de reçu personnalisable dans les réglages de boutique et les futurs documents de vente.
+- [x] Tester la sauvegarde du logo, les autorisations et le responsive, puis publier sur GitHub `main`.

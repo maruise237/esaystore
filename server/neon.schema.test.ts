@@ -26,13 +26,14 @@ describe("EASYSTOR schema on Neon", () => {
       SELECT column_name
       FROM information_schema.columns
       WHERE table_schema = 'public'
-        AND ((table_name = 'users' AND column_name = 'phone') OR (table_name = 'shops' AND column_name IN ('logo_url', 'address', 'contact_phone')))
+        AND ((table_name = 'users' AND column_name = 'phone') OR (table_name = 'shops' AND column_name IN ('logo_url', 'address', 'contact_phone', 'receipt_note')))
     `;
     expect(rows.map(row => row.column_name).sort()).toEqual([
       "address",
       "contact_phone",
       "logo_url",
       "phone",
+      "receipt_note",
     ]);
   });
 });

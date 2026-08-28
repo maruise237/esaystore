@@ -45,6 +45,9 @@ describe("public catalog storage keys", () => {
     expect(
       isPublicCatalogStorageKey(`shops/${shopId}/branding/logo_a1b2c3d4.png`)
     ).toBe(true);
+    expect(isPublicCatalogStorageKey(`shops/${shopId}/branding/logo.png`)).toBe(
+      true
+    );
   });
 
   it("rejects traversal attempts and non-catalogue storage keys", async () => {
@@ -57,9 +60,6 @@ describe("public catalog storage keys", () => {
         `shops/${shopId}/catalog/product/${targetId}.png`
       )
     ).toBe(false);
-    expect(isPublicCatalogStorageKey(`shops/${shopId}/branding/logo.png`)).toBe(
-      false
-    );
     const res = response();
     await servePublicCatalogImage("GET", "../../secrets.txt", res);
     expect(mocks.signedUrl).not.toHaveBeenCalled();
@@ -69,14 +69,12 @@ describe("public catalog storage keys", () => {
   it("proxies a valid image through the application origin with a safe content type", async () => {
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn()
-        .mockResolvedValue(
-          new Response(new Uint8Array([1, 2]), {
-            status: 200,
-            headers: { "content-type": "image/webp" },
-          })
-        )
+      vi.fn().mockResolvedValue(
+        new Response(new Uint8Array([1, 2]), {
+          status: 200,
+          headers: { "content-type": "image/webp" },
+        })
+      )
     );
     const res = response();
     await servePublicCatalogImage("GET", validKey, res);

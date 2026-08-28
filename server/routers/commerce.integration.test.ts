@@ -102,10 +102,11 @@ describe("commerce transaction with Neon", () => {
       name: "Nouvelle boutique",
       address: "Marché central, Dakar",
       contactPhone: "+221771112233",
+      receiptNote: "Merci de votre fidélité.",
     });
     const user = await sql`SELECT phone FROM users WHERE id = ${userId}`;
     const shop =
-      await sql`SELECT name, country, currency, address, contact_phone FROM shops WHERE id = ${shopId}`;
+      await sql`SELECT name, country, currency, address, contact_phone, receipt_note FROM shops WHERE id = ${shopId}`;
     const currencies =
       await sql`SELECT currency, is_active FROM shop_currencies WHERE shop_id = ${shopId}`;
     expect(user[0]?.phone).toBe("+221771234567");
@@ -115,6 +116,7 @@ describe("commerce transaction with Neon", () => {
       currency: "XOF",
       address: "Marché central, Dakar",
       contact_phone: "+221771112233",
+      receipt_note: "Merci de votre fidélité.",
     });
     expect(currencies).toEqual(
       expect.arrayContaining([

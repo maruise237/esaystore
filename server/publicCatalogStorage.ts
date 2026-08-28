@@ -4,7 +4,7 @@ import { storageGetSignedUrl } from "./storage";
 const catalogKey =
   /^shops\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/catalog\/(?:product|variant)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}_[0-9a-f]{8}\.(?:png|jpe?g|webp)$/i;
 const shopLogoKey =
-  /^shops\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/branding\/logo_[0-9a-f]{8}\.(?:png|jpe?g|webp)$/i;
+  /^shops\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/branding\/logo(?:_[0-9a-f]{8})?\.(?:png|jpe?g|webp)$/i;
 const allowedContentTypes = new Set(["image/png", "image/jpeg", "image/webp"]);
 
 export function isPublicCatalogStorageKey(value: string) {
